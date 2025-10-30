@@ -1,20 +1,38 @@
-import LogIn from '@/components/LogIn.vue'
-import SignIn from '@/components/signin.vue'
+import LogInView from '@/views/LogInView.vue'
+import MainView from '@/views/MainView.vue'
+import RecipeBookView from '@/views/RecipeBookView.vue'
+import RecipeEditView from '@/views/RecipeEditView.vue'
+import RecipeView from '@/views/RecipeView.vue'
+import SignInView from '@/views/SignInView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [{
     path: "/",
-    redirect: "/signin"
+    component: MainView,
+    children: [
+      {
+        path: "recipe-book",
+        component: RecipeBookView
+      },
+      {
+        path: "recipe",
+        component: RecipeView
+      },
+      {
+        path: "recipe/edit",
+        component: RecipeEditView
+      }
+    ]
   },
   {
     path: "/signin",
-    component: SignIn
+    component: SignInView
   },
   {
     path: "/login",
-    component: LogIn
+    component: LogInView
   }
 ],
 })

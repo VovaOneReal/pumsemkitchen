@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full max-w-70% prose gap-4">
+  <div class="flex flex-col w-full prose gap-4 justify-center">
     <h1 class="text-center">Pumsem<span class="text-accent">Kitchen</span></h1>
     <form class="flex flex-col gap-4">
         <h2 class="text-center">Регистрация</h2>
@@ -9,7 +9,7 @@
             <input class="input w-full" type="text" placeholder="Пригласительный код"/>
         </div>
         <div class="flex flex-col justify-center gap-2">
-            <input type="submit" value="Зарегистрироваться" class="btn"/>
+            <input @click="register" type="submit" value="Зарегистрироваться" class="btn"/>
             <RouterLink to="/login" class="btn btn-ghost">Войти</RouterLink>
         </div>
     </form>
@@ -19,5 +19,10 @@
 <script lang="ts" setup>
 import { RouterLink } from 'vue-router';
 
+import router from '@/router';
+
+function register() {
+  router.push("/")
+}
 
 </script>
