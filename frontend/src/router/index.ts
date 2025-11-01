@@ -11,6 +11,7 @@ const router = createRouter({
   routes: [{
     path: "/",
     component: MainView,
+    redirect: "/recipe-book",
     children: [
       {
         path: "recipe-book",

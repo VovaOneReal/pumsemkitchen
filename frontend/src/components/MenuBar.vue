@@ -4,8 +4,8 @@
     <div class="flex flex-col justify-between h-full w-full ">
       <ul class="menu w-full">
           <li><router-link to="recipe-book" active-class="menu-active" class="flex items-center"><utensils :size="16" />Рецепты</router-link></li>
-          <li><router-link to="families" class="flex items-center"><users :size="16" />Семьи</router-link></li>
-          <li><router-link to="menus" class="flex items-center"><hand-platter :size="16" />Меню</router-link></li>
+          <li v-show="false"><router-link to="families" class="flex items-center"><users :size="16" />Семьи</router-link></li>
+          <li v-show="false"><router-link to="menus" class="flex items-center"><hand-platter :size="16" />Меню</router-link></li>
       </ul>
       <ul class="menu w-full">
         <li><a href="" class="flex items-center"><sun-moon :size="16" />Тема: ночная</a></li>
