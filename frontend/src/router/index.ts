@@ -8,34 +8,35 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [{
-    path: "/",
-    component: MainView,
-    redirect: "/recipe-book",
-    children: [
-      {
-        path: "recipe-book",
-        component: RecipeBookView
-      },
-      {
-        path: "recipe",
-        component: RecipeView
-      },
-      {
-        path: "recipe/edit",
-        component: RecipeEditView
-      }
-    ]
-  },
-  {
-    path: "/signin",
-    component: SignInView
-  },
-  {
-    path: "/login",
-    component: LogInView
-  }
-],
+  routes: [
+    {
+      path: '/',
+      component: MainView,
+      redirect: '/recipe-book',
+      children: [
+        {
+          path: 'recipe-book',
+          component: RecipeBookView,
+        },
+        {
+          path: 'recipe',
+          component: RecipeView,
+        },
+        {
+          path: 'recipe/edit',
+          component: RecipeEditView,
+        },
+      ],
+    },
+    {
+      path: '/signin',
+      component: SignInView,
+    },
+    {
+      path: '/login',
+      component: LogInView,
+    },
+  ],
 })
 
 export default router
