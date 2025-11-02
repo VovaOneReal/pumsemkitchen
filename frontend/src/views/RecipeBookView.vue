@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-col w-full gap-4 prose max-w-none">
-    <h2>Кулинарная книга</h2>
+    <div class="flex flex-col w-full">
+      <h2 class="mt-0">Кулинарная книга</h2>
+      <router-link to="/recipe/edit" class="btn btn-accent w-fit">Добавить рецепт</router-link>
+    </div>
     <div class="flex flex-col w-full gap-2 h-full overflow-y-auto">
       <RecipeCard
         v-for="recipe in recipes"
