@@ -4,7 +4,7 @@
       <legend class="fieldset-legend">Название рецепта</legend>
       <input type="text" class="input w-full" placeholder="Как называется рецепт?" />
     </fieldset>
-    <div class="flex flex-col gap-6 w-full overflow-y-scroll overflow-x-hidden">
+    <div class="flex flex-col gap-6 w-full h-full overflow-y-auto overflow-x-hidden">
       <div class="flex gap-4 w-full max-h-[300px]">
         <img class="rounded-box" src="https://placehold.co/300x300" alt="" />
         <div class="flex w-full gap-2 flex-col prose max-w-none">
@@ -20,12 +20,10 @@
       <div class="flex w-full gap-4">
         <div class="flex flex-col gap-2 prose w-full max-w-none">
           <h3>Ингредиенты</h3>
-          <div
-            v-for="ingredient in ingredients"
-            :key="ingredient.id"
-            class="flex flex-col w-full gap-1"
-          >
+          <div class="flex flex-col w-full gap-1">
             <IngredientEditingListElement
+              v-for="ingredient in ingredients"
+              :key="ingredient.id"
               :id="ingredientsAmount"
               v-model:name="ingredient.name"
               v-model:is-optional="ingredient.isOptional"
@@ -50,10 +48,12 @@
           </button>
         </div>
       </div>
-      <div class="flex flex-col gap-6 prose max-w-none">
+      <div class="flex flex-col gap-2 prose max-w-none">
         <h3>Готовка</h3>
-        <div v-for="step in recipeSteps" :key="step.step" class="flex flex-col w-full gap-1">
+        <div class="flex flex-col w-full gap-1">
           <RecipeEditingStep
+            v-for="step in recipeSteps"
+            :key="step.step"
             @delete="(step) => deleteRecipeStep(step)"
             :step="step.step"
             v-model:description="step.description"
@@ -93,18 +93,7 @@ import RecipeEditingStep from '@/components/RecipeEditingStep.vue'
 import router from '@/router'
 import { reactive } from 'vue'
 
-type Ingredient = {
-  id: number
-  name: string
-  isOptional: boolean
-  amount: number
-  amountType: string
-}
-
-type RecipeStep = {
-  step: number
-  description: string
-}
+import type { Ingredient, RecipeStep } from '@/types'
 
 const ingredientsAmount = 0
 const ingredients: Ingredient[] = reactive([])
