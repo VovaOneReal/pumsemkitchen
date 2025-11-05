@@ -1,0 +1,23 @@
+openapi: 3.2.0
+info:
+  title: PumsemKitchen - Backend-API
+  version: 0.0.1
+paths:
+  /auth:
+    post:
+      description: Аутентификация пользователя по логину и паролю
+      responses:
+        "200":
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              login:
+                description: Логин пользователя
+                type: string
+              password:
+                description: Пароль пользователя, предварительно хешированный
+                type: string
+      required: true
