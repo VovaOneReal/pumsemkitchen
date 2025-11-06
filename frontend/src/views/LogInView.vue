@@ -19,9 +19,14 @@
       <div class="flex flex-col justify-center gap-2">
         <button @click="(e) => toLogin(e)" type="submit" class="btn hover:btn-accent">Войти</button>
         <RouterLink to="/signin" class="btn btn-ghost">Зарегистрироваться</RouterLink>
-        <button class="btn btn-ghost btn-xs">Забыл пароль</button>
+        <!-- <button class="btn btn-ghost btn-xs">Забыл пароль</button> -->
       </div>
     </form>
+    <div :class="testMsg == '' ? 'hidden' : ''" class="toast">
+      <div class="alert alert-info">
+        <span>{{ testMsg }}</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -29,18 +34,27 @@
 import { RouterLink } from 'vue-router'
 import router from '@/router'
 import { ref } from 'vue'
+import axios from 'axios'
 
 const login = ref<string>('')
 const password = ref<string>('')
 
 const authCorrect = ref<boolean>(true)
+const testMsg = ref<string>('')
 
 function toLogin(event: PointerEvent) {
-  // Send auth request...
-  if (authCorrect.value) {
-    router.push('/')
-  } else {
-    event.preventDefault()
-  }
+  axios.get('http://localhost:3000/').then((response) => {
+    if (response.status == 200) {
+      testMsg.value = response.data.message
+      setTimeout(() => {
+        testMsg.value = ''
+      }, 2000)
+    }
+  })
+  // if (authCorrect.value) {
+  //   router.push('/')
+  // } else {
+  event.preventDefault()
+  // }
 }
 </script>
