@@ -8,16 +8,24 @@ paths:
       description: Аутентификация пользователя по логину и паролю
       responses:
         "200":
+          description: Система подтвердила вход пользователя. Возвращает JWT-токен
     requestBody:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              login:
-                description: Логин пользователя
-                type: string
-              password:
-                description: Пароль пользователя, предварительно хешированный
-                type: string
+            $ref: "#/components/schemas/AuthData"
       required: true
+components:
+  schemas:
+    AuthData:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          description: Логин пользователя
+          type: string
+        password:
+          description: Пароль пользователя, хешированный с помощью bcrypt (12 rounds)
+          type: string
