@@ -1,12 +1,6 @@
 <template>
   <div class="flex w-full gap-2 items-center max-w-none">
-    <div
-      class="flex flex-col gap-1 hover:bg-base-200 rounded-box hover:cursor-move transition-colors min-w-2 p-2 justify-center items-center"
-    >
-      <div class="w-1 h-1 rounded-full bg-accent"></div>
-      <div class="w-1 h-3 rounded-full bg-accent"></div>
-      <div class="w-1 h-1 rounded-full bg-accent"></div>
-    </div>
+    <DragElement />
     <input class="input w-full" type="text" placeholder="Название ингредиента..." v-model="name" />
     <div class="tooltip" data-tip="«По вкусу»">
       <input v-model="isOptional" class="checkbox" type="checkbox" name="" id="" />
@@ -35,6 +29,7 @@
 <script lang="ts" setup>
 import { X } from 'lucide-vue-next'
 import type { ModelRef } from 'vue'
+import DragElement from './DragElement.vue'
 
 const emit = defineEmits(['delete'])
 

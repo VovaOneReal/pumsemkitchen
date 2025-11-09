@@ -1,5 +1,6 @@
 import LogInView from '@/views/LogInView.vue'
 import MainView from '@/views/MainView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 import RecipeBookView from '@/views/RecipeBookView.vue'
 import RecipeEditView from '@/views/RecipeEditView.vue'
 import RecipeView from '@/views/RecipeView.vue'
@@ -25,6 +26,10 @@ const router = createRouter({
         {
           path: 'recipe/edit',
           component: RecipeEditView,
+        },
+        {
+          path: '/profile',
+          component: ProfileView,
         },
       ],
     },
