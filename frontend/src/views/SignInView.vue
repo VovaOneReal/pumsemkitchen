@@ -12,7 +12,7 @@
             :class="loginCorrect ? '' : 'input-error'"
             class="input w-full"
             type="text"
-            placeholder="Логин..."
+            placeholder="Придумайте логин..."
           />
           <p class="label not-prose">Только латинские буквы и цифры от 3 до 32 символов</p>
         </fieldset>
@@ -24,10 +24,13 @@
             :class="passwordCorrect ? '' : 'input-error'"
             class="input w-full"
             type="password"
-            placeholder="Пароль..."
+            placeholder="Придумайте пароль..."
           />
           <p class="label not-prose">От 8 до 32 символов</p>
         </fieldset>
+        <p v-if="errorMsg.length != 0" class="text-error text-xs">
+          {{ errorMsg }}
+        </p>
       </div>
       <div class="flex flex-col justify-center gap-2">
         <button @click="(e) => toRegister(e)" type="submit" class="btn hover:btn-accent">
@@ -43,6 +46,7 @@
 import { RouterLink } from 'vue-router'
 import router from '@/router'
 import { ref } from 'vue'
+import axios from 'axios'
 
 const login = ref<string>('')
 const password = ref<string>('')
@@ -52,21 +56,41 @@ const passwordCorrect = ref<boolean>(true)
 const loginRe = /^[a-zA-Z0-9]{3,32}$/
 const passwordRe = /^[\p{L}\p{N}\p{S}\p{P}]{8,32}$/u
 
+const errorMsg = ref<string>('')
+
 function testLogin() {
   loginCorrect.value = loginRe.test(login.value)
+  errorMsg.value = ''
 }
 
 function testPassword() {
   passwordCorrect.value = passwordRe.test(password.value)
+  errorMsg.value = ''
 }
 
 function toRegister(event: PointerEvent) {
+  event.preventDefault()
   testLogin()
   testPassword()
-  if (loginCorrect.value && passwordCorrect.value) {
-    router.push('/')
+  if (loginCorrect.value) {
+    if (passwordCorrect.value) {
+      axios
+        .post('http://localhost:3000/signin', { login: login.value, password: password.value })
+        .then((response) => {
+          if (response.status == 200) {
+            router.push('/')
+          }
+        })
+        .catch((error) => {
+          if (error.status == 400) {
+            errorMsg.value = error.response.data.message
+          }
+        })
+    } else {
+      errorMsg.value = 'Такой пароль не подходит'
+    }
   } else {
-    event.preventDefault()
+    errorMsg.value = 'Такой логин не подходит'
   }
 }
 </script>

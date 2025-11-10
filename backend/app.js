@@ -4,6 +4,7 @@ import cors from "@koa/cors";
 import bodyParser from "koa-bodyparser";
 import compress from "koa-compress";
 import helmet from "koa-helmet";
+import pg from "pg";
 
 const app = new Koa();
 const router = new Router();
@@ -16,21 +17,26 @@ app.use(cors());
 // Request parsing middleware
 app.use(bodyParser());
 
-// Custom middleware demonstrating Koa's cascading
-app.use(async (ctx, next) => {
-  const start = Date.now();
-  await next();
-  const ms = Date.now() - start;
-  console.log(`${ctx.method} ${ctx.url} - ${ms}ms`);
-});
-
 // Root endpoint
-router.get("/", (ctx) => {
-  ctx.body = {
-    message: "Welcome to the Koa.js Blog API",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-  };
+router.post("/signin", (ctx) => {
+  if (ctx.request.body.login.length < 3 || ctx.request.body.login.length > 32) {
+    ctx.status = 400;
+    ctx.body = {
+      message: "Длина логина не подходит.",
+    };
+  } else if (
+    ctx.request.body.password.length < 8 ||
+    ctx.request.body.password.length > 32
+  ) {
+    ctx.status = 400;
+    ctx.body = {
+      message: "Длина пароля не подходит.",
+    };
+  } else {
+    ctx.body = {
+      message: "Добро пожаловать!",
+    };
+  }
 });
 
 app.use(router.routes());
