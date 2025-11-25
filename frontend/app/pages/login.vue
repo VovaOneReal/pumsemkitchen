@@ -1,59 +1,76 @@
 <template>
-  <div class="flex flex-col w-full prose gap-4 justify-center max-w-[50%]">
+  <div class="flex flex-col w-full gap-4 justify-center max-w-[50%]">
     <h1 class="text-center">Pumsem<span class="text-accent">Kitchen</span></h1>
-    <form class="flex flex-col gap-4 bg-base-200 rounded-box p-6 w-full">
-      <h2 class="text-center mt-0">Вход</h2>
-      <div class="flex flex-col gap-2">
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Логин</legend>
-          <input v-model="login" class="input w-full" type="text" placeholder="Логин..." />
-        </fieldset>
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">Пароль</legend>
-          <input v-model="password" class="input w-full" type="password" placeholder="Пароль..." />
-        </fieldset>
-        <p v-if="!authCorrect" class="text-error">
-          Неверные данные для входа. Проверьте правильность ввода.
-        </p>
-      </div>
-      <div class="flex flex-col justify-center gap-2">
-        <button @click="(e) => toLogin(e)" type="submit" class="btn hover:btn-accent">Войти</button>
-        <RouterLink to="/signin" class="btn btn-ghost">Зарегистрироваться</RouterLink>
-        <!-- <button class="btn btn-ghost btn-xs">Забыл пароль</button> -->
-      </div>
-    </form>
-    <div :class="testMsg == '' ? 'hidden' : ''" class="toast">
-      <div class="alert alert-info">
-        <span>{{ testMsg }}</span>
-      </div>
-    </div>
+    <UForm class="flex flex-col gap-4 bg-base-200 rounded-box p-6 w-full">
+      <UCard variant="soft">
+        <template #header>
+          <h2 class="text-center">Вход</h2>
+        </template>
+        <div class="flex flex-col gap-2">
+          <UFormField label="Логин">
+            <UInput v-model="login" class="input w-full" type="text" placeholder="Логин..." />
+          </UFormField>
+          <UFormField label="Пароль">
+            <UInput
+              v-model="password"
+              class="input w-full"
+              type="password"
+              placeholder="Пароль..."
+            />
+          </UFormField>
+          <p v-if="!authCorrect" class="text-error">
+            Неверные данные для входа. Проверьте правильность ввода.
+          </p>
+        </div>
+        <template #footer>
+          <div class="flex flex-col justify-center gap-2">
+            <UButton type="submit" block class="btn hover:btn-accent" @click="(e) => toLogin(e)"
+              >Войти</UButton
+            >
+            <UButton block variant="outline" to="/signup">Зарегистрироваться</UButton>
+            <UButton block variant="ghost" size="xs">Забыл пароль</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UForm>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { RouterLink } from 'vue-router'
-import router from '@/router'
 import { ref } from 'vue'
 import axios from 'axios'
+
+definePageMeta({
+  layout: false,
+})
+
+const toast = useToast()
 
 const login = ref<string>('')
 const password = ref<string>('')
 
 const authCorrect = ref<boolean>(true)
-const testMsg = ref<string>('')
 
 function toLogin(event: PointerEvent) {
-  axios.get('http://localhost:3000/').then((response) => {
-    if (response.status == 200) {
-      testMsg.value = response.data.message
-      setTimeout(() => {
-        testMsg.value = ''
-      }, 2000)
-    }
+  toast.add({
+    title: 'Успешный вход',
+    description: 'Добро пожаловать! Снова.',
+    color: 'success',
   })
+
+  // axios.get('http://localhost:3000/').then((response) => {
+  // if (response.status == 200) {
+  // toast.add({
+  //   title: 'Успешный вход',
+  //   description: response.data.message,
+  //   color: 'success',
+  // })
+  // }
+  // })
   // if (authCorrect.value) {
   //   router.push('/')
   // } else {
+  navigateTo('/recipebook')
   event.preventDefault()
   // }
 }
