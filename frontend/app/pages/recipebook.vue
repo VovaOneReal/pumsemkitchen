@@ -1,18 +1,21 @@
 <template>
   <div class="flex flex-col w-full gap-4 prose max-w-none">
-    <div class="flex flex-col w-full">
-      <h2 class="mt-0">Кулинарная книга</h2>
-      <router-link to="/recipe/edit" class="btn btn-accent w-fit">Добавить рецепт</router-link>
+    <div v-if="$route.path == '/recipebook'">
+      <div class="flex flex-col w-full">
+        <h2 class="mt-0">Кулинарная книга</h2>
+        <router-link to="/recipe/edit" class="btn btn-accent w-fit">Добавить рецепт</router-link>
+      </div>
+      <div class="flex flex-col w-full gap-2 h-full overflow-y-auto">
+        <RecipeCard
+          v-for="recipe in recipes"
+          :id="recipe.id"
+          :key="recipe.id"
+          :title="recipe.title"
+          :description="recipe.description"
+        />
+      </div>
     </div>
-    <div class="flex flex-col w-full gap-2 h-full overflow-y-auto">
-      <RecipeCard
-        v-for="recipe in recipes"
-        :key="recipe.id"
-        :id="recipe.id"
-        :title="recipe.title"
-        :description="recipe.description"
-      />
-    </div>
+    <NuxtPage></NuxtPage>
   </div>
 </template>
 

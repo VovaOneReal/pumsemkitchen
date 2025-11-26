@@ -1,18 +1,21 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/ui'
+  modules: ['@nuxt/eslint', '@nuxt/ui'],
+  components: [
+    {
+      path: '~/components',
+      pathPrefix: false,
+    },
   ],
 
   devtools: {
-    enabled: true
+    enabled: true,
   },
 
   css: ['~/assets/css/main.css'],
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
   },
 
   compatibilityDate: '2025-01-15',
@@ -21,8 +24,8 @@ export default defineNuxtConfig({
     config: {
       stylistic: {
         commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
-    }
-  }
+        braceStyle: '1tbs',
+      },
+    },
+  },
 })

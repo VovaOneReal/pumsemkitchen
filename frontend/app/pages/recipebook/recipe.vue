@@ -117,14 +117,16 @@
 import IngredientListElement from '@/components/IngredientListElement.vue'
 import NutritionProgressBar from '@/components/NutritionProgressBar.vue'
 import RecipeStep from '@/components/RecipeStep.vue'
-import router from '@/router'
+
+const router = useRouter()
 
 import { Heart, UserStar, FolderHeart, Pencil, Trash2, ArrowLeft } from 'lucide-vue-next'
+
 function goBack() {
   router.back()
 }
 
 function editRecipe() {
-  router.push('recipe/edit')
+  router.push('/recipebook/recipe/edit')
 }
 </script>

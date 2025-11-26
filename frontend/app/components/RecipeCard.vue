@@ -18,7 +18,6 @@
 </template>
 
 <script lang="ts" setup>
-import router from '@/router'
 import type { Recipe } from '@/types'
 import { ref } from 'vue'
 
@@ -27,6 +26,6 @@ const props = defineProps<Recipe>()
 const id = ref<number>(props.id)
 
 function openCard() {
-  router.push('/recipe')
+  navigateTo('/recipebook/recipe')
 }
 </script>

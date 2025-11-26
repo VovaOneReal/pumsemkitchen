@@ -90,10 +90,11 @@
 <script lang="ts" setup>
 import IngredientEditingListElement from '@/components/IngredientEditingListElement.vue'
 import RecipeEditingStep from '@/components/RecipeEditingStep.vue'
-import router from '@/router'
 import { reactive } from 'vue'
 
 import type { Ingredient, RecipeStep } from '@/types'
+
+const router = useRouter()
 
 const ingredientsAmount = 0
 const ingredients: Ingredient[] = reactive([])
