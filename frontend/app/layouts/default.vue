@@ -1,10 +1,10 @@
 <template>
-  <div class="flex w-full gap-8">
+  <UContainer class="flex gap-8">
     <MenuBar />
-    <div class="flex w-full">
+    <UMain class="flex w-full">
       <slot />
-    </div>
-  </div>
+    </UMain>
+  </UContainer>
 </template>
 
 <script lang="ts" setup></script>

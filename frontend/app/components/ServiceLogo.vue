@@ -1,9 +1,9 @@
 <template>
   <div class="flex w-full hover:cursor-pointer justify-center items-center" @click="goToMain">
-    <p class="font-bold text-lg hover:text-accent transition-colors">
+    <h1 class="font-bold text-lg hover:text-accent transition-colors">
       {{ props.collapsed ? 'P' : 'Pumsem'
-      }}<span class="text-accent">{{ props.collapsed ? 'K' : 'Kitchen' }}</span>
-    </p>
+      }}<span class="text-primary">{{ props.collapsed ? 'K' : 'Kitchen' }}</span>
+    </h1>
   </div>
 </template>
 

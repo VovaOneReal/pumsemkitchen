@@ -1,15 +1,19 @@
 <template>
-  <UNavigationMenu class="h-full" :collapsed="isCollapsed" :items="items" orientation="vertical">
-    <template #logo>
-      <ServiceLogo :collapsed="isCollapsed" />
-    </template>
-    <template #menu-collapser>
-      <MenuCollapser
-        :collapsed="isCollapsed"
-        @collapsed-change="isCollapsed = !isCollapsed"
-      ></MenuCollapser>
-    </template>
-  </UNavigationMenu>
+  <div class="flex flex-col justify-between">
+    <UNavigationMenu :collapsed="isCollapsed" :items="topItems" orientation="vertical">
+      <template #logo>
+        <ServiceLogo :collapsed="isCollapsed" />
+      </template>
+    </UNavigationMenu>
+    <UNavigationMenu :collapsed="isCollapsed" :items="bottomItems" orientation="vertical">
+      <template #menu-collapser>
+        <MenuCollapser
+          :collapsed="isCollapsed"
+          @collapsed-change="isCollapsed = !isCollapsed"
+        ></MenuCollapser>
+      </template>
+    </UNavigationMenu>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -19,7 +23,7 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const isCollapsed = ref<boolean>(false)
 
-const items = ref<NavigationMenuItem[]>([
+const topItems = ref<NavigationMenuItem[]>([
   {
     to: '/',
     slot: 'logo' as const,
@@ -42,6 +46,9 @@ const items = ref<NavigationMenuItem[]>([
     disabled: true,
     tooltip: true,
   },
+])
+
+const bottomItems = ref<NavigationMenuItem[]>([
   {
     label: 'Сменить тему',
     icon: SunMoon,

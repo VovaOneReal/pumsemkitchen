@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full gap-4 prose max-w-none">
+  <div class="flex flex-col w-full gap-4">
     <div v-if="$route.path == '/recipebook'">
       <div class="flex flex-col w-full">
         <h2 class="mt-0">Кулинарная книга</h2>

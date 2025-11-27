@@ -1,39 +1,46 @@
 <template>
-  <div class="flex flex-col w-full gap-4 justify-center max-w-[50%]">
-    <h1 class="text-center">Pumsem<span class="text-accent">Kitchen</span></h1>
-    <UForm class="flex flex-col gap-4 bg-base-200 rounded-box p-6 w-full">
-      <UCard variant="soft">
-        <template #header>
-          <h2 class="text-center">Вход</h2>
-        </template>
-        <div class="flex flex-col gap-2">
-          <UFormField label="Логин">
-            <UInput v-model="login" class="input w-full" type="text" placeholder="Логин..." />
-          </UFormField>
-          <UFormField label="Пароль">
-            <UInput
-              v-model="password"
-              class="input w-full"
-              type="password"
-              placeholder="Пароль..."
-            />
-          </UFormField>
-          <p v-if="!authCorrect" class="text-error">
-            Неверные данные для входа. Проверьте правильность ввода.
-          </p>
-        </div>
-        <template #footer>
-          <div class="flex flex-col justify-center gap-2">
-            <UButton type="submit" block class="btn hover:btn-accent" @click="(e) => toLogin(e)"
-              >Войти</UButton
-            >
-            <UButton block variant="outline" to="/signup">Зарегистрироваться</UButton>
-            <UButton block variant="ghost" size="xs">Забыл пароль</UButton>
+  <UContainer class="flex flex-col w-full h-screen gap-4 justify-center items-center">
+    <!-- TODO: Добавить акцентный цвет в тему -->
+    <UHeader :toggle="false">
+      <template #title>
+        <ServiceLogo :collapsed="false" />
+      </template>
+    </UHeader>
+    <UMain class="flex flex-col justify-center items-center w-full">
+      <UForm class="flex flex-col gap-4 bg-base-200 rounded-box w-full max-w-1/2">
+        <UCard variant="soft">
+          <template #header>
+            <h2 class="text-center">Вход</h2>
+          </template>
+          <div class="flex flex-col gap-2">
+            <UFormField label="Логин">
+              <UInput v-model="login" class="input w-full" type="text" placeholder="Логин..." />
+            </UFormField>
+            <UFormField label="Пароль">
+              <UInput
+                v-model="password"
+                class="input w-full"
+                type="password"
+                placeholder="Пароль..."
+              />
+            </UFormField>
+            <p v-if="!authCorrect" class="text-error">
+              Неверные данные для входа. Проверьте правильность ввода.
+            </p>
           </div>
-        </template>
-      </UCard>
-    </UForm>
-  </div>
+          <template #footer>
+            <div class="flex flex-col justify-center gap-2">
+              <UButton type="submit" block class="btn hover:btn-accent" @click="(e) => toLogin(e)"
+                >Войти</UButton
+              >
+              <UButton block variant="outline" to="/signup">Зарегистрироваться</UButton>
+              <UButton block variant="ghost" size="xs">Забыл пароль</UButton>
+            </div>
+          </template>
+        </UCard>
+      </UForm>
+    </UMain>
+  </UContainer>
 </template>
 
 <script lang="ts" setup>
