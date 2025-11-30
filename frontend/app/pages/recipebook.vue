@@ -1,11 +1,11 @@
 <template>
-  <div class="flex flex-col w-full gap-4">
-    <div v-if="$route.path == '/recipebook'">
-      <div class="flex flex-col w-full">
-        <h2 class="mt-0">Кулинарная книга</h2>
-        <router-link to="/recipe/edit" class="btn btn-accent w-fit">Добавить рецепт</router-link>
+  <div class="flex flex-col w-full">
+    <div v-if="$route.path == '/recipebook'" class="flex flex-col w-full gap-4">
+      <div class="flex flex-col gap-2">
+        <h2 class="ui-header-2">Кулинарная книга</h2>
+        <UButton class="w-fit" label="Добавить рецепт" to="/recipe/edit"></UButton>
       </div>
-      <div class="flex flex-col w-full gap-2 h-full overflow-y-auto">
+      <UPageList class="gap-2">
         <RecipeCard
           v-for="recipe in recipes"
           :id="recipe.id"
@@ -13,7 +13,7 @@
           :title="recipe.title"
           :description="recipe.description"
         />
-      </div>
+      </UPageList>
     </div>
     <NuxtPage></NuxtPage>
   </div>

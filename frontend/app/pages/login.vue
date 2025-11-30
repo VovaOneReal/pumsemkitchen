@@ -1,6 +1,5 @@
 <template>
   <UContainer class="flex flex-col w-full h-screen gap-4 justify-center items-center">
-    <!-- TODO: Добавить акцентный цвет в тему -->
     <UHeader :toggle="false">
       <template #title>
         <ServiceLogo :collapsed="false" />
@@ -10,7 +9,7 @@
       <UForm class="flex flex-col gap-4 bg-base-200 rounded-box w-full max-w-1/2">
         <UCard variant="soft">
           <template #header>
-            <h2 class="text-center">Вход</h2>
+            <h2 class="ui-header-2 text-center">Вход</h2>
           </template>
           <div class="flex flex-col gap-2">
             <UFormField label="Логин">

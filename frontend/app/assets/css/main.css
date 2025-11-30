@@ -17,4 +17,42 @@
   --color-green-800: #016538;
   --color-green-900: #0a5331;
   --color-green-950: #052e16;
+
+  --container-8xl: 68rem;
+}
+
+@layer base {
+  h1 {
+    font-weight: var(--font-weight-extrabold);
+    font-size: var(--text-4xl);
+  }
+
+  h2 {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--text-3xl);
+  }
+
+  h3 {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--text-2xl);
+  }
+
+  h4 {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--text-xl);
+  }
+
+  h5 {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--text-lg);
+  }
+
+  h6 {
+    font-weight: var(--font-weight-medium);
+    font-size: var(--text-md);
+  }
+}
+
+:root {
+  --ui-container: var(--container-8xl);
 }
