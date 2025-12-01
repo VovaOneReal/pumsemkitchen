@@ -1,6 +1,5 @@
 <template>
   <UContainer class="flex flex-col w-full h-screen gap-4 justify-center items-center">
-    <!-- TODO: Добавить акцентный цвет в тему -->
     <UHeader :toggle="false">
       <template #title>
         <ServiceLogo :collapsed="false" />

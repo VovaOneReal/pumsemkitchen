@@ -10,7 +10,7 @@
     "
   >
     <ChevronsLeftRight :size="20" v-if="collapsed"></ChevronsLeftRight>
-    <ChevronsLeftRight :size="20" v-else></ChevronsLeftRight>
+    <ChevronsRightLeft :size="20" v-else></ChevronsRightLeft>
     {{ collapsed ? '' : 'Свернуть' }}
   </div>
 </template>

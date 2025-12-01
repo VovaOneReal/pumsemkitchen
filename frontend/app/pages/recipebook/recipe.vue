@@ -1,14 +1,18 @@
 <template>
-  <div class="flex flex-col gap-6 w-full">
-    <div class="flex gap-3 w-full items-center prose">
-      <div class="btn btn-circle btn-accent btn-sm" @click="goBack"><arrow-left :size="20" /></div>
-      <h2 class="mt-0">Название рецепта</h2>
+  <div class="flex flex-col gap-6 w-full px-2">
+    <div class="flex gap-3 w-full items-center">
+      <UButton size="sm" variant="ghost" class="rounded-full" to="/recipebook">
+        <template #leading>
+          <arrow-left :size="20" />
+        </template>
+      </UButton>
+      <h2>Название рецепта</h2>
     </div>
     <div class="flex flex-col gap-6 w-full overflow-y-auto h-full">
       <div class="flex gap-4 w-full max-h-[300px]">
-        <img class="rounded-box" src="https://placehold.co/300x300" alt="" />
-        <div class="flex gap-2 flex-col prose max-w-none">
-          <h3 class="mt-0 mb-0">Описание</h3>
+        <img class="rounded-md" src="https://placehold.co/300x300" alt="" />
+        <div class="flex gap-2 flex-col">
+          <h3>Описание</h3>
           <p class="overflow-y-scroll">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Esse consequatur sit alias,
             deleniti facilis rem. Ex blanditiis aperiam ipsam dolorum esse aut consequuntur corrupti
@@ -24,43 +28,74 @@
       </div>
       <div class="flex w-full gap-4">
         <div class="flex flex-col w-full gap-2 max-w-[300px]">
-          <div class="flex w-full gap-2">
-            <div class="tooltip w-full">
-              <p class="tooltip-content">Добавить в Избранное</p>
-              <div class="btn btn-square w-full"><heart :size="24" /></div>
-            </div>
-            <div class="tooltip w-full">
-              <p class="tooltip-content">Добавить в коллекцию</p>
-              <div class="btn btn-square w-full"><folder-heart :size="24" /></div>
-            </div>
-            <div class="tooltip w-full">
-              <p class="tooltip-content">Добавить в семью</p>
-              <div class="btn btn-square w-full"><user-star :size="24" /></div>
-            </div>
-            <div class="tooltip w-full">
-              <p class="tooltip-content">Редактировать</p>
-              <div @click="editRecipe" class="btn btn-square w-full"><pencil :size="24" /></div>
-            </div>
-            <div class="tooltip w-full">
-              <p class="tooltip-content">Удалить</p>
-              <div onclick="deleteModal.showModal()" class="btn btn-square btn-error w-full">
-                <trash2 :size="24" />
+          <div class="flex w-full justify-between">
+            <UTooltip text="Добавить в Избранное">
+              <UButton size="xl" variant="soft">
+                <template #leading>
+                  <heart :size="24" />
+                </template>
+              </UButton>
+            </UTooltip>
+            <UTooltip text="Добавить в коллекцию">
+              <UButton size="xl" variant="soft">
+                <template #leading>
+                  <folder-heart :size="24" />
+                </template>
+              </UButton>
+            </UTooltip>
+            <UTooltip text="Добавить в семью">
+              <UButton size="xl" variant="soft">
+                <template #leading>
+                  <user-star :size="24" />
+                </template>
+              </UButton>
+            </UTooltip>
+            <UTooltip text="Редактировать">
+              <UButton size="xl" variant="soft" to="/recipebook/recipe/edit">
+                <template #leading>
+                  <pencil :size="24" />
+                </template>
+              </UButton>
+            </UTooltip>
+            <UPopover>
+              <UTooltip text="Удалить">
+                <UButton size="xl" variant="soft" color="error">
+                  <template #leading>
+                    <trash2 :size="24" />
+                  </template>
+                </UButton>
+              </UTooltip>
+              <template #content>
+                <div class="flex flex-col gap-4 p-4">
+                  <div class="flex flex-col gap-2 justify-center items-center">
+                    <p class="text-lg font-bold text-center">Подтвердите удаление</p>
+                    <p class="py-2 text-center">Вы действительно хотите удалить рецепт?</p>
+                  </div>
+                  <div class="flex gap-4">
+                    <UButton block color="error">Удалить</UButton>
+                    <UButton block variant="soft">Отменить</UButton>
+                  </div>
+                </div>
+              </template>
+            </UPopover>
+          </div>
+          <UCard class="flex flex-col w-full">
+            <template #header>
+              <div class="flex flex-col justify-center items-center gap-1">
+                <p class="font-bold text-lg">Энергетическая ценность</p>
+                <p>на 100 гр. блюда</p>
               </div>
-            </div>
-          </div>
-          <div class="flex flex-col w-full h-fit gap-2 prose rounded-box bg-base-200 p-4">
-            <div class="flex flex-col justify-center items-center">
-              <h3 class="mt-3">Энергетическая ценность</h3>
-              <p>на 100 гр. блюда</p>
-            </div>
-            <div class="flex flex-col">
-              <NutritionProgressBar label="Белки" :value="10" />
-              <NutritionProgressBar label="Жиры" :value="5" />
-              <NutritionProgressBar label="Углеводы" :value="23" />
-            </div>
-          </div>
+            </template>
+            <template #default>
+              <div class="flex flex-col">
+                <NutritionProgressBar type="proteins" label="Белки" :value="54" />
+                <NutritionProgressBar type="fats" label="Жиры" :value="13" />
+                <NutritionProgressBar type="carbs" label="Углеводы" :value="78" />
+              </div>
+            </template>
+          </UCard>
         </div>
-        <div class="flex flex-col gap-2 prose w-full">
+        <div class="flex flex-col gap-2 w-full">
           <h3>Ингредиенты</h3>
           <div class="flex flex-col w-full gap-1">
             <IngredientListElement name="Банка горошка" :amount="1" measure="шт." />
@@ -71,7 +106,8 @@
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-6 prose max-w-none">
+      <div class="flex flex-col gap-6">
+        <!-- TODO: Добавить суммарное количество шагов или боковую отметку-трекер шагов -->
         <h3>Готовка</h3>
         <RecipeStep
           :step="1"
@@ -98,18 +134,6 @@
         />
       </div>
     </div>
-    <dialog id="deleteModal" class="modal">
-      <div class="modal-box">
-        <h3 class="text-lg font-bold">Подтвердите удаление</h3>
-        <p class="py-4">Вы действительно хотите удалить рецепт?</p>
-        <div class="modal-action">
-          <form method="dialog" class="flex gap-4">
-            <button class="btn btn-error">Удалить</button>
-            <button class="btn">Отменить</button>
-          </form>
-        </div>
-      </div>
-    </dialog>
   </div>
 </template>
 
@@ -118,15 +142,5 @@ import IngredientListElement from '@/components/IngredientListElement.vue'
 import NutritionProgressBar from '@/components/NutritionProgressBar.vue'
 import RecipeStep from '@/components/RecipeStep.vue'
 
-const router = useRouter()
-
 import { Heart, UserStar, FolderHeart, Pencil, Trash2, ArrowLeft } from 'lucide-vue-next'
-
-function goBack() {
-  router.back()
-}
-
-function editRecipe() {
-  router.push('/recipebook/recipe/edit')
-}
 </script>

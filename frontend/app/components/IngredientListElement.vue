@@ -1,18 +1,17 @@
 <template>
   <div class="flex gap-2 items-center w-full">
-    <input class="checkbox" type="checkbox" />
-    <p class="w-full text-md mt-0 mb-0 font-semibold">{{ name }}</p>
+    <UCheckbox size="xl" :label="props.name" class="w-full" />
     <div class="flex gap-1 items-baseline">
-        <p class="text-sm mt-0 mb-0">{{ amount }}</p>
-        <p class="text-sm mt-0 mb-0">{{ measure }}</p>
+      <p class="text-sm">{{ amount }}</p>
+      <p class="text-sm">{{ measure }}</p>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 const props = defineProps({
-    name: String,
-    amount: Number,
-    measure: String
+  name: String,
+  amount: Number,
+  measure: String,
 })
 </script>
