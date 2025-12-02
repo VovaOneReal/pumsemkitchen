@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col gap-6 w-full px-2">
-    <div class="flex gap-3 w-full items-center">
+  <div class="flex flex-col gap-6 w-full h-full">
+    <div v-if="$route.path == '/recipebook/recipe'" class="flex gap-3 w-full items-center">
       <UButton size="sm" variant="ghost" class="rounded-full" to="/recipebook">
         <template #leading>
           <arrow-left :size="20" />
@@ -8,7 +8,10 @@
       </UButton>
       <h2>Название рецепта</h2>
     </div>
-    <div class="flex flex-col gap-6 w-full overflow-y-auto h-full">
+    <div
+      v-if="$route.path == '/recipebook/recipe'"
+      class="flex flex-col gap-6 w-full overflow-y-auto px-2 h-full"
+    >
       <div class="flex gap-4 w-full max-h-[300px]">
         <img class="rounded-md" src="https://placehold.co/300x300" alt="" />
         <div class="flex gap-2 flex-col">
@@ -69,7 +72,6 @@
                 <div class="flex flex-col gap-4 p-4">
                   <div class="flex flex-col gap-2 justify-center items-center">
                     <p class="text-lg font-bold text-center">Подтвердите удаление</p>
-                    <p class="py-2 text-center">Вы действительно хотите удалить рецепт?</p>
                   </div>
                   <div class="flex gap-4">
                     <UButton block color="error">Удалить</UButton>
@@ -134,6 +136,7 @@
         />
       </div>
     </div>
+    <NuxtPage></NuxtPage>
   </div>
 </template>
 

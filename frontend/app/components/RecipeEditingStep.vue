@@ -1,20 +1,25 @@
 <template>
-  <div class="flex w-full gap-2 items-center max-w-none">
+  <div class="flex w-full gap-2 items-center">
     <DragElement />
     <div
-      class="flex items-baseline justify-center min-w-8 max-w-8 min-h-8 max-h-8 rounded-full border-2 font-bold"
+      class="flex items-center justify-center min-w-8 max-w-8 min-h-8 max-h-8 rounded-full border font-bold"
     >
       {{ step + 1 }}
     </div>
-    <textarea
-      class="textarea w-full"
-      placeholder="Что нужно делать?.."
+    <UTextarea
+      class="w-full"
+      placeholder="Опишите действия на этом шаге..."
       v-model="description"
-    ></textarea>
-    <div class="tooltip" data-tip="Загрузить иллюстрацию">
-      <button class="btn btn-square"><Upload /></button>
-    </div>
-    <button @click="$emit('delete', props.step)" class="btn btn-square btn-error"><X /></button>
+      :rows="3"
+      :maxrows="12"
+      autoresize
+    ></UTextarea>
+    <UTooltip text="Загрузить иллюстрацию">
+      <UButton square color="neutral" variant="soft"><Upload /></UButton>
+    </UTooltip>
+    <UButton color="error" variant="ghost" square @click="$emit('delete', props.step)"
+      ><X
+    /></UButton>
   </div>
 </template>
 
