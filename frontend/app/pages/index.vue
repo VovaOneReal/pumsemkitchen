@@ -1,3 +1,3 @@
 <template>
-  <div>Тут когда-нибудь будет лендинг</div>
+  <div></div>
 </template>

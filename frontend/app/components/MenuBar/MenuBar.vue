@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="flex flex-col justify-between">
     <UNavigationMenu :collapsed="isCollapsed" :items="topItems" orientation="vertical">
       <template #logo>
@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Utensils, HandPlatter, SunMoon, LogOut, UserCircle } from 'lucide-vue-next'
+import { Utensils, List, Users, Folder, Package, SunMoon, LogOut } from 'lucide-vue-next'
 import { ref } from 'vue'
 import type { NavigationMenuItem } from '@nuxt/ui'
 
@@ -29,21 +29,38 @@ const topItems = ref<NavigationMenuItem[]>([
     slot: 'logo' as const,
   },
   {
-    label: 'Профиль',
-    icon: UserCircle,
-    to: '/profile',
-    tooltip: true,
-  },
-  {
-    label: 'Книга рецептов',
+    label: 'Рецепты',
     icon: Utensils,
     to: '/recipebook',
     tooltip: true,
   },
   {
+    label: 'Списки покупок',
+    icon: List,
+    to: '/shopping-lists',
+    tooltip: true,
+  },
+  {
+    label: 'Семьи',
+    icon: Users,
+    to: '/families',
+    tooltip: true,
+  },
+  {
+    label: 'Коллекции',
+    icon: Folder,
+    to: '/collections',
+    tooltip: true,
+  },
+  {
+    label: 'Продукты',
+    icon: Package,
+    to: '/products',
+    tooltip: true,
+  },
+  {
     label: 'Меню',
-    icon: HandPlatter,
-    disabled: true,
+    icon: Utensils,
     tooltip: true,
   },
 ])

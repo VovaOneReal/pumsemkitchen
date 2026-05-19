@@ -33,7 +33,7 @@
                 >Войти</UButton
               >
               <UButton block variant="outline" to="/signup">Зарегистрироваться</UButton>
-              <UButton block variant="ghost" size="xs">Забыл пароль</UButton>
+              <!-- <UButton block variant="ghost" size="xs">Забыл пароль</UButton> -->
             </div>
           </template>
         </UCard>

@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: myapp_postgres
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: myapp_backend
+    command: npm run dev
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://app:app@postgres:5432/appdb
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    container_name: myapp_frontend
+    command: npm run dev
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:3001/api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
