@@ -10,35 +10,29 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  backend:
-    build: ./backend
-    container_name: myapp_backend
-    command: npm run dev
-    environment:
-      PORT: 3001
-      DATABASE_URL: postgres://app:app@postgres:5432/appdb
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    depends_on:
-      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build: ./frontend
     container_name: myapp_frontend
     command: npm run dev
     environment:
-      NUXT_PUBLIC_API_BASE: http://localhost:3001/api
+      DATABASE_URL: postgres://app:app@postgres:5432/appdb
+      NUXT_HOST: 0.0.0.0
+      NUXT_PORT: 3000
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/.nuxt
     depends_on:
-      - backend
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
