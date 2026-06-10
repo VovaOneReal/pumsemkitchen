@@ -1,103 +1,72 @@
 <template>
-  <UContainer class="flex flex-col w-full h-screen gap-4 justify-center items-center">
-    <UHeader :toggle="false">
-      <template #title>
-        <ServiceLogo :collapsed="false" />
+  <div class="flex items-center justify-center min-h-screen px-6">
+    <UAuthForm
+      title="Сервис планирования питания"
+      :fields="fields"
+      :validate="validate"
+      :submit="{ label: 'Зарегистрироваться', block: true }"
+      class="w-full max-w-sm"
+      @submit="onSubmit"
+    >
+      <template #footer>
+        <UButton block variant="ghost" to="/login">Войти</UButton>
       </template>
-    </UHeader>
-    <UMain class="flex flex-col justify-center items-center w-full">
-      <UForm class="flex flex-col gap-4 bg-base-200 rounded-box max-w-1/2">
-        <UCard variant="soft">
-          <template #header>
-            <h2 class="ui-header-2 text-center">Регистрация</h2>
-          </template>
-          <div class="flex flex-col gap-2">
-            <UFormField label="Логин" help="Только латинские буквы и цифры от 3 до 32 символов">
-              <UInput
-                v-model="login"
-                :class="loginCorrect ? '' : 'input-error'"
-                class="input w-full"
-                type="text"
-                placeholder="Придумайте логин..."
-                @input="testLogin"
-              />
-            </UFormField>
-            <UFormField label="Пароль" help="От 8 до 32 символов" :error="errorMsg">
-              <UInput
-                v-model="password"
-                :class="passwordCorrect ? '' : 'input-error'"
-                class="input w-full"
-                type="password"
-                placeholder="Придумайте пароль..."
-                @input="testPassword"
-              />
-            </UFormField>
-          </div>
-          <template #footer>
-            <div class="flex flex-col gap-2">
-              <UButton block type="submit" @click="(e) => toRegister(e)">
-                Зарегистрироваться
-              </UButton>
-              <UButton block to="/login" variant="outline">Войти</UButton>
-            </div>
-          </template>
-        </UCard>
-      </UForm>
-    </UMain>
-  </UContainer>
+    </UAuthForm>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import axios from 'axios'
+import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({
   layout: false,
 })
 
-const login = ref<string>('')
-const password = ref<string>('')
+const fields = [
+  {
+    name: 'login',
+    type: 'text',
+    label: 'Логин',
+    placeholder: 'Придумайте логин...',
+    required: true,
+    help: 'От 5 до 32 символов',
+  },
+  {
+    name: 'password',
+    type: 'password',
+    label: 'Пароль',
+    placeholder: 'Придумайте пароль...',
+    required: true,
+    help: 'Не менее 8 символов',
+  },
+  {
+    name: 'inviteCode',
+    type: 'password',
+    label: 'Пригласительный код',
+    placeholder: 'Введите код приглашения...',
+    required: true,
+  },
+]
 
-const loginCorrect = ref<boolean>(true)
-const passwordCorrect = ref<boolean>(true)
-const loginRe = /^[a-zA-Z0-9]{3,32}$/
-const passwordRe = /^[\p{L}\p{N}\p{S}\p{P}]{8,32}$/u
+function validate(state: Record<string, string>) {
+  const errors: { path: string; message: string }[] = []
 
-const errorMsg = ref<string | undefined>(undefined)
-
-function testLogin() {
-  loginCorrect.value = loginRe.test(login.value)
-  errorMsg.value = ''
-}
-
-function testPassword() {
-  passwordCorrect.value = passwordRe.test(password.value)
-  errorMsg.value = ''
-}
-
-function toRegister(event: PointerEvent) {
-  event.preventDefault()
-  testLogin()
-  testPassword()
-  if (loginCorrect.value) {
-    if (passwordCorrect.value) {
-      axios
-        .post('http://localhost:3000/signin', { login: login.value, password: password.value })
-        .then((response) => {
-          if (response.status == 200) {
-            navigateTo('/recipebook')
-          }
-        })
-        .catch((error) => {
-          if (error.status == 400) {
-            errorMsg.value = error.response.data.message
-          }
-        })
-    } else {
-      errorMsg.value = 'Такой пароль не подходит'
-    }
-  } else {
-    errorMsg.value = 'Такой логин не подходит'
+  if (!state.login || state.login.length < 5 || state.login.length > 32) {
+    errors.push({ path: 'login', message: 'Логин должен содержать от 5 до 32 символов' })
   }
+  if (!state.password || state.password.length < 8) {
+    errors.push({ path: 'password', message: 'Пароль должен содержать не менее 8 символов' })
+  }
+  if (!state.inviteCode) {
+    errors.push({ path: 'inviteCode', message: 'Введите пригласительный код' })
+  }
+
+  return errors
+}
+
+// Заглушка — будет вызывать API регистрации
+async function onSubmit(event: FormSubmitEvent<Record<string, string>>) {
+  console.log('Регистрация:', event.data)
+  // TODO: вызов API /api/auth/signup
 }
 </script>

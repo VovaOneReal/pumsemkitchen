@@ -1,83 +1,60 @@
 <template>
-  <UContainer class="flex flex-col w-full h-screen gap-4 justify-center items-center">
-    <UHeader :toggle="false">
-      <template #title>
-        <ServiceLogo :collapsed="false" />
+  <div class="flex items-center justify-center min-h-screen px-6">
+    <UAuthForm
+      title="Сервис планирования питания"
+      :fields="fields"
+      :validate="validate"
+      :submit="{ label: 'Войти', block: true }"
+      class="w-full max-w-sm"
+      @submit="onSubmit"
+    >
+      <template #footer>
+        <UButton block variant="ghost" to="/signup">Зарегистрироваться</UButton>
       </template>
-    </UHeader>
-    <UMain class="flex flex-col justify-center items-center w-full">
-      <UForm class="flex flex-col gap-4 bg-base-200 rounded-box w-full max-w-1/2">
-        <UCard variant="soft">
-          <template #header>
-            <h2 class="ui-header-2 text-center">Вход</h2>
-          </template>
-          <div class="flex flex-col gap-2">
-            <UFormField label="Логин">
-              <UInput v-model="login" class="input w-full" type="text" placeholder="Логин..." />
-            </UFormField>
-            <UFormField label="Пароль">
-              <UInput
-                v-model="password"
-                class="input w-full"
-                type="password"
-                placeholder="Пароль..."
-              />
-            </UFormField>
-            <p v-if="!authCorrect" class="text-error">
-              Неверные данные для входа. Проверьте правильность ввода.
-            </p>
-          </div>
-          <template #footer>
-            <div class="flex flex-col justify-center gap-2">
-              <UButton type="submit" block class="btn hover:btn-accent" @click="(e) => toLogin(e)"
-                >Войти</UButton
-              >
-              <UButton block variant="outline" to="/signup">Зарегистрироваться</UButton>
-              <!-- <UButton block variant="ghost" size="xs">Забыл пароль</UButton> -->
-            </div>
-          </template>
-        </UCard>
-      </UForm>
-    </UMain>
-  </UContainer>
+    </UAuthForm>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import axios from 'axios'
+import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({
   layout: false,
 })
 
-const toast = useToast()
+const fields = [
+  {
+    name: 'login',
+    type: 'text',
+    label: 'Логин',
+    placeholder: 'Логин...',
+    required: true,
+  },
+  {
+    name: 'password',
+    type: 'password',
+    label: 'Пароль',
+    placeholder: 'Пароль...',
+    required: true,
+  },
+]
 
-const login = ref<string>('')
-const password = ref<string>('')
+function validate(state: Record<string, string>) {
+  const errors: { path: string; message: string }[] = []
 
-const authCorrect = ref<boolean>(true)
+  if (!state.login || state.login.length < 5 || state.login.length > 32) {
+    errors.push({ path: 'login', message: 'Логин должен содержать от 5 до 32 символов' })
+  }
+  if (!state.password || state.password.length < 8) {
+    errors.push({ path: 'password', message: 'Пароль должен содержать не менее 8 символов' })
+  }
 
-function toLogin(event: PointerEvent) {
-  toast.add({
-    title: 'Успешный вход',
-    description: 'Добро пожаловать! Снова.',
-    color: 'success',
-  })
+  return errors
+}
 
-  // axios.get('http://localhost:3000/').then((response) => {
-  // if (response.status == 200) {
-  // toast.add({
-  //   title: 'Успешный вход',
-  //   description: response.data.message,
-  //   color: 'success',
-  // })
-  // }
-  // })
-  // if (authCorrect.value) {
-  //   router.push('/')
-  // } else {
-  navigateTo('/recipebook')
-  event.preventDefault()
-  // }
+// Заглушка — будет вызывать API входа
+async function onSubmit(event: FormSubmitEvent<Record<string, string>>) {
+  console.log('Вход:', event.data)
+  // TODO: вызов API /api/auth/login
 }
 </script>
