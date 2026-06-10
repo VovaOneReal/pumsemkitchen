@@ -3,29 +3,61 @@ info:
   title: PumsemKitchen - Backend-API
   version: 0.0.1
 paths:
-  /auth:
+  /auth/register:
     post:
-      description: Аутентификация пользователя по логину и паролю
+      summary: Регистрация нового пользователя
+      description: >
+        Принимает логин, пароль и пригласительный код.
+        Роль определяется по коду: INVITE_CODE → user, INVITE_CODE_ADMIN → admin.
+        После успешной регистрации устанавливает сессионную cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterData"
       responses:
         "200":
-          description: Система подтвердила вход пользователя. Возвращает JWT-токен
-    requestBody:
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/AuthData"
-      required: true
+          description: Пользователь зарегистрирован, сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          description: Неверный пригласительный код
+        "409":
+          description: Пользователь с таким логином уже существует
+        "422":
+          description: Ошибка валидации входных данных
 components:
   schemas:
-    AuthData:
+    RegisterData:
       type: object
       required:
         - login
         - password
+        - inviteCode
       properties:
         login:
-          description: Логин пользователя
+          description: Логин пользователя (5–32 символа, только латинские буквы и цифры)
           type: string
+          minLength: 5
+          maxLength: 32
         password:
-          description: Пароль пользователя, хешированный с помощью bcrypt (12 rounds)
+          description: Пароль пользователя (8–1024 символа)
           type: string
+          minLength: 8
+          maxLength: 1024
+        inviteCode:
+          description: Пригласительный код (только буквы и цифры)
+          type: string
+    RegisterResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        login:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]

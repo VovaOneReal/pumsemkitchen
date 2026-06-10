@@ -32,9 +32,10 @@
 
 <script lang="ts" setup>
 const route = useRoute()
+const { user } = useUserSession()
 
-const topItems = [
-  { label: 'Пользователи', icon: 'i-lucide-user-cog',    to: '/users' },
+const topItems = computed(() => [
+  ...(user.value?.role === 'admin' ? [{ label: 'Пользователи', icon: 'i-lucide-user-cog', to: '/users' }] : []),
   { label: 'Профиль',      icon: 'i-lucide-user',         to: '/profile' },
   { label: 'Семьи',        icon: 'i-lucide-users',        to: '/families' },
   { label: 'Рецепты',      icon: 'i-lucide-utensils',     to: '/recipes' },
@@ -42,7 +43,7 @@ const topItems = [
   { label: 'Меню',         icon: 'i-lucide-calendar-days',to: '/menu' },
   { label: 'Покупки',      icon: 'i-lucide-list-checks',  to: '/shopping' },
   { label: 'Продукты',     icon: 'i-lucide-package',      to: '/products' },
-]
+])
 
 function getVariant(to: string): 'ghost' | 'solid' | 'soft' {
   if (route.path === to) return 'solid'

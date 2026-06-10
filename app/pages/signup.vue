@@ -17,7 +17,7 @@
 
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { signupSchema, type SignupForm } from '~/schemas/auth'
+import { signupSchema, type SignupForm } from '~~/schemas/auth'
 
 definePageMeta({
   layout: false,
@@ -46,8 +46,21 @@ const fields = [
   },
 ]
 
+const { fetch: refreshSession } = useUserSession()
+const toast = useToast()
+
 async function onSubmit(event: FormSubmitEvent<SignupForm>) {
-  console.log('Регистрация:', event.data)
-  // TODO: вызов API /api/auth/signup
+  try {
+    await $fetch('/api/auth/register', { method: 'POST', body: event.data })
+    await refreshSession()
+    await navigateTo('/')
+  } catch (error: unknown) {
+    const statusCode = (error as { statusCode?: number }).statusCode
+    const message =
+      statusCode === 409 ? 'Пользователь с таким логином уже существует'
+      : statusCode === 400 ? 'Неверный пригласительный код'
+      : 'Ошибка при регистрации'
+    toast.add({ title: message, color: 'error' })
+  }
 }
 </script>
