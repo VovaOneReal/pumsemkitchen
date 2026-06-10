@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-6 w-full h-full">
-    <div v-if="$route.path == '/recipebook/recipe'" class="flex gap-3 w-full items-center">
-      <UButton size="sm" variant="ghost" class="rounded-full" to="/recipebook">
+    <div v-if="$route.path == '/recipes/recipe'" class="flex gap-3 w-full items-center">
+      <UButton size="sm" variant="ghost" class="rounded-full" to="/recipes">
         <template #leading>
           <arrow-left :size="20" />
         </template>
@@ -9,7 +9,7 @@
       <h2>Название рецепта</h2>
     </div>
     <div
-      v-if="$route.path == '/recipebook/recipe'"
+      v-if="$route.path == '/recipes/recipe'"
       class="flex flex-col gap-6 w-full overflow-y-auto px-2 h-full"
     >
       <div class="flex gap-4 w-full max-h-[300px]">
@@ -54,7 +54,7 @@
               </UButton>
             </UTooltip>
             <UTooltip text="Редактировать">
-              <UButton size="xl" variant="soft" to="/recipebook/recipe/edit">
+              <UButton size="xl" variant="soft" to="/recipes/recipe/edit">
                 <template #leading>
                   <pencil :size="24" />
                 </template>

@@ -1,11 +1,21 @@
 <template>
-  <UPageCard to="/recipebook/recipe" variant="soft">
+  <UPageCard :to="`/recipes/recipe`" variant="soft">
     <template #body>
       <div class="w-full flex gap-4">
-        <img class="h-full object-cover rounded-lg" src="https://placehold.co/170x170" alt="" />
-        <div class="flex flex-col gap-2">
-          <h3 class="ui-header-3">{{ props.title }}</h3>
-          <p class="max-h-[96px] line-clamp-4">{{ props.description }}</p>
+        <img class="h-[140px] w-[140px] object-cover rounded-lg flex-shrink-0" src="https://placehold.co/140x140" alt="" />
+        <div class="flex flex-col gap-1 min-w-0">
+          <h3 class="ui-header-3 text-primary">{{ props.title }}</h3>
+          <div class="flex items-center gap-3 text-sm text-muted">
+            <span class="flex items-center gap-1">
+              <UIcon name="i-lucide-user" class="w-4 h-4" />
+              {{ props.authorName }}
+            </span>
+            <span class="flex items-center gap-1">
+              <UIcon name="i-lucide-calendar" class="w-4 h-4" />
+              {{ props.createdAt }}
+            </span>
+          </div>
+          <p class="max-h-[80px] line-clamp-3 text-sm mt-1">{{ props.description }}</p>
         </div>
       </div>
     </template>
@@ -14,9 +24,6 @@
 
 <script lang="ts" setup>
 import type { Recipe } from '@/types'
-import { ref } from 'vue'
 
 const props = defineProps<Recipe>()
-
-const id = ref<number>(props.id)
 </script>

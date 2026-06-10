@@ -73,7 +73,7 @@
       </div>
     </div>
     <div class="flex gap-3 w-full h-fit items-center">
-      <UButton to="/recipebook/recipe">Сохранить</UButton>
+      <UButton to="/recipes/recipe">Сохранить</UButton>
       <!-- TODO: цвет кнопки должен меняться в зависимости от наличия изменений в рецепте -->
       <UPopover>
         <UButton variant="ghost">Отменить</UButton>
@@ -85,7 +85,7 @@
             </div>
             <div class="flex gap-4">
               <UButton block color="error">Отменить</UButton>
-              <UButton to="/recipebook/recipe" block variant="soft">Вернуться</UButton>
+              <UButton to="/recipes/recipe" block variant="soft">Вернуться</UButton>
             </div>
           </div>
         </template>
