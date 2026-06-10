@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     role,
   }).returning()
 
-  await setUserSession(event, { user: { userId: user.userId, role: user.role } })
+  await setUserSession(event, { user: { userId: user.userId, login: user.login, name: user.name, role: user.role } })
 
-  return { userId: user.userId, login: user.login, role: user.role }
+  return { userId: user.userId, login: user.login, name: user.name, role: user.role }
 })
