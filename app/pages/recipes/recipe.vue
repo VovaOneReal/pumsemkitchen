@@ -13,7 +13,7 @@
       class="flex flex-col gap-6 w-full overflow-y-auto px-2 h-full"
     >
       <div class="flex gap-4 w-full max-h-[300px]">
-        <img class="rounded-md" src="https://placehold.co/300x300" alt="" />
+        <AppImage placeholder :width="300" :height="300" />
         <div class="flex gap-2 flex-col">
           <h3>Описание</h3>
           <p class="overflow-y-scroll">

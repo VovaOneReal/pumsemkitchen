@@ -4,6 +4,6 @@ export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useUserSession()
 
   if (!loggedIn.value && !publicRoutes.includes(to.path)) {
-    return navigateTo('/login')
+    return navigateTo('/login?unauthorized=1')
   }
 })

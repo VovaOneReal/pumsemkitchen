@@ -53,6 +53,7 @@ async function onSubmit(event: FormSubmitEvent<SignupForm>) {
   try {
     await $fetch('/api/auth/register', { method: 'POST', body: event.data })
     await refreshSession()
+    toast.add({ title: 'Регистрация прошла успешно', color: 'success' })
     await navigateTo('/')
   } catch (error: unknown) {
     const statusCode = (error as { statusCode?: number }).statusCode

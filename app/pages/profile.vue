@@ -28,13 +28,14 @@
         <UInput v-model="nameForm.displayName" class="w-full" />
       </UFormField>
       <p class="text-sm text-gray-500 mt-1 mb-3">Пользователи будут видеть вас под этим именем</p>
+      <!-- TODO: временно отключено до реализации API -->
       <div class="flex justify-end">
         <UButton
           type="submit"
           label="Обновить имя"
           variant="outline"
           color="primary"
-          :disabled="nameForm.displayName === originalDisplayName"
+          :disabled="true"
         />
       </div>
     </UForm>
@@ -53,23 +54,26 @@
           <UInput v-model="passwordForm.confirmPassword" type="password" class="w-full" />
         </UFormField>
       </div>
+      <!-- TODO: временно отключено до реализации API -->
       <div class="flex justify-end mt-4">
         <UButton
           type="submit"
           label="Сменить пароль"
           variant="outline"
           color="warning"
-          :disabled="!isPasswordFormFilled"
+          :disabled="true"
         />
       </div>
     </UForm>
 
     <!-- Удалить профиль -->
+    <!-- TODO: временно отключено до реализации API -->
     <div class="mt-8">
       <UButton
         icon="i-lucide-trash"
         label="Удалить профиль"
         color="error"
+        disabled
         @click="isDeleteModalOpen = true"
       />
     </div>

@@ -18,13 +18,13 @@
     </div>
     <div class="flex flex-col gap-1">
       <UButton
-        to="/login"
         icon="i-lucide-log-out"
         label="Выйти"
         variant="ghost"
         color="primary"
         block
         class="justify-start"
+        @click="logout"
       />
     </div>
   </div>
@@ -32,14 +32,22 @@
 
 <script lang="ts" setup>
 const route = useRoute()
-const { user } = useUserSession()
+const { user, fetch: refreshSession } = useUserSession()
+const toast = useToast()
+
+async function logout() {
+  await $fetch('/api/auth/logout', { method: 'POST' })
+  await refreshSession()
+  toast.add({ title: 'Вы вышли из системы', color: 'success' })
+  await navigateTo('/login')
+}
 
 const topItems = computed(() => [
   ...(user.value?.role === 'admin' ? [{ label: 'Пользователи', icon: 'i-lucide-user-cog', to: '/users' }] : []),
   { label: 'Профиль',      icon: 'i-lucide-user',         to: '/profile' },
-  { label: 'Семьи',        icon: 'i-lucide-users',        to: '/families' },
+  // { label: 'Семьи',        icon: 'i-lucide-users',        to: '/families' },
   { label: 'Рецепты',      icon: 'i-lucide-utensils',     to: '/recipes' },
-  { label: 'Коллекции',    icon: 'i-lucide-folder-open',  to: '/collections' },
+  // { label: 'Коллекции',    icon: 'i-lucide-folder-open',  to: '/collections' },
   { label: 'Меню',         icon: 'i-lucide-calendar-days',to: '/menu' },
   { label: 'Покупки',      icon: 'i-lucide-list-checks',  to: '/shopping' },
   { label: 'Продукты',     icon: 'i-lucide-package',      to: '/products' },

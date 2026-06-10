@@ -14,9 +14,7 @@
       :maxrows="12"
       autoresize
     ></UTextarea>
-    <UTooltip text="Загрузить иллюстрацию">
-      <UButton square color="neutral" variant="soft"><Upload /></UButton>
-    </UTooltip>
+    <AppImageUpload v-model="imageSrc" class="w-24 h-24 min-w-24" />
     <UButton color="error" variant="ghost" square @click="$emit('delete', props.step)"
       ><X
     /></UButton>
@@ -24,14 +22,16 @@
 </template>
 
 <script lang="ts" setup>
-import { X, Upload } from 'lucide-vue-next'
+import { X } from 'lucide-vue-next'
 import type { ModelRef } from 'vue'
 import DragElement from './DragElement.vue'
+
 const props = defineProps({
   step: Number,
 })
 
 const description: ModelRef<string | undefined> = defineModel('description')
+const imageSrc = defineModel<string | null>('imageSrc', { default: null })
 
 const emit = defineEmits(['delete'])
 </script>

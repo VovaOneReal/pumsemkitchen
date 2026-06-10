@@ -3,6 +3,29 @@ info:
   title: PumsemKitchen - Backend-API
   version: 0.0.1
 paths:
+  /auth/login:
+    post:
+      summary: Вход пользователя
+      description: >
+        Принимает логин и пароль. Проверяет наличие пользователя в БД и корректность пароля.
+        После успешного входа устанавливает сессионную cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginData"
+      responses:
+        "200":
+          description: Вход выполнен, сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          description: Неверный логин или пароль
+        "422":
+          description: Ошибка валидации входных данных
   /auth/register:
     post:
       summary: Регистрация нового пользователя
@@ -29,8 +52,45 @@ paths:
           description: Пользователь с таким логином уже существует
         "422":
           description: Ошибка валидации входных данных
+  /auth/logout:
+    post:
+      summary: Выход пользователя
+      description: Очищает сессионную cookie на сервере.
+      responses:
+        "200":
+          description: Сессия очищена
+        "401":
+          description: Нет активной сессии
 components:
   schemas:
+    LoginData:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          description: Логин пользователя (5–32 символа, только латинские буквы и цифры)
+          type: string
+          minLength: 5
+          maxLength: 32
+        password:
+          description: Пароль пользователя (8–1024 символа)
+          type: string
+          minLength: 8
+          maxLength: 1024
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        login:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
     RegisterData:
       type: object
       required:
