@@ -20,5 +20,10 @@ export const useProducts = () => {
     return updated
   }
 
-  return { products, fetchProducts, createProduct, updateProduct }
+  const deleteProduct = async (id: number) => {
+    await $fetch(`/api/products/${id}`, { method: 'DELETE' })
+    products.value = products.value.filter(p => p.id !== id)
+  }
+
+  return { products, fetchProducts, createProduct, updateProduct, deleteProduct }
 }

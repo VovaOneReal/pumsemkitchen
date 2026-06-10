@@ -51,7 +51,7 @@
     </UTable>
 
     <!-- Диалог просмотра карточки продукта -->
-    <UModal v-model:open="showViewModal">
+    <UModal v-model:open="showViewModal" :ui="{ content: 'sm:max-w-2xl' }">
       <template #content>
         <div class="p-6 flex flex-col gap-5">
           <div class="flex items-center justify-between">
@@ -77,18 +77,18 @@
               />
               <div class="flex gap-2">
                 <UButton
-                  icon="i-lucide-trash-2"
-                  color="error"
-                  variant="soft"
-                  class="flex-1"
-                  @click="openDeleteFromView"
-                />
-                <UButton
+                  label="Редактирование"
                   icon="i-lucide-pencil"
                   color="primary"
                   variant="soft"
                   class="flex-1"
                   @click="openEditFromView"
+                />
+                <UButton
+                  icon="i-lucide-trash-2"
+                  color="error"
+                  variant="soft"
+                  @click="openDeleteFromView"
                 />
               </div>
             </div>
@@ -97,9 +97,9 @@
             <div class="flex flex-col gap-4 flex-1">
               <p class="text-lg font-bold">{{ selectedProduct?.name }}</p>
 
-              <div class="flex gap-8">
+              <div class="flex flex-col gap-4">
                 <!-- Пищевая ценность -->
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2 w-full">
                   <p class="font-semibold text-sm">Пищевая ценность (на 100 г продукта)</p>
                   <div class="flex flex-col gap-1 text-sm">
                     <div class="flex gap-6">
@@ -116,20 +116,31 @@
                     </div>
                     <div class="flex gap-6">
                       <span class="w-20">Калории</span>
-                      <span>{{ selectedProduct ? calcCalories(selectedProduct.protein, selectedProduct.fat, selectedProduct.carbs) : 0 }} ккал</span>
+                      <span
+                        >{{
+                          selectedProduct
+                            ? calcCalories(
+                                selectedProduct.protein,
+                                selectedProduct.fat,
+                                selectedProduct.carbs,
+                              )
+                            : 0
+                        }}
+                        ккал</span
+                      >
                     </div>
                   </div>
                 </div>
 
                 <!-- Стоимость -->
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-4 w-full">
                   <p class="font-semibold text-sm">Стоимость</p>
-                  <p class="text-sm">
-                    {{ selectedProduct?.priceRub }} ₽
-                  </p>
-                  <p class="text-sm text-gray-500">
-                    за {{ selectedProduct?.priceQty }} {{ selectedProduct?.priceUnit }}.
-                  </p>
+                  <div class="flex gap-2 w-full">
+                    <p class="text-sm">{{ selectedProduct?.priceRub }} ₽</p>
+                    <p class="text-sm text-gray-500">
+                      за {{ selectedProduct?.priceQty }} {{ selectedProduct?.priceUnit }}.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -141,7 +152,12 @@
     <!-- Диалог редактирования / создания продукта -->
     <UModal v-model:open="showEditModal" :dismissible="false" :ui="{ content: 'sm:max-w-3xl' }">
       <template #content>
-        <UForm :schema="createProductSchema" :state="editForm" class="p-6 flex flex-col gap-5" @submit="onFormSubmit">
+        <UForm
+          :schema="createProductSchema"
+          :state="editForm"
+          class="p-6 flex flex-col gap-5"
+          @submit="onFormSubmit"
+        >
           <h3 class="text-xl font-semibold">
             {{ editingProduct ? 'Изменение продукта' : 'Создание продукта' }}
           </h3>
@@ -237,7 +253,12 @@
                       <USelect
                         v-else
                         v-model="editForm.measurement_unit_id"
-                        :items="measurements.map(m => ({ label: m.unit_name, value: m.measurement_unit_id }))"
+                        :items="
+                          measurements.map((m) => ({
+                            label: m.unit_name,
+                            value: m.measurement_unit_id,
+                          }))
+                        "
                         class="w-24"
                       />
                     </UFormField>
@@ -248,7 +269,13 @@
           </div>
 
           <div class="flex justify-end gap-2">
-            <UButton type="button" variant="ghost" color="error" label="Отменить" @click="cancelEdit" />
+            <UButton
+              type="button"
+              variant="ghost"
+              color="error"
+              label="Отменить"
+              @click="cancelEdit"
+            />
             <UButton type="submit" label="Сохранить" :loading="saving" />
           </div>
         </UForm>
@@ -264,8 +291,13 @@
             Вы точно хотите удалить продукт {{ productToDelete?.name }}?
           </p>
           <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="primary" label="Отменить" @click="showDeleteModal = false" />
-            <UButton color="error" label="Удалить" @click="deleteProduct" />
+            <UButton
+              variant="ghost"
+              color="primary"
+              label="Отменить"
+              @click="showDeleteModal = false"
+            />
+            <UButton color="error" label="Удалить" @click="onDeleteConfirm" />
           </div>
         </div>
       </template>
@@ -311,7 +343,7 @@ const editForm = ref<EditForm>({
   measurement_unit_id: null,
 })
 
-const { products, fetchProducts, createProduct, updateProduct } = useProducts()
+const { products, fetchProducts, createProduct, updateProduct, deleteProduct } = useProducts()
 const { measurements, loading: measurementsLoading, fetchMeasurements } = useMeasurements()
 
 function calcCalories(protein: number, fat: number, carbs: number): number {
@@ -319,7 +351,11 @@ function calcCalories(protein: number, fat: number, carbs: number): number {
 }
 
 const editCalories = computed(() =>
-  calcCalories(editForm.value.user_proteins ?? 0, editForm.value.user_fats ?? 0, editForm.value.user_carbs ?? 0),
+  calcCalories(
+    editForm.value.user_proteins ?? 0,
+    editForm.value.user_fats ?? 0,
+    editForm.value.user_carbs ?? 0,
+  ),
 )
 
 onMounted(fetchProducts)
@@ -386,7 +422,7 @@ async function openEdit(product: Product) {
     measurement_unit_id: null,
   }
   await fetchMeasurements()
-  const unit = measurements.value.find(m => m.unit_name === product.priceUnit)
+  const unit = measurements.value.find((m) => m.unit_name === product.priceUnit)
   editForm.value.measurement_unit_id = unit?.measurement_unit_id ?? null
   showEditModal.value = true
 }
@@ -409,8 +445,14 @@ function confirmDelete(product: Product) {
   showDeleteModal.value = true
 }
 
-function deleteProduct() {
-  // TODO: вызов API удаления
+async function onDeleteConfirm() {
+  if (!productToDelete.value) return
+  try {
+    await deleteProduct(productToDelete.value.id)
+    toast.add({ title: 'Продукт удалён', color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка при удалении продукта', color: 'error' })
+  }
   showDeleteModal.value = false
   productToDelete.value = null
 }
@@ -441,7 +483,9 @@ async function onFormSubmit() {
     }
   } catch {
     toast.add({
-      title: editingProduct.value ? 'Ошибка при обновлении продукта' : 'Ошибка при создании продукта',
+      title: editingProduct.value
+        ? 'Ошибка при обновлении продукта'
+        : 'Ошибка при создании продукта',
       color: 'error',
     })
     return
