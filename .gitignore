@@ -18,6 +18,10 @@ logs
 .fleet
 .idea
 
+# Database
+db/*
+!db/relations.ts
+
 # Local env files
 .env
 .env.*
