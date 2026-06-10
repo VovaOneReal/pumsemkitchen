@@ -92,6 +92,97 @@ paths:
           description: Пользователь не авторизован
         "422":
           description: Ошибка валидации входных данных
+  /products/{id}:
+    get:
+      summary: Получить продукт по ID
+      description: >
+        Возвращает продукт по его ID.
+        Пользователь может получить только свой продукт.
+        Требует активной сессии (cookie).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID продукта
+      responses:
+        "200":
+          description: Данные продукта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к продукту
+        "404":
+          description: Продукт не найден
+    patch:
+      summary: Обновить продукт
+      description: >
+        Обновляет данные существующего продукта.
+        Стоимость нормализуется к цене за одну единицу (user_price / quantity_price, округление до 2 знаков).
+        Требует активной сессии (cookie).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID продукта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "200":
+          description: Продукт обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Пользователь не авторизован
+        "404":
+          description: Продукт не найден
+        "422":
+          description: Ошибка валидации входных данных
+    delete:
+      summary: Удалить продукт
+      description: >
+        Удаляет продукт по его ID. Пользователь может удалить только свой продукт.
+        Если продукт используется как ингредиент хотя бы в одном рецепте, удаление отклоняется.
+        Требует активной сессии (cookie).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID продукта
+      responses:
+        "200":
+          description: Продукт удалён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Продукт успешно удалён
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к продукту
+        "404":
+          description: Продукт не найден
+        "409":
+          description: Продукт используется в рецептах и не может быть удалён
   /measurements:
     get:
       summary: Список единиц измерения

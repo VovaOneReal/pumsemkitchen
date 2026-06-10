@@ -141,7 +141,7 @@
     <!-- Диалог редактирования / создания продукта -->
     <UModal v-model:open="showEditModal" :dismissible="false" :ui="{ content: 'sm:max-w-3xl' }">
       <template #content>
-        <UForm :schema="editingProduct ? undefined : createProductSchema" :state="editForm" class="p-6 flex flex-col gap-5" @submit="onFormSubmit">
+        <UForm :schema="createProductSchema" :state="editForm" class="p-6 flex flex-col gap-5" @submit="onFormSubmit">
           <h3 class="text-xl font-semibold">
             {{ editingProduct ? 'Изменение продукта' : 'Создание продукта' }}
           </h3>
@@ -311,7 +311,7 @@ const editForm = ref<EditForm>({
   measurement_unit_id: null,
 })
 
-const { products, fetchProducts, createProduct } = useProducts()
+const { products, fetchProducts, createProduct, updateProduct } = useProducts()
 const { measurements, loading: measurementsLoading, fetchMeasurements } = useMeasurements()
 
 function calcCalories(protein: number, fat: number, carbs: number): number {
@@ -373,7 +373,7 @@ function openCreate() {
   showEditModal.value = true
 }
 
-function openEdit(product: Product) {
+async function openEdit(product: Product) {
   editingProduct.value = product
   editForm.value = {
     image: product.image,
@@ -383,16 +383,18 @@ function openEdit(product: Product) {
     user_carbs: product.carbs,
     user_price: product.priceRub,
     quantity_price: product.priceQty,
-    measurement_unit_id: null, // TODO: при реализации edit API добавить measurement_unit_id в тип Product
+    measurement_unit_id: null,
   }
-  fetchMeasurements()
+  await fetchMeasurements()
+  const unit = measurements.value.find(m => m.unit_name === product.priceUnit)
+  editForm.value.measurement_unit_id = unit?.measurement_unit_id ?? null
   showEditModal.value = true
 }
 
-function openEditFromView() {
+async function openEditFromView() {
   if (!selectedProduct.value) return
   showViewModal.value = false
-  openEdit(selectedProduct.value)
+  await openEdit(selectedProduct.value)
 }
 
 function openDeleteFromView() {
@@ -419,27 +421,33 @@ function cancelEdit() {
 }
 
 async function onFormSubmit() {
-  if (!editingProduct.value) {
-    saving.value = true
-    try {
-      await createProduct({
-        title: editForm.value.title,
-        user_proteins: editForm.value.user_proteins!,
-        user_fats: editForm.value.user_fats!,
-        user_carbs: editForm.value.user_carbs!,
-        user_price: editForm.value.user_price!,
-        quantity_price: editForm.value.quantity_price!,
-        measurement_unit_id: editForm.value.measurement_unit_id!,
-      })
-      toast.add({ title: 'Продукт создан', color: 'success' })
-    } catch {
-      toast.add({ title: 'Ошибка при создании продукта', color: 'error' })
-      return
-    } finally {
-      saving.value = false
+  saving.value = true
+  try {
+    const body = {
+      title: editForm.value.title,
+      user_proteins: editForm.value.user_proteins!,
+      user_fats: editForm.value.user_fats!,
+      user_carbs: editForm.value.user_carbs!,
+      user_price: editForm.value.user_price!,
+      quantity_price: editForm.value.quantity_price!,
+      measurement_unit_id: editForm.value.measurement_unit_id!,
     }
+    if (editingProduct.value) {
+      await updateProduct(editingProduct.value.id, body)
+      toast.add({ title: 'Продукт обновлён', color: 'success' })
+    } else {
+      await createProduct(body)
+      toast.add({ title: 'Продукт создан', color: 'success' })
+    }
+  } catch {
+    toast.add({
+      title: editingProduct.value ? 'Ошибка при обновлении продукта' : 'Ошибка при создании продукта',
+      color: 'error',
+    })
+    return
+  } finally {
+    saving.value = false
   }
-  // TODO: вызов API редактирования
   showEditModal.value = false
   editingProduct.value = null
 }
