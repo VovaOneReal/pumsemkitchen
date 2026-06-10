@@ -1,17 +1,12 @@
 <template>
   <div class="flex w-full gap-2 items-center">
-    <!-- TODO: отображать необязательные элементы только при наведении курсора на весь компонент -->
     <DragElement />
-    <UInput class="w-full" type="text" placeholder="Название ингредиента..." v-model="name" />
-    <UTooltip text="«По вкусу»">
-      <UCheckbox size="xl" v-model="isOptional" name="" id="" />
-    </UTooltip>
+    <UInput class="flex-1" type="text" placeholder="Введите название ингредиента..." v-model="name" />
+    <UInput class="w-32" type="text" placeholder="Примечание" v-model="note" />
     <UInputNumber
       :disabled="isOptional"
-      orientation="vertical"
-      class="w-24"
-      name=""
-      id=""
+      orientation="horizontal"
+      class="w-28"
       :min="0"
       v-model="amount"
     />
@@ -19,12 +14,12 @@
       :disabled="isOptional"
       :items="amountTypeItems"
       v-model="amountType"
-      class="select w-24"
-      name=""
-      id=""
-    >
-    </USelect>
-    <UButton color="error" variant="ghost" square @click="$emit('delete', id)"><X /></UButton>
+      class="w-24"
+    />
+    <UCheckbox v-model="isOptional" label="По вкусу" />
+    <UButton color="error" variant="ghost" square @click="$emit('delete', id)">
+      <X />
+    </UButton>
   </div>
 </template>
 
@@ -44,29 +39,18 @@ const props = defineProps({
 const id = props.id
 
 const name: ModelRef<string | undefined> = defineModel('name')
+const note: ModelRef<string | undefined> = defineModel('note')
 const isOptional: ModelRef<boolean | undefined> = defineModel('isOptional')
 const amount: ModelRef<number | undefined> = defineModel('amount')
 const amountType: ModelRef<string | undefined> = defineModel('amountType')
+
 const amountTypeItems = ref<SelectItem[]>([
-  {
-    label: 'ст. л.',
-    value: 'table_spoon',
-  },
-  {
-    label: 'ч. л.',
-    value: 'tea_spoon',
-  },
-  {
-    label: 'шт',
-    value: 'pcs',
-  },
-  {
-    label: 'гр',
-    value: 'g',
-  },
-  {
-    label: 'кг',
-    value: 'kg',
-  },
+  { label: 'ст. л.', value: 'table_spoon' },
+  { label: 'ч. л.', value: 'tea_spoon' },
+  { label: 'шт', value: 'pcs' },
+  { label: 'гр', value: 'g' },
+  { label: 'кг', value: 'kg' },
+  { label: 'мл', value: 'ml' },
+  { label: 'л', value: 'l' },
 ])
 </script>

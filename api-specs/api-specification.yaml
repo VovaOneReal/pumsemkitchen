@@ -52,6 +52,61 @@ paths:
           description: Пользователь с таким логином уже существует
         "422":
           description: Ошибка валидации входных данных
+  /products:
+    get:
+      summary: Список продуктов пользователя
+      description: >
+        Возвращает все продукты, принадлежащие аутентифицированному пользователю.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Массив продуктов пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "401":
+          description: Пользователь не авторизован
+    post:
+      summary: Создать продукт
+      description: >
+        Создаёт новый продукт для аутентифицированного пользователя.
+        Стоимость нормализуется к цене за одну единицу (user_price / quantity_price, округление до 2 знаков).
+        Требует активной сессии (cookie).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "200":
+          description: Продукт создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Пользователь не авторизован
+        "422":
+          description: Ошибка валидации входных данных
+  /measurements:
+    get:
+      summary: Список единиц измерения
+      description: Возвращает все доступные единицы измерения из справочника.
+      responses:
+        "200":
+          description: Список единиц измерения
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MeasurementUnit"
+        "401":
+          description: Не авторизован
   /auth/logout:
     post:
       summary: Выход пользователя
@@ -121,3 +176,90 @@ components:
         role:
           type: string
           enum: [user, admin]
+    MeasurementUnit:
+      type: object
+      required: [measurement_unit_id, unit_name]
+      properties:
+        measurement_unit_id:
+          type: integer
+        unit_name:
+          type: string
+        unit_plural_name:
+          type: string
+          nullable: true
+        measure_type:
+          type: string
+          enum: [piece, weight, volume]
+        is_standart:
+          type: boolean
+    CreateProductRequest:
+      type: object
+      required:
+        - title
+        - user_proteins
+        - user_fats
+        - user_carbs
+        - user_price
+        - quantity_price
+        - measurement_unit_id
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Название продукта
+        user_proteins:
+          type: number
+          minimum: 0
+          description: Белки на 100 г
+        user_fats:
+          type: number
+          minimum: 0
+          description: Жиры на 100 г
+        user_carbs:
+          type: number
+          minimum: 0
+          description: Углеводы на 100 г
+        user_price:
+          type: number
+          minimum: 0
+          description: Стоимость за quantity_price единиц
+        quantity_price:
+          type: number
+          exclusiveMinimum: 0
+          description: Количество единиц, за которое указана цена
+        measurement_unit_id:
+          type: integer
+          description: ID единицы измерения из справочника
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          maxLength: 32
+        image:
+          type: string
+          nullable: true
+        priceRub:
+          type: number
+          description: Цена в рублях
+        priceQty:
+          type: number
+          description: Количество единиц, за которое указана цена
+        priceUnit:
+          type: string
+          description: Единица измерения (название из measurement_units)
+        protein:
+          type: number
+          description: Белки на 100 г продукта
+        fat:
+          type: number
+          description: Жиры на 100 г продукта
+        carbs:
+          type: number
+          description: Углеводы на 100 г продукта
+        calories:
+          type: number
+          description: Калории на 100 г продукта

@@ -1,19 +1,20 @@
 <template>
-  <div class="flex gap-2 items-baseline">
+  <div class="flex gap-2 items-center">
     <p class="text-xs min-w-16">{{ label }}</p>
-    <!-- TODO: добавить отдельные цвета для нутриций -->
     <UProgress
-      class="progress"
-      :color="props.type == 'proteins' ? 'neutral' : props.type == 'fats' ? 'warning' : 'primary'"
-      :modelValue="props.value"
+      v-if="type !== 'calories'"
+      class="flex-1"
+      :color="type === 'proteins' ? 'neutral' : type === 'fats' ? 'warning' : 'primary'"
+      :modelValue="value"
       :max="100"
-    ></UProgress>
-    <p class="text-xs min-w-8">{{ value }}</p>
+    />
+    <div v-else class="flex-1" />
+    <p class="text-xs min-w-8 text-right">{{ value }}</p>
   </div>
 </template>
 
 <script lang="ts" setup>
-type NutritionType = 'proteins' | 'fats' | 'carbs'
+type NutritionType = 'proteins' | 'fats' | 'carbs' | 'calories'
 
 interface NutritionProgressBarProps {
   label: string

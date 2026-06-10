@@ -12,7 +12,7 @@
       :trailing-icon="'i-lucide-search'"
     />
 
-    <UTable :data="filteredProducts" :columns="columns">
+    <UTable :data="filteredProducts" :columns="columns" empty="Нет данных">
       <template #image-cell="{ row }">
         <img
           :src="row.original.image ?? 'https://placehold.co/40x40'"
@@ -114,6 +114,10 @@
                       <span class="w-20">Углеводы</span>
                       <span>{{ selectedProduct?.carbs }} г</span>
                     </div>
+                    <div class="flex gap-6">
+                      <span class="w-20">Калории</span>
+                      <span>{{ selectedProduct ? calcCalories(selectedProduct.protein, selectedProduct.fat, selectedProduct.carbs) : 0 }} ккал</span>
+                    </div>
                   </div>
                 </div>
 
@@ -137,7 +141,7 @@
     <!-- Диалог редактирования / создания продукта -->
     <UModal v-model:open="showEditModal" :dismissible="false" :ui="{ content: 'sm:max-w-3xl' }">
       <template #content>
-        <div class="p-6 flex flex-col gap-5">
+        <UForm :schema="editingProduct ? undefined : createProductSchema" :state="editForm" class="p-6 flex flex-col gap-5" @submit="onFormSubmit">
           <h3 class="text-xl font-semibold">
             {{ editingProduct ? 'Изменение продукта' : 'Создание продукта' }}
           </h3>
@@ -150,9 +154,9 @@
 
             <!-- Поля формы -->
             <div class="flex flex-col gap-4 flex-1">
-              <UFormField label="Название продукта" required>
+              <UFormField name="title" label="Название продукта" required>
                 <UInput
-                  v-model="editForm.name"
+                  v-model="editForm.title"
                   placeholder="Название продукта"
                   :maxlength="32"
                   class="w-full"
@@ -163,35 +167,45 @@
                 <!-- Пищевая ценность -->
                 <div class="flex flex-col gap-2">
                   <p class="font-semibold text-sm">Пищевая ценность (на 100 г продукта)</p>
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm w-24">Белки (г)</span>
+                  <UFormField name="user_proteins" class="flex items-center gap-3">
+                    <template #label>
+                      <span class="text-sm w-24">Белки (г)</span>
+                    </template>
                     <UInputNumber
-                      v-model="editForm.protein"
+                      v-model="editForm.user_proteins"
                       :step="0.1"
                       :min="0"
                       :format-options="{ useGrouping: false, maximumFractionDigits: 1 }"
                       class="w-36"
                     />
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm w-24">Жиры (г)</span>
+                  </UFormField>
+                  <UFormField name="user_fats" class="flex items-center gap-3">
+                    <template #label>
+                      <span class="text-sm w-24">Жиры (г)</span>
+                    </template>
                     <UInputNumber
-                      v-model="editForm.fat"
+                      v-model="editForm.user_fats"
                       :step="0.1"
                       :min="0"
                       :format-options="{ useGrouping: false, maximumFractionDigits: 1 }"
                       class="w-36"
                     />
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <span class="text-sm w-24">Углеводы (г)</span>
+                  </UFormField>
+                  <UFormField name="user_carbs" class="flex items-center gap-3">
+                    <template #label>
+                      <span class="text-sm w-24">Углеводы (г)</span>
+                    </template>
                     <UInputNumber
-                      v-model="editForm.carbs"
+                      v-model="editForm.user_carbs"
                       :step="0.1"
                       :min="0"
                       :format-options="{ useGrouping: false, maximumFractionDigits: 1 }"
                       class="w-36"
                     />
+                  </UFormField>
+                  <div class="flex items-center gap-3 text-sm text-gray-500">
+                    <span class="w-24">Калории</span>
+                    <span class="w-36 text-center">{{ editCalories }} ккал</span>
                   </div>
                 </div>
 
@@ -199,26 +213,34 @@
                 <div class="flex flex-col gap-2">
                   <p class="font-semibold text-sm">Стоимость</p>
                   <div class="flex items-center gap-2">
-                    <UInputNumber
-                      v-model="editForm.priceRub"
-                      :step="0.01"
-                      :min="0"
-                      :format-options="{ useGrouping: false, maximumFractionDigits: 2 }"
-                      class="w-32"
-                    />
+                    <UFormField name="user_price">
+                      <UInputNumber
+                        v-model="editForm.user_price"
+                        :step="0.01"
+                        :min="0"
+                        :format-options="{ useGrouping: false, maximumFractionDigits: 2 }"
+                        class="w-32"
+                      />
+                    </UFormField>
                     <span class="text-sm shrink-0">Р за</span>
-                    <UInputNumber
-                      v-model="editForm.priceQty"
-                      :step="0.1"
-                      :min="0"
-                      :format-options="{ useGrouping: false, maximumFractionDigits: 1 }"
-                      class="w-28"
-                    />
-                    <USelect
-                      v-model="editForm.priceUnit"
-                      :items="unitOptions"
-                      class="w-20"
-                    />
+                    <UFormField name="quantity_price">
+                      <UInputNumber
+                        v-model="editForm.quantity_price"
+                        :step="0.1"
+                        :min="0"
+                        :format-options="{ useGrouping: false, maximumFractionDigits: 1 }"
+                        class="w-28"
+                      />
+                    </UFormField>
+                    <UFormField name="measurement_unit_id">
+                      <USkeleton v-if="measurementsLoading" class="h-8 w-20 rounded-md" />
+                      <USelect
+                        v-else
+                        v-model="editForm.measurement_unit_id"
+                        :items="measurements.map(m => ({ label: m.unit_name, value: m.measurement_unit_id }))"
+                        class="w-24"
+                      />
+                    </UFormField>
                   </div>
                 </div>
               </div>
@@ -226,10 +248,10 @@
           </div>
 
           <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="error" label="Отменить" @click="cancelEdit" />
-            <UButton label="Сохранить" @click="saveEdit" />
+            <UButton type="button" variant="ghost" color="error" label="Отменить" @click="cancelEdit" />
+            <UButton type="submit" label="Сохранить" :loading="saving" />
           </div>
-        </div>
+        </UForm>
       </template>
     </UModal>
 
@@ -253,84 +275,81 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
-
-interface Product {
-  id: number
-  image: string | null
-  name: string
-  priceRub: number
-  priceQty: number
-  priceUnit: string
-  protein: number
-  fat: number
-  carbs: number
-  calories: number
-}
+import type { Product } from '~/app/types'
+import { createProductSchema } from '~~/schemas/product'
 
 interface EditForm {
   image: string | null
-  name: string
-  protein: number
-  fat: number
-  carbs: number
-  priceRub: number
-  priceQty: number
-  priceUnit: string
+  title: string
+  user_proteins: number | null
+  user_fats: number | null
+  user_carbs: number | null
+  user_price: number | null
+  quantity_price: number | null
+  measurement_unit_id: number | null
 }
+
+const toast = useToast()
 
 const searchQuery = ref('')
 const showViewModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
+const saving = ref(false)
 const selectedProduct = ref<Product | null>(null)
 const editingProduct = ref<Product | null>(null)
 const productToDelete = ref<Product | null>(null)
 
 const editForm = ref<EditForm>({
   image: null,
-  name: '',
-  protein: 0,
-  fat: 0,
-  carbs: 0,
-  priceRub: 0,
-  priceQty: 0,
-  priceUnit: 'кг',
+  title: '',
+  user_proteins: 0,
+  user_fats: 0,
+  user_carbs: 0,
+  user_price: 0,
+  quantity_price: 0,
+  measurement_unit_id: null,
 })
 
-const unitOptions = ['кг', 'г', 'шт', 'мл', 'л']
+const { products, fetchProducts, createProduct } = useProducts()
+const { measurements, loading: measurementsLoading, fetchMeasurements } = useMeasurements()
 
-const products: Product[] = reactive([
-  {
-    id: 1,
-    image: null,
-    name: 'Название продукта',
-    priceRub: 150,
-    priceQty: 800,
-    priceUnit: 'г',
-    protein: 10.4,
-    fat: 4.5,
-    carbs: 14.1,
-    calories: 225.6,
-  },
-])
+function calcCalories(protein: number, fat: number, carbs: number): number {
+  return Math.round((4 * protein + 9 * fat + 4 * carbs) * 10) / 10
+}
+
+const editCalories = computed(() =>
+  calcCalories(editForm.value.user_proteins ?? 0, editForm.value.user_fats ?? 0, editForm.value.user_carbs ?? 0),
+)
+
+onMounted(fetchProducts)
 
 const columns: TableColumn<Product>[] = [
   { id: 'image', header: '' },
   { accessorKey: 'name', header: 'Название' },
   {
     accessorKey: 'priceRub',
-    header: 'Р / кг',
+    header: 'Стоимость',
     cell: ({ row }) => `${row.original.priceRub} ₽`,
+  },
+  {
+    id: 'priceFor',
+    header: 'за',
+    cell: ({ row }) => `${row.original.priceQty} ${row.original.priceUnit}.`,
   },
   { accessorKey: 'protein', header: 'Белки' },
   { accessorKey: 'fat', header: 'Жиры' },
   { accessorKey: 'carbs', header: 'Углеводы' },
-  { accessorKey: 'calories', header: 'Калории' },
+  {
+    id: 'calories',
+    header: 'Калории',
+    cell: ({ row }) => calcCalories(row.original.protein, row.original.fat, row.original.carbs),
+  },
   { id: 'actions', header: 'Действия' },
 ]
 
 const filteredProducts = computed(() =>
-  products.filter((p) => p.name.toLowerCase().includes(searchQuery.value.toLowerCase())),
+  products.value.filter((p) => p.name.toLowerCase().includes(searchQuery.value.toLowerCase())),
 )
 
 function openView(product: Product) {
@@ -340,7 +359,17 @@ function openView(product: Product) {
 
 function openCreate() {
   editingProduct.value = null
-  editForm.value = { image: null, name: '', protein: 0, fat: 0, carbs: 0, priceRub: 0, priceQty: 0, priceUnit: 'кг' }
+  editForm.value = {
+    image: null,
+    title: '',
+    user_proteins: 0,
+    user_fats: 0,
+    user_carbs: 0,
+    user_price: 0,
+    quantity_price: 0,
+    measurement_unit_id: null,
+  }
+  fetchMeasurements()
   showEditModal.value = true
 }
 
@@ -348,14 +377,15 @@ function openEdit(product: Product) {
   editingProduct.value = product
   editForm.value = {
     image: product.image,
-    name: product.name,
-    protein: product.protein,
-    fat: product.fat,
-    carbs: product.carbs,
-    priceRub: product.priceRub,
-    priceQty: product.priceQty,
-    priceUnit: product.priceUnit,
+    title: product.name,
+    user_proteins: product.protein,
+    user_fats: product.fat,
+    user_carbs: product.carbs,
+    user_price: product.priceRub,
+    quantity_price: product.priceQty,
+    measurement_unit_id: null, // TODO: при реализации edit API добавить measurement_unit_id в тип Product
   }
+  fetchMeasurements()
   showEditModal.value = true
 }
 
@@ -388,8 +418,28 @@ function cancelEdit() {
   editingProduct.value = null
 }
 
-function saveEdit() {
-  // TODO: вызов API сохранения
+async function onFormSubmit() {
+  if (!editingProduct.value) {
+    saving.value = true
+    try {
+      await createProduct({
+        title: editForm.value.title,
+        user_proteins: editForm.value.user_proteins!,
+        user_fats: editForm.value.user_fats!,
+        user_carbs: editForm.value.user_carbs!,
+        user_price: editForm.value.user_price!,
+        quantity_price: editForm.value.quantity_price!,
+        measurement_unit_id: editForm.value.measurement_unit_id!,
+      })
+      toast.add({ title: 'Продукт создан', color: 'success' })
+    } catch {
+      toast.add({ title: 'Ошибка при создании продукта', color: 'error' })
+      return
+    } finally {
+      saving.value = false
+    }
+  }
+  // TODO: вызов API редактирования
   showEditModal.value = false
   editingProduct.value = null
 }

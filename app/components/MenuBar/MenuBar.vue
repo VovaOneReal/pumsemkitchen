@@ -11,6 +11,7 @@
         :icon="item.icon"
         :label="item.label"
         :variant="getVariant(item.to)"
+        :disabled="item.disabled"
         color="primary"
         block
         class="justify-start"
@@ -43,13 +44,16 @@ async function logout() {
 }
 
 const topItems = computed(() => [
-  ...(user.value?.role === 'admin' ? [{ label: 'Пользователи', icon: 'i-lucide-user-cog', to: '/users' }] : []),
+  ...(user.value?.role === 'admin' ? [
+    { label: 'Пользователи',    icon: 'i-lucide-user-cog', to: '/users',            disabled: true },
+    // { label: 'Меры измерений',  icon: 'i-lucide-scale',    to: '/measurement-units' },
+  ] : []),
   { label: 'Профиль',      icon: 'i-lucide-user',         to: '/profile' },
-  // { label: 'Семьи',        icon: 'i-lucide-users',        to: '/families' },
+  { label: 'Семьи',        icon: 'i-lucide-users',        to: '/families',    disabled: true },
   { label: 'Рецепты',      icon: 'i-lucide-utensils',     to: '/recipes' },
-  // { label: 'Коллекции',    icon: 'i-lucide-folder-open',  to: '/collections' },
-  { label: 'Меню',         icon: 'i-lucide-calendar-days',to: '/menu' },
-  { label: 'Покупки',      icon: 'i-lucide-list-checks',  to: '/shopping' },
+  { label: 'Коллекции',    icon: 'i-lucide-folder-open',  to: '/collections', disabled: true },
+  { label: 'Меню',         icon: 'i-lucide-calendar-days',to: '/menu',     disabled: true },
+  { label: 'Покупки',      icon: 'i-lucide-list-checks',  to: '/shopping', disabled: true },
   { label: 'Продукты',     icon: 'i-lucide-package',      to: '/products' },
 ])
 
