@@ -146,7 +146,7 @@ const title = ref('')
 const description = ref('')
 const coverImage = ref<string | null>(null)
 const portions = ref(4)
-const cookingTime = ref(15)
+const cookingTime = ref(0)
 const saving = ref(false)
 
 let nextIngredientId = 0
@@ -165,7 +165,7 @@ onMounted(async () => {
 
   title.value = r.title
   description.value = r.description ?? ''
-  cookingTime.value = r.cookingTimeMin ?? 15
+  cookingTime.value = r.cookingTimeMin ?? 0
   portions.value = r.portions ?? 4
   coverImage.value = r.pictureUrl
 

@@ -283,6 +283,34 @@ paths:
           description: Нет доступа к рецепту
         "404":
           description: Рецепт не найден
+    delete:
+      summary: Удалить рецепт
+      description: >
+        Удаляет рецепт по ID. Каскадно удаляет ингредиенты, шаги, оценки и связи с коллекциями.
+        Пользователь может удалить только свой рецепт.
+        Требует активной сессии (cookie).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Рецепт успешно удалён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к рецепту
+        "404":
+          description: Рецепт не найден
   /measurements:
     get:
       summary: Список единиц измерения
