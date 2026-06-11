@@ -12,7 +12,7 @@
           class="w-64"
           :trailing-icon="'i-lucide-search'"
         />
-        <UPopover>
+        <!-- <UPopover>
           <UButton variant="outline" leading-icon="i-lucide-arrow-up-down">Сортировка</UButton>
           <template #content>
             <div class="flex flex-col p-2 gap-1 min-w-[200px]">
@@ -28,7 +28,7 @@
               </UButton>
             </div>
           </template>
-        </UPopover>
+        </UPopover> -->
       </div>
       <UPageList class="gap-2">
         <div v-if="loading" class="text-muted text-sm py-4">Ищем рецепты...</div>

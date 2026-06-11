@@ -9,10 +9,15 @@
 
     <!-- Основной контент -->
     <div class="flex gap-6 w-full overflow-y-auto">
-      <!-- Левая колонка: обложка -->
-      <div class="flex flex-col gap-2 w-48 flex-shrink-0">
-        <h3 class="font-semibold">Обложка</h3>
-        <AppImageUpload v-model="coverImage" class="w-full aspect-square" />
+      <!-- Левая колонка: обложка и доп. поля -->
+      <div class="flex flex-col gap-4 w-48 flex-shrink-0">
+        <div class="flex flex-col gap-2">
+          <h3 class="font-semibold">Обложка</h3>
+          <AppImageUpload v-model="coverImage" class="w-full aspect-square" />
+        </div>
+        <UFormField label="Время готовки (мин.)" class="w-full">
+          <UInputNumber v-model="cookingTime" :min="0" class="w-full" orientation="horizontal" />
+        </UFormField>
       </div>
 
       <!-- Правая колонка: основные поля -->
@@ -110,6 +115,7 @@ const title = ref('')
 const description = ref('')
 const coverImage = ref<string | null>(null)
 const portions = ref(4)
+const cookingTime = ref(15)
 
 let nextIngredientId = 0
 const ingredients: Ingredient[] = reactive([])

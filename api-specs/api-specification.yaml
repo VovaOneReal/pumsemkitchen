@@ -201,6 +201,29 @@ paths:
                   $ref: "#/components/schemas/Recipe"
         "401":
           description: Пользователь не авторизован
+    post:
+      summary: Создать рецепт
+      description: >
+        Создаёт новый рецепт с ингредиентами и шагами приготовления.
+        Все три таблицы (recipes, ingredients, recipe_steps) заполняются атомарно в рамках одной транзакции.
+        Требует активной сессии (cookie).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecipeData"
+      responses:
+        "200":
+          description: Созданный рецепт с полными данными
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecipeDetail"
+        "401":
+          description: Пользователь не авторизован
+        "422":
+          description: Ошибка валидации входных данных
   /recipes/{id}:
     get:
       summary: Получить рецепт по ID
@@ -449,6 +472,89 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/RecipeStep"
+    CreateRecipeIngredientData:
+      type: object
+      required:
+        - product_id
+        - measurement_unit_id
+        - quantity
+      properties:
+        product_id:
+          type: integer
+          description: ID продукта
+        measurement_unit_id:
+          type: integer
+          description: ID единицы измерения
+        quantity:
+          type: number
+          exclusiveMinimum: 0
+          description: Количество
+        is_optional:
+          type: boolean
+          description: Необязательный ингредиент
+        note:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: Примечание к ингредиенту
+    CreateRecipeStepData:
+      type: object
+      required:
+        - order
+        - description
+      properties:
+        order:
+          type: integer
+          exclusiveMinimum: 0
+          description: Порядковый номер шага
+        description:
+          type: string
+          minLength: 1
+          description: Описание шага
+        picture_url:
+          type: string
+          nullable: true
+          description: URL изображения шага
+    CreateRecipeData:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Название рецепта
+        description:
+          type: string
+          nullable: true
+          description: Описание рецепта
+        cooking_time_min:
+          type: integer
+          exclusiveMinimum: 0
+          nullable: true
+          description: Время приготовления в минутах
+        portions:
+          type: integer
+          minimum: 0
+          default: 4
+          description: Количество порций
+        is_public:
+          type: boolean
+          default: false
+          description: Публичный рецепт
+        picture_url:
+          type: string
+          nullable: true
+          description: URL изображения рецепта
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateRecipeIngredientData"
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateRecipeStepData"
     Product:
       type: object
       properties:
