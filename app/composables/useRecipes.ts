@@ -1,5 +1,5 @@
 import type { Recipe, RecipeDetail } from '@/types'
-import type { CreateRecipeForm } from '~~/schemas/recipe'
+import type { CreateRecipeForm, UpdateRecipeForm } from '~~/schemas/recipe'
 
 export const useRecipes = () => {
   const recipes = useState<Recipe[]>('recipes', () => [])
@@ -31,5 +31,11 @@ export const useRecipes = () => {
     return await $fetch('/api/recipes', { method: 'POST', body })
   }
 
-  return { recipes, loading, fetchRecipes, currentRecipe, detailLoading, fetchRecipeById, createRecipe }
+  const updateRecipe = async (id: number, body: UpdateRecipeForm) => {
+    const updated = await $fetch<RecipeDetail>(`/api/recipes/${id}`, { method: 'PATCH', body })
+    currentRecipe.value = updated
+    return updated
+  }
+
+  return { recipes, loading, fetchRecipes, currentRecipe, detailLoading, fetchRecipeById, createRecipe, updateRecipe }
 }

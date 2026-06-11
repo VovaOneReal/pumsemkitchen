@@ -28,3 +28,6 @@ export const createRecipeSchema = z.object({
 })
 
 export type CreateRecipeForm = z.infer<typeof createRecipeSchema>
+
+export const updateRecipeSchema = createRecipeSchema.partial()
+export type UpdateRecipeForm = z.infer<typeof updateRecipeSchema>

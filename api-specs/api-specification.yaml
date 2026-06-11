@@ -225,6 +225,39 @@ paths:
         "422":
           description: Ошибка валидации входных данных
   /recipes/{id}:
+    patch:
+      summary: Обновить рецепт
+      description: >
+        Частично обновляет рецепт. Если переданы ingredients или steps — они заменяются целиком.
+        Пользователь может редактировать только свой рецепт.
+        Требует активной сессии (cookie).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRecipeData"
+      responses:
+        "200":
+          description: Обновлённый рецепт с полными данными
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecipeDetail"
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к рецепту
+        "404":
+          description: Рецепт не найден
+        "422":
+          description: Ошибка валидации входных данных
     get:
       summary: Получить рецепт по ID
       description: >
@@ -515,6 +548,43 @@ components:
           type: string
           nullable: true
           description: URL изображения шага
+    UpdateRecipeData:
+      type: object
+      description: Все поля опциональны. Переданные ingredients/steps заменяют существующие целиком.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Название рецепта
+        description:
+          type: string
+          nullable: true
+          description: Описание рецепта
+        cooking_time_min:
+          type: integer
+          exclusiveMinimum: 0
+          nullable: true
+          description: Время приготовления в минутах
+        portions:
+          type: integer
+          minimum: 0
+          description: Количество порций
+        is_public:
+          type: boolean
+          description: Публичный рецепт
+        picture_url:
+          type: string
+          nullable: true
+          description: URL изображения рецепта
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateRecipeIngredientData"
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateRecipeStepData"
     CreateRecipeData:
       type: object
       required:

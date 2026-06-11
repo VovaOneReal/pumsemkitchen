@@ -129,7 +129,13 @@
 
         <!-- Готовка -->
         <div v-if="currentRecipe.steps.length" class="flex flex-col gap-6">
-          <h3>Готовка</h3>
+          <div class="flex items-center justify-between">
+            <h3>Готовка</h3>
+            <div v-if="currentRecipe.cookingTimeMin" class="flex items-center gap-1 text-sm text-muted">
+              <Clock :size="16" />
+              <span>Время готовки (мин.): {{ currentRecipe.cookingTimeMin }}</span>
+            </div>
+          </div>
           <RecipeStep
             v-for="step in currentRecipe.steps"
             :key="step.step"
@@ -146,7 +152,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ArrowLeft, Pencil, Trash2, FolderPlus, Link2, CalendarPlus, ListPlus, Minus, Plus } from 'lucide-vue-next'
+import { ArrowLeft, Pencil, Trash2, FolderPlus, Link2, CalendarPlus, ListPlus, Minus, Plus, Clock } from 'lucide-vue-next'
 import IngredientListElement from '@/components/IngredientListElement.vue'
 import NutritionProgressBar from '@/components/NutritionProgressBar.vue'
 import RecipeStep from '@/components/RecipeStep.vue'

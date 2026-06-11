@@ -124,7 +124,7 @@ import IngredientEditingListElement from '@/components/IngredientEditingListElem
 import RecipeEditingStep from '@/components/RecipeEditingStep.vue'
 import { reactive, ref } from 'vue'
 import type { RecipeStep } from '@/types'
-import { createRecipeSchema } from '~~/schemas/recipe'
+import { createRecipeSchema, updateRecipeSchema } from '~~/schemas/recipe'
 
 interface IngredientFormItem {
   id: number
@@ -135,7 +135,7 @@ interface IngredientFormItem {
   measurementUnitId: number | null
 }
 
-const { createRecipe, currentRecipe } = useRecipes()
+const { createRecipe, updateRecipe, currentRecipe, fetchRecipeById } = useRecipes()
 const { isCreating } = useRecipeState()
 const toast = useToast()
 const route = useRoute()
@@ -153,35 +153,41 @@ let nextIngredientId = 0
 const ingredients: IngredientFormItem[] = reactive([])
 const recipeSteps: RecipeStep[] = reactive([])
 
-onMounted(() => {
-  if (editingId.value && currentRecipe.value) {
-    const r = currentRecipe.value
-    title.value = r.title
-    description.value = r.description ?? ''
-    cookingTime.value = r.cookingTimeMin ?? 15
-    portions.value = r.portions ?? 4
-    coverImage.value = r.pictureUrl
+onMounted(async () => {
+  if (!editingId.value) return
 
-    ingredients.push(
-      ...r.ingredients.map((ing, i) => ({
-        id: i + 1,
-        productId: ing.productId,
-        note: ing.note ?? '',
-        isOptional: ing.isOptional,
-        amount: ing.amount,
-        measurementUnitId: ing.measurementUnitId,
-      }))
-    )
-    nextIngredientId = r.ingredients.length
-
-    recipeSteps.push(
-      ...r.steps.map((s) => ({
-        step: s.step - 1,
-        description: s.description,
-        pictureUrl: s.pictureUrl,
-      }))
-    )
+  if (!currentRecipe.value || currentRecipe.value.id !== editingId.value) {
+    await fetchRecipeById(editingId.value)
   }
+
+  const r = currentRecipe.value
+  if (!r) return
+
+  title.value = r.title
+  description.value = r.description ?? ''
+  cookingTime.value = r.cookingTimeMin ?? 15
+  portions.value = r.portions ?? 4
+  coverImage.value = r.pictureUrl
+
+  ingredients.push(
+    ...r.ingredients.map((ing, i) => ({
+      id: i + 1,
+      productId: ing.productId,
+      note: ing.note ?? '',
+      isOptional: ing.isOptional,
+      amount: ing.amount,
+      measurementUnitId: ing.measurementUnitId,
+    }))
+  )
+  nextIngredientId = r.ingredients.length
+
+  recipeSteps.push(
+    ...r.steps.map((s) => ({
+      step: s.step - 1,
+      description: s.description,
+      pictureUrl: s.pictureUrl,
+    }))
+  )
 })
 
 function addIngredient() {
@@ -229,7 +235,8 @@ async function onSave() {
     })),
   }
 
-  const result = createRecipeSchema.safeParse(body)
+  const schema = editingId.value ? updateRecipeSchema : createRecipeSchema
+  const result = schema.safeParse(body)
   if (!result.success) {
     toast.add({ title: 'Ошибка', description: result.error.issues[0]?.message, color: 'error' })
     return
@@ -237,10 +244,16 @@ async function onSave() {
 
   saving.value = true
   try {
-    await createRecipe(result.data)
-    await navigateTo('/recipes')
+    if (editingId.value) {
+      await updateRecipe(editingId.value, result.data)
+      await navigateTo(`/recipes/recipe?id=${editingId.value}`)
+    } else {
+      await createRecipe(result.data)
+      await navigateTo('/recipes')
+    }
   } catch {
-    toast.add({ title: 'Ошибка сохранения', description: 'Не удалось создать рецепт', color: 'error' })
+    const action = editingId.value ? 'обновить' : 'создать'
+    toast.add({ title: 'Ошибка сохранения', description: `Не удалось ${action} рецепт`, color: 'error' })
   } finally {
     saving.value = false
   }
