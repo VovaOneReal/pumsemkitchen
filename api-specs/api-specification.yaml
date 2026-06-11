@@ -183,6 +183,50 @@ paths:
           description: Продукт не найден
         "409":
           description: Продукт используется в рецептах и не может быть удалён
+  /recipes:
+    get:
+      summary: Список рецептов пользователя
+      description: >
+        Возвращает все рецепты, принадлежащие аутентифицированному пользователю.
+        Сортировка по убыванию даты создания.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Массив рецептов пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipe"
+        "401":
+          description: Пользователь не авторизован
+  /recipes/{id}:
+    get:
+      summary: Получить рецепт по ID
+      description: >
+        Возвращает полные данные рецепта: основную информацию, ингредиенты и шаги приготовления.
+        Пользователь может получить только свой рецепт.
+        Требует активной сессии (cookie).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Полные данные рецепта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecipeDetail"
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к рецепту
+        "404":
+          description: Рецепт не найден
   /measurements:
     get:
       summary: Список единиц измерения
@@ -322,6 +366,89 @@ components:
         measurement_unit_id:
           type: integer
           description: ID единицы измерения из справочника
+    Recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          maxLength: 32
+        description:
+          type: string
+          nullable: true
+        cookingTimeMin:
+          type: integer
+          nullable: true
+          description: Время приготовления в минутах
+        portions:
+          type: integer
+          nullable: true
+          description: Количество порций
+        isPublic:
+          type: boolean
+          nullable: true
+          description: Доступен ли рецепт другим пользователям
+        pictureUrl:
+          type: string
+          nullable: true
+          description: URL изображения рецепта
+        createdAt:
+          type: string
+          format: date
+        editedAt:
+          type: string
+          format: date
+        authorName:
+          type: string
+          description: Имя владельца рецепта
+    RecipeIngredient:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Название продукта
+        note:
+          type: string
+          nullable: true
+          description: Примечание к ингредиенту
+        isOptional:
+          type: boolean
+          description: Является ли ингредиент необязательным
+        amount:
+          type: number
+          description: Количество
+        amountType:
+          type: string
+          description: Единица измерения
+    RecipeStep:
+      type: object
+      properties:
+        step:
+          type: number
+          description: Порядковый номер шага
+        description:
+          type: string
+          description: Описание шага
+        pictureUrl:
+          type: string
+          nullable: true
+          description: URL изображения шага
+    RecipeDetail:
+      allOf:
+        - $ref: "#/components/schemas/Recipe"
+        - type: object
+          properties:
+            ingredients:
+              type: array
+              items:
+                $ref: "#/components/schemas/RecipeIngredient"
+            steps:
+              type: array
+              items:
+                $ref: "#/components/schemas/RecipeStep"
     Product:
       type: object
       properties:
