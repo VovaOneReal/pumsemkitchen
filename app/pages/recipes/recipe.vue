@@ -31,7 +31,7 @@
               <template #leading><Pencil :size="16" /></template>
               Редактировать
             </UButton>
-            <UPopover>
+            <UPopover v-model:open="deletePopoverOpen">
               <UButton variant="outline" color="error">
                 <template #leading><Trash2 :size="16" /></template>
               </UButton>
@@ -39,8 +39,8 @@
                 <div class="flex flex-col gap-4 p-4">
                   <p class="text-lg font-bold text-center">Подтвердите удаление</p>
                   <div class="flex gap-4">
-                    <UButton block color="error">Удалить</UButton>
-                    <UButton block variant="soft">Отменить</UButton>
+                    <UButton block color="error" :loading="deleting" @click="onDelete">Удалить</UButton>
+                    <UButton block variant="soft" @click="deletePopoverOpen = false">Отменить</UButton>
                   </div>
                 </div>
               </template>
@@ -159,7 +159,24 @@ import RecipeStep from '@/components/RecipeStep.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { currentRecipe, detailLoading, fetchRecipeById } = useRecipes()
+const toast = useToast()
+const { currentRecipe, detailLoading, fetchRecipeById, deleteRecipe } = useRecipes()
+
+const deleting = ref(false)
+const deletePopoverOpen = ref(false)
+
+async function onDelete() {
+  if (!currentRecipe.value) return
+  deleting.value = true
+  try {
+    await deleteRecipe(currentRecipe.value.id)
+    await navigateTo('/recipes')
+  } catch {
+    toast.add({ title: 'Ошибка', description: 'Не удалось удалить рецепт', color: 'error' })
+  } finally {
+    deleting.value = false
+  }
+}
 
 const isCurrentPage = computed(() => route.path === '/recipes/recipe')
 

@@ -37,5 +37,10 @@ export const useRecipes = () => {
     return updated
   }
 
-  return { recipes, loading, fetchRecipes, currentRecipe, detailLoading, fetchRecipeById, createRecipe, updateRecipe }
+  const deleteRecipe = async (id: number) => {
+    await $fetch(`/api/recipes/${id}`, { method: 'DELETE' })
+    recipes.value = recipes.value.filter((r) => r.id !== id)
+  }
+
+  return { recipes, loading, fetchRecipes, currentRecipe, detailLoading, fetchRecipeById, createRecipe, updateRecipe, deleteRecipe }
 }
