@@ -56,26 +56,30 @@
               <UInputNumber v-model="portions" orientation="horizontal" :min="1" class="w-28" />
             </div>
           </div>
-          <UButton
-            block
-            variant="soft"
-            icon="i-lucide-plus"
-            @click="addIngredient"
-          >
+          <UButton block variant="soft" icon="i-lucide-plus" @click="addIngredient">
             Добавить ингредиент
           </UButton>
           <div class="flex flex-col w-full gap-1">
-            <IngredientEditingListElement
-              v-for="ingredient in ingredients"
+            <div
+              v-for="(ingredient, index) in ingredients"
               :key="ingredient.id"
-              :id="ingredient.id"
-              v-model:name="ingredient.name"
-              v-model:note="ingredient.note"
-              v-model:is-optional="ingredient.isOptional"
-              v-model:amount="ingredient.amount"
-              v-model:amount-type="ingredient.amountType"
-              @delete="deleteIngredient"
-            />
+              data-drag-row
+              :class="{ 'opacity-40': dragIngredientIndex === index }"
+              @dragstart="onIngredientDragStart($event, index)"
+              @dragover="onIngredientDragOver($event, index)"
+              @drop.prevent
+              @dragend="dragIngredientIndex = -1"
+            >
+              <IngredientEditingListElement
+                :id="ingredient.id"
+                v-model:name="ingredient.name"
+                v-model:note="ingredient.note"
+                v-model:is-optional="ingredient.isOptional"
+                v-model:amount="ingredient.amount"
+                v-model:amount-type="ingredient.amountType"
+                @delete="deleteIngredient"
+              />
+            </div>
           </div>
         </div>
 
@@ -91,13 +95,22 @@
             Добавить шаг
           </UButton>
           <div class="flex flex-col w-full gap-1">
-            <RecipeEditingStep
-              v-for="step in recipeSteps"
+            <div
+              v-for="(step, index) in recipeSteps"
               :key="step.step"
-              :step="step.step"
-              v-model:description="step.description"
-              @delete="deleteRecipeStep"
-            />
+              data-drag-row
+              :class="{ 'opacity-40': dragStepIndex === index }"
+              @dragstart="onStepDragStart($event, index)"
+              @dragover="onStepDragOver($event, index)"
+              @drop.prevent
+              @dragend="onStepDragEnd"
+            >
+              <RecipeEditingStep
+                :step="step.step"
+                v-model:description="step.description"
+                @delete="deleteRecipeStep"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -142,5 +155,43 @@ function deleteRecipeStep(step: number) {
   for (let i = step; i < recipeSteps.length; i++) {
     recipeSteps[i].step -= 1
   }
+}
+
+// --- Drag & Drop: ингредиенты ---
+let dragIngredientIndex = ref(-1)
+
+function onIngredientDragStart(e: DragEvent, index: number) {
+  dragIngredientIndex.value = index
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+
+function onIngredientDragOver(e: DragEvent, index: number) {
+  e.preventDefault()
+  if (dragIngredientIndex.value === -1 || dragIngredientIndex.value === index) return
+  const [item] = ingredients.splice(dragIngredientIndex.value, 1)
+  ingredients.splice(index, 0, item)
+  dragIngredientIndex.value = index
+}
+
+// --- Drag & Drop: шаги ---
+let dragStepIndex = ref(-1)
+
+function onStepDragStart(e: DragEvent, index: number) {
+  dragStepIndex.value = index
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+
+function onStepDragOver(e: DragEvent, index: number) {
+  e.preventDefault()
+  if (dragStepIndex.value === -1 || dragStepIndex.value === index) return
+  const [item] = recipeSteps.splice(dragStepIndex.value, 1)
+  recipeSteps.splice(index, 0, item)
+  dragStepIndex.value = index
+}
+
+function onStepDragEnd() {
+  // Пересчитываем порядковые номера шагов после перетаскивания
+  recipeSteps.forEach((s, i) => { s.step = i })
+  dragStepIndex.value = -1
 }
 </script>
