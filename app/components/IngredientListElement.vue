@@ -8,23 +8,14 @@
       <p v-if="note" class="text-xs text-muted">{{ note }}</p>
     </div>
     <div class="flex items-center gap-1 shrink-0">
-      <span class="text-sm w-6 text-right">{{ amount }}</span>
-      <USelect v-model="selectedMeasure" :items="measureItems" size="xs" class="w-20" />
+      <span class="text-sm">{{ amount }}</span>
+      <span class="text-sm text-muted">{{ measure }}</span>
     </div>
     <span v-if="cost !== undefined" class="text-sm min-w-12 text-right shrink-0">{{ cost }}₽</span>
   </div>
 </template>
 
 <script lang="ts" setup>
-import type { SelectItem } from '@nuxt/ui'
-
-const measureItems: SelectItem[] = [
-  { label: 'гр', value: 'гр' },
-  { label: 'кг', value: 'кг' },
-  { label: 'л', value: 'л' },
-  { label: 'мл', value: 'мл' },
-]
-
 const props = defineProps({
   name: String,
   amount: Number,
@@ -33,6 +24,4 @@ const props = defineProps({
   note: String,
   cost: Number,
 })
-
-const selectedMeasure = ref(props.measure ?? 'гр')
 </script>

@@ -71,7 +71,7 @@
         </div>
 
         <!-- Пищевая ценность -->
-        <UCard>
+        <UCard v-if="false">
           <template #header>
             <div class="flex flex-col items-center gap-1">
               <p class="font-bold text-lg">Пищевая ценность</p>
@@ -119,7 +119,7 @@
               v-for="ing in currentRecipe.ingredients"
               :key="ing.id"
               :name="ing.name"
-              :amount="ing.amount"
+              :amount="scaledAmount(ing.amount)"
               :measure="ing.amountType"
               :optional="ing.isOptional"
               :note="ing.note ?? undefined"
@@ -181,6 +181,12 @@ async function onDelete() {
 const isCurrentPage = computed(() => route.path === '/recipes/recipe')
 
 const portions = ref(4)
+
+const basePortions = computed(() => currentRecipe.value?.portions ?? 1)
+
+function scaledAmount(baseAmount: number): number {
+  return Math.round(baseAmount * (portions.value / basePortions.value) * 10) / 10
+}
 
 watch(
   () => route.query.id,
