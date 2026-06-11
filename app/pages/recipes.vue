@@ -55,6 +55,7 @@
 import RecipeCard from '@/components/RecipeCard.vue'
 import { ref, computed, onMounted } from 'vue'
 
+const route = useRoute()
 const router = useRouter()
 const { startCreating } = useRecipeState()
 const { recipes, loading, fetchRecipes } = useRecipes()
@@ -69,6 +70,12 @@ const sortOptions = [
 ] as const
 
 onMounted(fetchRecipes)
+
+// Повторно загружаем рецепты при возврате на страницу списка (например, после создания)
+watch(
+  () => route.path,
+  (path) => { if (path === '/recipes') fetchRecipes() },
+)
 
 const filteredRecipes = computed(() => {
   let result = recipes.value.filter((r) =>

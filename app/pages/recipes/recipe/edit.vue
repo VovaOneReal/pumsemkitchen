@@ -3,8 +3,8 @@
     <!-- Заголовок -->
     <div class="flex items-center gap-3 flex-shrink-0">
       <UButton icon="i-lucide-arrow-left" variant="ghost" square to="/recipes/recipe" />
-      <UButton color="primary">Сохранить</UButton>
-      <h1 class="text-2xl font-bold">Изменение рецепта</h1>
+      <UButton color="primary" :loading="saving" @click="onSave">Сохранить</UButton>
+      <h1 class="text-2xl font-bold">{{ isCreating ? 'Создать рецепт' : 'Изменить рецепт' }}</h1>
     </div>
 
     <!-- Основной контент -->
@@ -72,11 +72,11 @@
             >
               <IngredientEditingListElement
                 :id="ingredient.id"
-                v-model:name="ingredient.name"
+                v-model:product-id="ingredient.productId"
                 v-model:note="ingredient.note"
                 v-model:is-optional="ingredient.isOptional"
                 v-model:amount="ingredient.amount"
-                v-model:amount-type="ingredient.amountType"
+                v-model:measurement-unit-id="ingredient.measurementUnitId"
                 @delete="deleteIngredient"
               />
             </div>
@@ -90,7 +90,7 @@
             block
             variant="soft"
             icon="i-lucide-plus"
-            @click="recipeSteps.push({ step: recipeSteps.length, description: '' })"
+            @click="recipeSteps.push({ step: recipeSteps.length, description: '', pictureUrl: null })"
           >
             Добавить шаг
           </UButton>
@@ -108,6 +108,7 @@
               <RecipeEditingStep
                 :step="step.step"
                 v-model:description="step.description"
+                v-model:image-src="step.pictureUrl"
                 @delete="deleteRecipeStep"
               />
             </div>
@@ -123,12 +124,18 @@ import IngredientEditingListElement from '@/components/IngredientEditingListElem
 import RecipeEditingStep from '@/components/RecipeEditingStep.vue'
 import { reactive, ref } from 'vue'
 import type { Ingredient, RecipeStep } from '@/types'
+import { createRecipeSchema } from '~~/schemas/recipe'
+
+const { createRecipe } = useRecipes()
+const { isCreating } = useRecipeState()
+const toast = useToast()
 
 const title = ref('')
 const description = ref('')
 const coverImage = ref<string | null>(null)
 const portions = ref(4)
 const cookingTime = ref(15)
+const saving = ref(false)
 
 let nextIngredientId = 0
 const ingredients: Ingredient[] = reactive([])
@@ -137,11 +144,11 @@ const recipeSteps: RecipeStep[] = reactive([])
 function addIngredient() {
   ingredients.push({
     id: ++nextIngredientId,
-    name: '',
+    productId: null,
     note: '',
     isOptional: false,
     amount: 4,
-    amountType: 'g',
+    measurementUnitId: null,
   })
 }
 
@@ -154,6 +161,45 @@ function deleteRecipeStep(step: number) {
   recipeSteps.splice(step, 1)
   for (let i = step; i < recipeSteps.length; i++) {
     recipeSteps[i].step -= 1
+  }
+}
+
+async function onSave() {
+  const body = {
+    title: title.value,
+    description: description.value || null,
+    cooking_time_min: cookingTime.value > 0 ? cookingTime.value : null,
+    portions: portions.value,
+    is_public: false,
+    picture_url: coverImage.value,
+    ingredients: ingredients.map((ing) => ({
+      product_id: ing.productId!,
+      measurement_unit_id: ing.measurementUnitId!,
+      quantity: ing.amount,
+      is_optional: ing.isOptional,
+      note: ing.note || undefined,
+    })),
+    steps: recipeSteps.map((s) => ({
+      order: s.step + 1, // API требует positive (> 0), step 0-indexed
+      description: s.description,
+      picture_url: s.pictureUrl ?? null,
+    })),
+  }
+
+  const result = createRecipeSchema.safeParse(body)
+  if (!result.success) {
+    toast.add({ title: 'Ошибка', description: result.error.issues[0]?.message, color: 'error' })
+    return
+  }
+
+  saving.value = true
+  try {
+    await createRecipe(result.data)
+    await navigateTo('/recipes')
+  } catch {
+    toast.add({ title: 'Ошибка сохранения', description: 'Не удалось создать рецепт', color: 'error' })
+  } finally {
+    saving.value = false
   }
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <UPageCard :to="`/recipes/recipe`" variant="soft">
+  <UPageCard :to="`/recipes/recipe?id=${props.id}`" variant="soft">
     <template #body>
       <div class="w-full flex gap-4">
         <img class="h-[140px] w-[140px] object-cover rounded-lg flex-shrink-0" src="https://placehold.co/140x140" alt="" />

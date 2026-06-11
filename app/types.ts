@@ -1,7 +1,7 @@
 export type Ingredient = {
   id: number
   name: string
-  note: string
+  note: string | null
   isOptional: boolean
   amount: number
   amountType: string

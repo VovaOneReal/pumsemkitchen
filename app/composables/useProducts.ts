@@ -3,9 +3,16 @@ import type { CreateProductForm, UpdateProductForm } from '~~/schemas/product'
 
 export const useProducts = () => {
   const products = useState<Product[]>('products', () => [])
+  const loading = ref(false)
 
   const fetchProducts = async () => {
-    products.value = await $fetch<Product[]>('/api/products')
+    if (products.value.length > 0) return // кеш-гард: не делать повторный запрос
+    loading.value = true
+    try {
+      products.value = await $fetch<Product[]>('/api/products')
+    } finally {
+      loading.value = false
+    }
   }
 
   const createProduct = async (body: CreateProductForm) => {
@@ -25,5 +32,5 @@ export const useProducts = () => {
     products.value = products.value.filter(p => p.id !== id)
   }
 
-  return { products, fetchProducts, createProduct, updateProduct, deleteProduct }
+  return { products, loading, fetchProducts, createProduct, updateProduct, deleteProduct }
 }
