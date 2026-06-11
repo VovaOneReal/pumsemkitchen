@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-4 w-full h-full">
     <div v-if="isCurrentPage" class="flex gap-3 items-center">
-      <UButton size="sm" variant="ghost" class="rounded-full" @click="router.back()">
+      <UButton size="sm" variant="ghost" class="rounded-full" @click="router.push('/recipes')">
         <template #leading>
           <ArrowLeft :size="20" />
         </template>
@@ -27,7 +27,7 @@
         <!-- Кнопки действий -->
         <div class="flex flex-col gap-2">
           <div class="flex gap-2">
-            <UButton class="flex-1 justify-center" variant="outline" to="/recipes/recipe/edit">
+            <UButton class="flex-1 justify-center" variant="outline" :to="`/recipes/recipe/edit?id=${currentRecipe.id}`">
               <template #leading><Pencil :size="16" /></template>
               Редактировать
             </UButton>

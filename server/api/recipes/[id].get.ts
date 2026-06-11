@@ -32,10 +32,12 @@ export default defineEventHandler(async (event) => {
     authorName: recipe.user.name,
     ingredients: recipe.ingredients.map((ing) => ({
       id: ing.ingredientId,
+      productId: ing.product.productId,
       name: ing.product.title,
       note: ing.note,
       isOptional: ing.isOptional,
       amount: Number(ing.quantity),
+      measurementUnitId: ing.measurementUnit.measurementUnitId,
       amountType: ing.measurementUnit.unitName,
     })),
     steps: recipe.steps.map((s) => ({

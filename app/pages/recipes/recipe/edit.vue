@@ -2,9 +2,9 @@
   <div class="flex flex-col gap-6 w-full h-full">
     <!-- Заголовок -->
     <div class="flex items-center gap-3 flex-shrink-0">
-      <UButton icon="i-lucide-arrow-left" variant="ghost" square to="/recipes/recipe" />
+      <UButton icon="i-lucide-arrow-left" variant="ghost" square :to="editingId ? `/recipes/recipe?id=${editingId}` : '/recipes/recipe'" />
       <UButton color="primary" :loading="saving" @click="onSave">Сохранить</UButton>
-      <h1 class="text-2xl font-bold">{{ isCreating ? 'Создать рецепт' : 'Изменить рецепт' }}</h1>
+      <h1 class="text-2xl font-bold">{{ isCreating && !editingId ? 'Создать рецепт' : 'Изменить рецепт' }}</h1>
     </div>
 
     <!-- Основной контент -->
@@ -123,12 +123,24 @@
 import IngredientEditingListElement from '@/components/IngredientEditingListElement.vue'
 import RecipeEditingStep from '@/components/RecipeEditingStep.vue'
 import { reactive, ref } from 'vue'
-import type { Ingredient, RecipeStep } from '@/types'
+import type { RecipeStep } from '@/types'
 import { createRecipeSchema } from '~~/schemas/recipe'
 
-const { createRecipe } = useRecipes()
+interface IngredientFormItem {
+  id: number
+  productId: number | null
+  note: string
+  isOptional: boolean
+  amount: number
+  measurementUnitId: number | null
+}
+
+const { createRecipe, currentRecipe } = useRecipes()
 const { isCreating } = useRecipeState()
 const toast = useToast()
+const route = useRoute()
+
+const editingId = computed(() => route.query.id ? Number(route.query.id) : null)
 
 const title = ref('')
 const description = ref('')
@@ -138,8 +150,39 @@ const cookingTime = ref(15)
 const saving = ref(false)
 
 let nextIngredientId = 0
-const ingredients: Ingredient[] = reactive([])
+const ingredients: IngredientFormItem[] = reactive([])
 const recipeSteps: RecipeStep[] = reactive([])
+
+onMounted(() => {
+  if (editingId.value && currentRecipe.value) {
+    const r = currentRecipe.value
+    title.value = r.title
+    description.value = r.description ?? ''
+    cookingTime.value = r.cookingTimeMin ?? 15
+    portions.value = r.portions ?? 4
+    coverImage.value = r.pictureUrl
+
+    ingredients.push(
+      ...r.ingredients.map((ing, i) => ({
+        id: i + 1,
+        productId: ing.productId,
+        note: ing.note ?? '',
+        isOptional: ing.isOptional,
+        amount: ing.amount,
+        measurementUnitId: ing.measurementUnitId,
+      }))
+    )
+    nextIngredientId = r.ingredients.length
+
+    recipeSteps.push(
+      ...r.steps.map((s) => ({
+        step: s.step - 1,
+        description: s.description,
+        pictureUrl: s.pictureUrl,
+      }))
+    )
+  }
+})
 
 function addIngredient() {
   ingredients.push({
@@ -149,7 +192,7 @@ function addIngredient() {
     isOptional: false,
     amount: 4,
     measurementUnitId: null,
-  })
+  } as IngredientFormItem)
 }
 
 function deleteIngredient(id: number) {

@@ -1,9 +1,11 @@
 export type Ingredient = {
   id: number
+  productId: number
   name: string
   note: string | null
   isOptional: boolean
   amount: number
+  measurementUnitId: number
   amountType: string
 }
 
