@@ -31,7 +31,12 @@
         </UPopover>
       </div>
       <UPageList class="gap-2">
+        <div v-if="loading" class="text-muted text-sm py-4">Ищем рецепты...</div>
+        <div v-else-if="filteredRecipes.length === 0" class="text-muted text-sm py-4">
+          Пока что рецептов нет. Вы можете создать новый по кнопке «Создать».
+        </div>
         <RecipeCard
+          v-else
           v-for="recipe in filteredRecipes"
           :id="recipe.id"
           :key="recipe.id"
@@ -48,11 +53,11 @@
 
 <script lang="ts" setup>
 import RecipeCard from '@/components/RecipeCard.vue'
-import type { Recipe } from '@/types'
-import { reactive, ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const router = useRouter()
 const { startCreating } = useRecipeState()
+const { recipes, loading, fetchRecipes } = useRecipes()
 
 const searchQuery = ref('')
 const sortBy = ref<'title' | 'author' | 'date'>('date')
@@ -63,43 +68,10 @@ const sortOptions = [
   { label: 'По дате создания', value: 'date' },
 ] as const
 
-const recipes: Recipe[] = reactive([
-  {
-    id: 1,
-    title: 'Название рецепта',
-    authorName: 'Автор',
-    createdAt: '20-10-2026',
-    description:
-      'Картельные сговоры не допускают ситуации, при которой независимые государства освещают чрезвычайно интересные особенности картины в целом, однако конкретные выводы, разумеется, ассоциативно распределены по отраслям.',
-  },
-  {
-    id: 2,
-    title: 'Название рецепта',
-    authorName: 'Автор',
-    createdAt: '20-10-2026',
-    description:
-      'Картельные сговоры не допускают ситуации, при которой независимые государства освещают чрезвычайно интересные особенности картины в целом, однако конкретные выводы, разумеется, ассоциативно распределены по отраслям.',
-  },
-  {
-    id: 3,
-    title: 'Название рецепта',
-    authorName: 'Автор',
-    createdAt: '20-10-2026',
-    description:
-      'Картельные сговоры не допускают ситуации, при которой независимые государства освещают чрезвычайно интересные особенности картины в целом, однако конкретные выводы, разумеется, ассоциативно распределены по отраслям.',
-  },
-  {
-    id: 4,
-    title: 'Название рецепта',
-    authorName: 'Автор',
-    createdAt: '20-10-2026',
-    description:
-      'Картельные сговоры не допускают ситуации, при которой независимые государства освещают чрезвычайно интересные особенности картины в целом, однако конкретные выводы, разумеется, ассоциативно распределены по отраслям.',
-  },
-])
+onMounted(fetchRecipes)
 
 const filteredRecipes = computed(() => {
-  let result = recipes.filter((r) =>
+  let result = recipes.value.filter((r) =>
     r.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
   )
 
