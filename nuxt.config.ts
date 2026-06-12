@@ -1,6 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/ui', 'nuxt-auth-utils', '@pinia/nuxt'],
+  modules: [
+    '@nuxt/eslint',
+    '@nuxt/ui',
+    'nuxt-auth-utils',
+    '@pinia/nuxt',
+    '@nuxt/content',
+  ],
   components: [
     {
       path: '~/components',

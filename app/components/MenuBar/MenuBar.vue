@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col justify-between h-full py-4 px-2">
+  <div class="flex flex-col justify-between h-full py-4 px-2 w-64 flex-shrink-0">
     <div class="flex flex-col gap-1">
       <div class="px-2 pb-4">
         <ServiceLogo :collapsed="false" />
@@ -18,6 +18,15 @@
       />
     </div>
     <div class="flex flex-col gap-1">
+      <UButton
+        icon="i-lucide-circle-help"
+        label="Справка"
+        :variant="getVariant('/help')"
+        color="primary"
+        block
+        class="justify-start"
+        to="/help"
+      />
       <UButton
         icon="i-lucide-log-out"
         label="Выйти"
@@ -44,17 +53,19 @@ async function logout() {
 }
 
 const topItems = computed(() => [
-  ...(user.value?.role === 'admin' ? [
-    { label: 'Пользователи',    icon: 'i-lucide-user-cog', to: '/users',            disabled: true },
-    // { label: 'Меры измерений',  icon: 'i-lucide-scale',    to: '/measurement-units' },
-  ] : []),
-  { label: 'Профиль',      icon: 'i-lucide-user',         to: '/profile' },
-  { label: 'Семьи',        icon: 'i-lucide-users',        to: '/families',    disabled: true },
-  { label: 'Рецепты',      icon: 'i-lucide-utensils',     to: '/recipes' },
-  { label: 'Коллекции',    icon: 'i-lucide-folder-open',  to: '/collections', disabled: true },
-  { label: 'Меню',         icon: 'i-lucide-calendar-days',to: '/menu',     disabled: true },
-  { label: 'Покупки',      icon: 'i-lucide-list-checks',  to: '/shopping', disabled: true },
-  { label: 'Продукты',     icon: 'i-lucide-package',      to: '/products' },
+  ...(user.value?.role === 'admin'
+    ? [
+        { label: 'Пользователи', icon: 'i-lucide-user-cog', to: '/users', disabled: true },
+        // { label: 'Меры измерений',  icon: 'i-lucide-scale',    to: '/measurement-units' },
+      ]
+    : []),
+  { label: 'Профиль', icon: 'i-lucide-user', to: '/profile' },
+  { label: 'Семьи', icon: 'i-lucide-users', to: '/families', disabled: true },
+  { label: 'Рецепты', icon: 'i-lucide-utensils', to: '/recipes' },
+  { label: 'Коллекции', icon: 'i-lucide-folder-open', to: '/collections', disabled: true },
+  { label: 'Меню', icon: 'i-lucide-calendar-days', to: '/menu', disabled: true },
+  { label: 'Покупки', icon: 'i-lucide-list-checks', to: '/shopping', disabled: true },
+  { label: 'Продукты', icon: 'i-lucide-package', to: '/products' },
 ])
 
 function getVariant(to: string): 'ghost' | 'solid' | 'soft' {
