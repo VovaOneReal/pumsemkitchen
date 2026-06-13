@@ -3,16 +3,24 @@ import { z } from 'zod'
 export const createProductSchema = z.object({
   title: z.string({ error: 'Пожалуйста, заполните поле' })
     .min(1, 'Название не может быть пустым')
-    .max(32, 'Название не должно превышать 32 символа'),
-  user_proteins: z.number({ error: 'Введите число' }).min(0, 'Значение не может быть отрицательным'),
-  user_fats: z.number({ error: 'Введите число' }).min(0, 'Значение не может быть отрицательным'),
-  user_carbs: z.number({ error: 'Введите число' }).min(0, 'Значение не может быть отрицательным'),
+    .max(128, 'Название не должно превышать 128 символов'),
+  proteins: z.number({ error: 'Введите число' }).min(0, 'Значение не может быть отрицательным'),
+  fats: z.number({ error: 'Введите число' }).min(0, 'Значение не может быть отрицательным'),
+  carbs: z.number({ error: 'Введите число' }).min(0, 'Значение не может быть отрицательным'),
   user_price: z.number({ error: 'Введите число' }).min(0, 'Значение не может быть отрицательным'),
-  quantity_price: z.number({ error: 'Введите число' }).positive('Количество должно быть больше нуля'),
+  quantity_per_price: z.number({ error: 'Введите число' }).positive('Количество должно быть больше нуля'),
   measurement_unit_id: z.number({ error: 'Выберите единицу измерения' }).int().positive('Выберите единицу измерения'),
+  family_id: z.number({ error: 'Укажите семью' }).int().positive('Укажите семью').optional(),
+  g_measure: z.number({ error: 'Введите число' }).positive('Значение должно быть больше нуля').nullable().optional(),
+  ml_measure: z.number({ error: 'Введите число' }).positive('Значение должно быть больше нуля').nullable().optional(),
+  pcs_measure: z.number({ error: 'Введите число' }).positive('Значение должно быть больше нуля').nullable().optional(),
+  is_public: z.boolean({ error: 'Укажите булевое значение' }).optional().default(false),
 })
 
 export type CreateProductForm = z.infer<typeof createProductSchema>
 
 export const updateProductSchema = createProductSchema
 export type UpdateProductForm = z.infer<typeof updateProductSchema>
+
+// Схема для клиентской формы: family_id исключён, т.к. сервер берёт его из сессии
+export const productFormSchema = createProductSchema.omit({ family_id: true })

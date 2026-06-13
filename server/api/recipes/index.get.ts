@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   const rows = await db.query.recipes.findMany({
     where: (r, { eq }) => eq(r.userId, user.userId),
-    with: { user: true },
+    with: { user_userId: true },
     orderBy: (r, { desc }) => [desc(r.createdAt)],
   })
 
@@ -18,8 +18,9 @@ export default defineEventHandler(async (event) => {
     portions: r.portions,
     isPublic: r.isPublic,
     pictureUrl: r.pictureUrl,
+    sourceUrl: r.sourceUrl,
     createdAt: r.createdAt,
     editedAt: r.editedAt,
-    authorName: r.user.name,
+    authorName: r.user_userId.name,
   }))
 })

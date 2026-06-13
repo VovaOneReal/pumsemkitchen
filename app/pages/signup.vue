@@ -16,6 +16,7 @@
 </template>
 
 <script lang="ts" setup>
+useHead({ title: 'Регистрация' })
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { signupSchema, type SignupForm } from '~~/schemas/auth'
 

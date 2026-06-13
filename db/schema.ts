@@ -160,7 +160,7 @@ export const products = pgTable("products", {
 	measurementUnitId: integer("measurement_unit_id").notNull(),
 	emissGoodsId: integer("emiss_goods_id"),
 	editUserId: integer("edit_user_id"),
-	familyId: integer("family_id").notNull(),
+	familyId: integer("family_id"),
 	priceFromProductId: integer("price_from_product_id"),
 	nutritionsFromProductId: integer("nutritions_from_product_id"),
 	title: varchar({ length: 128 }).notNull(),

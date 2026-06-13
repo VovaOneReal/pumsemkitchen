@@ -52,6 +52,21 @@ paths:
           description: Пользователь с таким логином уже существует
         "422":
           description: Ошибка валидации входных данных
+  /products/public:
+    get:
+      summary: Список публичных продуктов
+      description: >
+        Возвращает все продукты с флагом is_public = true.
+        Не требует аутентификации.
+      responses:
+        "200":
+          description: Массив публичных продуктов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
   /products:
     get:
       summary: Список продуктов пользователя
@@ -73,7 +88,7 @@ paths:
       summary: Создать продукт
       description: >
         Создаёт новый продукт для аутентифицированного пользователя.
-        Стоимость нормализуется к цене за одну единицу (user_price / quantity_price, округление до 2 знаков).
+        Если переданы g_measure, ml_measure или pcs_measure — записи добавляются в таблицу product_measures_in_units.
         Требует активной сессии (cookie).
       requestBody:
         required: true
@@ -123,7 +138,7 @@ paths:
       summary: Обновить продукт
       description: >
         Обновляет данные существующего продукта.
-        Стоимость нормализуется к цене за одну единицу (user_price / quantity_price, округление до 2 знаков).
+        Если переданы g_measure, ml_measure или pcs_measure — записи в product_measures_in_units создаются или обновляются.
         Требует активной сессии (cookie).
       parameters:
         - name: id
@@ -311,6 +326,65 @@ paths:
           description: Нет доступа к рецепту
         "404":
           description: Рецепт не найден
+  /users/me:
+    get:
+      summary: Профиль текущего пользователя
+      description: >
+        Возвращает логин и отображаемое имя аутентифицированного пользователя.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Данные текущего пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserMe"
+        "401":
+          description: Пользователь не авторизован
+        "404":
+          description: Пользователь не найден
+    patch:
+      summary: Обновить имя текущего пользователя
+      description: >
+        Обновляет отображаемое имя аутентифицированного пользователя.
+        Имя не должно превышать 32 символа и содержать спецсимволы, кроме «-».
+        Требует активной сессии (cookie).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserMe"
+      responses:
+        "200":
+          description: Обновлённые данные пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserMe"
+        "401":
+          description: Пользователь не авторизован
+        "404":
+          description: Пользователь не найден
+        "422":
+          description: Ошибка валидации входных данных
+    delete:
+      summary: Удалить аккаунт текущего пользователя
+      description: >
+        Удаляет аутентифицированного пользователя из системы и очищает сессию.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Аккаунт успешно удалён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "401":
+          description: Пользователь не авторизован
   /measurements:
     get:
       summary: Список единиц измерения
@@ -403,9 +477,8 @@ components:
           type: integer
         unit_name:
           type: string
-        unit_plural_name:
+        unit_abbr:
           type: string
-          nullable: true
         measure_type:
           type: string
           enum: [piece, weight, volume]
@@ -415,41 +488,64 @@ components:
       type: object
       required:
         - title
-        - user_proteins
-        - user_fats
-        - user_carbs
+        - proteins
+        - fats
+        - carbs
         - user_price
-        - quantity_price
+        - quantity_per_price
         - measurement_unit_id
       properties:
         title:
           type: string
           minLength: 1
-          maxLength: 32
+          maxLength: 128
           description: Название продукта
-        user_proteins:
+        proteins:
           type: number
           minimum: 0
           description: Белки на 100 г
-        user_fats:
+        fats:
           type: number
           minimum: 0
           description: Жиры на 100 г
-        user_carbs:
+        carbs:
           type: number
           minimum: 0
           description: Углеводы на 100 г
         user_price:
           type: number
           minimum: 0
-          description: Стоимость за quantity_price единиц
-        quantity_price:
+          description: Стоимость продукта
+        quantity_per_price:
           type: number
           exclusiveMinimum: 0
           description: Количество единиц, за которое указана цена
         measurement_unit_id:
           type: integer
           description: ID единицы измерения из справочника
+        family_id:
+          type: integer
+          nullable: true
+          description: ID семьи, которой принадлежит продукт. Если не указан — продукт принадлежит только пользователю
+        g_measure:
+          type: number
+          exclusiveMinimum: 0
+          nullable: true
+          description: Масса продукта в граммах, соответствующая одной единице measurement_unit_id
+        ml_measure:
+          type: number
+          exclusiveMinimum: 0
+          nullable: true
+          description: Объём продукта в миллилитрах, соответствующий одной единице measurement_unit_id
+        pcs_measure:
+          type: number
+          exclusiveMinimum: 0
+          nullable: true
+          description: Количество штук продукта, соответствующее одной единице measurement_unit_id
+        is_public:
+          type: boolean
+          default: false
+          description: Доступен ли продукт другим пользователям
     Recipe:
       type: object
       properties:
@@ -467,16 +563,18 @@ components:
           description: Время приготовления в минутах
         portions:
           type: integer
-          nullable: true
           description: Количество порций
         isPublic:
           type: boolean
-          nullable: true
           description: Доступен ли рецепт другим пользователям
         pictureUrl:
           type: string
           nullable: true
           description: URL изображения рецепта
+        sourceUrl:
+          type: string
+          nullable: true
+          description: Ссылка на источник рецепта
         createdAt:
           type: string
           format: date
@@ -660,7 +758,7 @@ components:
           type: integer
         name:
           type: string
-          maxLength: 32
+          maxLength: 128
         image:
           type: string
           nullable: true
@@ -685,3 +783,30 @@ components:
         calories:
           type: number
           description: Калории на 100 г продукта
+        priceFromProductId:
+          type: integer
+          nullable: true
+          description: ID продукта, от которого наследуется цена
+        nutritionsFromProductId:
+          type: integer
+          nullable: true
+          description: ID продукта, от которого наследуются нутриенты
+    UserMe:
+      type: object
+      properties:
+        login:
+          type: string
+          description: Логин пользователя
+        name:
+          type: string
+          description: Отображаемое имя пользователя
+    UpdateUserMe:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Новое отображаемое имя (без спецсимволов, кроме «-»)

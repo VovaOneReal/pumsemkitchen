@@ -1,11 +1,8 @@
 import { db } from '~~/server/utils/db'
 
-export default defineEventHandler(async (event) => {
-  // Сессия гарантирована server/middleware/auth.ts
-  const { user } = await getUserSession(event)
-
+export default defineEventHandler(async () => {
   const rows = await db.query.products.findMany({
-    where: (p, { eq }) => eq(p.userId, user.userId),
+    where: (p, { eq }) => eq(p.isPublic, true),
     with: { measurementUnitsRef: true },
   })
 
@@ -20,5 +17,7 @@ export default defineEventHandler(async (event) => {
     fat: Number(p.fats ?? 0),
     carbs: Number(p.carbs ?? 0),
     calories: 0,
+    priceFromProductId: p.priceFromProductId,
+    nutritionsFromProductId: p.nutritionsFromProductId,
   }))
 })

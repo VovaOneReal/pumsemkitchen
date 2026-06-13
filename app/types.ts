@@ -20,9 +20,10 @@ export type Recipe = {
   title: string
   description: string | null
   cookingTimeMin: number | null
-  portions: number | null
-  isPublic: boolean | null
+  portions: number
+  isPublic: boolean
   pictureUrl: string | null
+  sourceUrl: string | null
   createdAt: string
   editedAt: string
   authorName: string
@@ -44,4 +45,15 @@ export type Product = {
   fat: number
   carbs: number
   calories: number
+  // Поля из обновлённой схемы БД
+  isPublic?: boolean
+  authorName?: string
+  createdAt?: string
+  modifierName?: string
+  updatedAt?: string
+  nutritionsFromProductName?: string | null
+  priceFromProductName?: string | null
+  conversionGrams?: number
+  conversionMl?: number | null
+  conversionPieces?: number | null
 }

@@ -15,6 +15,7 @@
 </template>
 
 <script lang="ts" setup>
+useHead({ title: 'Вход' })
 import axios from 'axios'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { LoginForm } from '~~/schemas/auth'

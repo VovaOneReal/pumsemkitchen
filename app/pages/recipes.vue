@@ -3,7 +3,7 @@
     <div v-if="$route.path == '/recipes'" class="flex flex-col w-full gap-4">
       <div class="flex items-center justify-between w-full">
         <h2 class="ui-header-2">Рецепты</h2>
-        <UButton label="+ Создать" @click="onCreate" />
+        <UButton leading-icon="i-lucide-plus" label="Создать" @click="onCreate" />
       </div>
       <div class="flex gap-2 items-center">
         <UInput
@@ -52,6 +52,7 @@
 </template>
 
 <script lang="ts" setup>
+useHead({ title: 'Рецепты' })
 import RecipeCard from '@/components/RecipeCard.vue'
 import { ref, computed, onMounted } from 'vue'
 
@@ -74,7 +75,9 @@ onMounted(fetchRecipes)
 // Повторно загружаем рецепты при возврате на страницу списка (например, после создания)
 watch(
   () => route.path,
-  (path) => { if (path === '/recipes') fetchRecipes() },
+  (path) => {
+    if (path === '/recipes') fetchRecipes()
+  },
 )
 
 const filteredRecipes = computed(() => {

@@ -4,3 +4,7 @@
     <p class="text-xl font-semibold">Выберите пункт меню, чтобы начать</p>
   </div>
 </template>
+
+<script lang="ts" setup>
+useHead({ title: 'Система планирования питания' })
+</script>

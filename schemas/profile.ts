@@ -5,7 +5,8 @@ const requiredString = z.string({ error: 'Пожалуйста, заполнит
 export const displayNameSchema = z.object({
   displayName: requiredString
     .min(1, 'Имя должно содержать от 1 до 32 символов')
-    .max(32, 'Имя должно содержать от 1 до 32 символов'),
+    .max(32, 'Имя должно содержать от 1 до 32 символов')
+    .regex(/^[^!@#$%^&*()+=[\]{};':"\\|,.<>/?`~]*$/, 'Имя не должно содержать спецсимволы, кроме «-»'),
 })
 
 export const changePasswordSchema = z.object({

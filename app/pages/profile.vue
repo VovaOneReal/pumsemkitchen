@@ -28,14 +28,12 @@
         <UInput v-model="nameForm.displayName" class="w-full" />
       </UFormField>
       <p class="text-sm text-gray-500 mt-1 mb-3">Пользователи будут видеть вас под этим именем</p>
-      <!-- TODO: временно отключено до реализации API -->
       <div class="flex justify-end">
         <UButton
           type="submit"
           label="Обновить имя"
           variant="outline"
           color="primary"
-          :disabled="true"
         />
       </div>
     </UForm>
@@ -54,7 +52,6 @@
           <UInput v-model="passwordForm.confirmPassword" type="password" class="w-full" />
         </UFormField>
       </div>
-      <!-- TODO: временно отключено до реализации API -->
       <div class="flex justify-end mt-4">
         <UButton
           type="submit"
@@ -67,13 +64,11 @@
     </UForm>
 
     <!-- Удалить профиль -->
-    <!-- TODO: временно отключено до реализации API -->
     <div class="mt-8">
       <UButton
         icon="i-lucide-trash"
         label="Удалить профиль"
         color="error"
-        disabled
         @click="isDeleteModalOpen = true"
       />
     </div>
@@ -100,9 +95,10 @@
 </template>
 
 <script lang="ts" setup>
+useHead({ title: 'Профиль' })
 import { displayNameSchema, changePasswordSchema } from '~~/schemas/profile'
 
-const { user } = useUserSession()
+const { user, fetch: refreshSession } = useUserSession()
 const toast = useToast()
 
 // Логин
@@ -116,8 +112,14 @@ const originalDisplayName = ref(user.value?.name ?? '')
 const nameForm = reactive({ displayName: user.value?.name ?? '' })
 
 async function onUpdateName() {
-  // TODO: отправить PATCH /api/profile/display-name
-  originalDisplayName.value = nameForm.displayName
+  try {
+    await $fetch('/api/users/me', { method: 'PATCH', body: { name: nameForm.displayName } })
+    await refreshSession()
+    originalDisplayName.value = nameForm.displayName
+    toast.add({ title: 'Имя успешно обновлено', color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка при обновлении имени', color: 'error' })
+  }
 }
 
 // Смена пароля
@@ -147,6 +149,12 @@ const isDeleteModalOpen = ref(false)
 
 async function onDeleteProfile() {
   isDeleteModalOpen.value = false
-  // TODO: отправить DELETE /api/profile
+  try {
+    await $fetch('/api/users/me', { method: 'DELETE' })
+    toast.add({ title: 'Профиль успешно удалён', color: 'success' })
+    await navigateTo('/signup')
+  } catch {
+    toast.add({ title: 'Ошибка при удалении профиля', color: 'error' })
+  }
 }
 </script>
