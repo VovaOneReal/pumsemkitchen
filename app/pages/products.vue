@@ -14,11 +14,7 @@
 
     <UTable :data="filteredProducts" :columns="columns" :empty="emptyText">
       <template #isPublic-cell="{ row }">
-        <UIcon
-          v-if="row.original.isPublic"
-          name="i-lucide-earth"
-          class="text-primary w-5 h-5"
-        />
+        <UIcon v-if="row.original.isPublic" name="i-lucide-earth" class="text-primary w-5 h-5" />
       </template>
 
       <template #name-cell="{ row }">
@@ -67,8 +63,8 @@
 
           <div class="flex gap-6">
             <!-- Изображение и кнопки действий -->
-            <div class="flex flex-col gap-3 shrink-0">
-              <!-- TODO: изображение продукта
+            <!-- <div class="flex flex-col gap-3 shrink-0"> -->
+            <!-- TODO: изображение продукта
               <AppImage
                 :src="selectedProduct?.image ?? undefined"
                 :placeholder="!selectedProduct?.image"
@@ -77,23 +73,7 @@
                 class="w-48 h-48 rounded-lg"
               />
               -->
-              <div class="flex gap-2">
-                <UButton
-                  label="Редактировать"
-                  icon="i-lucide-pencil"
-                  color="primary"
-                  variant="soft"
-                  class="flex-1"
-                  @click="openEditFromView"
-                />
-                <UButton
-                  icon="i-lucide-trash-2"
-                  color="error"
-                  variant="soft"
-                  @click="openDeleteFromView"
-                />
-              </div>
-            </div>
+            <!-- </div> -->
 
             <!-- Информация о продукте -->
             <div class="flex flex-col gap-4 flex-1 min-w-0">
@@ -181,6 +161,22 @@
                   </div>
                 </div>
               </div>
+              <div class="flex gap-2">
+                <UButton
+                  label="Редактировать"
+                  icon="i-lucide-pencil"
+                  color="primary"
+                  variant="soft"
+                  block
+                  @click="openEditFromView"
+                />
+                <UButton
+                  icon="i-lucide-trash-2"
+                  color="error"
+                  variant="soft"
+                  @click="openDeleteFromView"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -243,10 +239,7 @@
                         @update:open="(open: boolean) => open && fetchPublicProducts()"
                       />
                     </div>
-                    <UFormField
-                      name="proteins"
-                      class="flex items-center justify-between gap-2"
-                    >
+                    <UFormField name="proteins" class="flex items-center justify-between gap-2">
                       <template #label>
                         <span class="text-sm">Белки (г)</span>
                       </template>
@@ -521,11 +514,7 @@ function calcCalories(protein: number, fat: number, carbs: number): number {
 }
 
 const editCalories = computed(() =>
-  calcCalories(
-    editForm.value.proteins ?? 0,
-    editForm.value.fats ?? 0,
-    editForm.value.carbs ?? 0,
-  ),
+  calcCalories(editForm.value.proteins ?? 0, editForm.value.fats ?? 0, editForm.value.carbs ?? 0),
 )
 
 const viewConversionText = computed(() => {
@@ -718,7 +707,9 @@ async function onFormSubmit() {
       quantity_per_price: editForm.value.quantity_per_price!,
       measurement_unit_id: editForm.value.measurement_unit_id!,
       // Поля конвертации передаются только при активных галочках
-      ...(specifyVolume.value || specifyPieces.value ? { g_measure: editForm.value.g_measure } : {}),
+      ...(specifyVolume.value || specifyPieces.value
+        ? { g_measure: editForm.value.g_measure }
+        : {}),
       ...(specifyVolume.value ? { ml_measure: editForm.value.ml_measure ?? undefined } : {}),
       ...(specifyPieces.value ? { pcs_measure: editForm.value.pcs_measure ?? undefined } : {}),
     }
