@@ -86,6 +86,8 @@ export default defineEventHandler(async (event) => {
     fat: Number(row!.fats ?? 0),
     carbs: Number(row!.carbs ?? 0),
     calories: 0,
+    isPublic: row!.isPublic,
+    isOwn: row!.userId === user.userId,
     measures: row!.productMeasuresInUnits.map((m) => ({
       unitId: m.measurementUnitId,
       unitName: m.measurementUnitsRef.unitName,

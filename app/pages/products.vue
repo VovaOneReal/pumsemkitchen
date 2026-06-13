@@ -27,7 +27,7 @@
       </template>
 
       <template #actions-cell="{ row }">
-        <div v-if="row.original.isOwn" class="flex gap-1">
+        <div v-if="row.original.isOwn || isAdmin" class="flex gap-1">
           <UButton
             icon="i-lucide-pencil"
             variant="subtle"
@@ -161,7 +161,7 @@
                   </div>
                 </div>
               </div>
-              <div class="flex gap-2">
+              <div v-if="selectedProduct?.isOwn || isAdmin" class="flex gap-2">
                 <UButton
                   label="Редактировать"
                   icon="i-lucide-pencil"
@@ -226,19 +226,6 @@
                   <div class="flex flex-col gap-2">
                     <p class="font-semibold text-sm">Пищевая ценность</p>
                     <p class="text-xs text-gray-500">на 100 г продукта</p>
-                    <div class="flex items-center justify-between gap-2 text-sm">
-                      <span class="shrink-0">Использовать из публичного продукта</span>
-                      <USelectMenu
-                        v-model="editForm.nutritions_from_product_id"
-                        :items="nutritionItems"
-                        :loading="publicProductsLoading"
-                        searchable
-                        placeholder="Свои значения"
-                        class="w-40"
-                        :searchInput="{ placeholder: 'Поиск...', variant: 'none' }"
-                        @update:open="(open: boolean) => open && fetchPublicProducts()"
-                      />
-                    </div>
                     <UFormField name="proteins" class="flex items-center justify-between gap-2">
                       <template #label>
                         <span class="text-sm">Белки (г)</span>
@@ -284,19 +271,6 @@
                   <!-- Стоимость -->
                   <div class="flex flex-col gap-2">
                     <p class="font-semibold text-sm">Стоимость</p>
-                    <div class="flex items-center justify-between gap-2 text-sm">
-                      <span class="shrink-0">Использовать из публичного продукта</span>
-                      <USelectMenu
-                        v-model="editForm.price_from_product_id"
-                        :items="priceItems"
-                        :loading="publicProductsLoading"
-                        searchable
-                        placeholder="Свои значения"
-                        :searchInput="{ placeholder: 'Поиск...', variant: 'none' }"
-                        class="w-40"
-                        @update:open="(open: boolean) => open && fetchPublicProducts()"
-                      />
-                    </div>
                     <div class="flex items-center gap-2 flex-wrap">
                       <UFormField name="user_price">
                         <UInputNumber
@@ -459,8 +433,6 @@ interface EditForm {
   quantity_per_price: number | null
   measurement_unit_id: number | null
   is_public: boolean
-  nutritions_from_product_id: number | null
-  price_from_product_id: number | null
   g_measure: number
   ml_measure: number | null
   pcs_measure: number | null
@@ -493,20 +465,12 @@ const editForm = ref<EditForm>({
   quantity_per_price: 0,
   measurement_unit_id: null,
   is_public: false,
-  nutritions_from_product_id: null,
-  price_from_product_id: null,
   g_measure: 100,
   ml_measure: 100,
   pcs_measure: 1,
 })
 
 const { products, fetchProducts, createProduct, updateProduct, deleteProduct } = useProducts()
-const {
-  loading: publicProductsLoading,
-  fetchPublicProducts,
-  nutritionItems,
-  priceItems,
-} = usePublicProducts()
 const { measurements, loading: measurementsLoading, fetchMeasurements } = useMeasurements()
 
 function calcCalories(protein: number, fat: number, carbs: number): number {
@@ -518,16 +482,9 @@ const editCalories = computed(() =>
 )
 
 const viewConversionText = computed(() => {
-  if (!selectedProduct.value) return '100 г = 100 мл = 1 шт'
-  const g = selectedProduct.value.conversionGrams ?? 100
-  const parts: string[] = [`${g} г`]
-  if (selectedProduct.value.conversionMl != null)
-    parts.push(`${selectedProduct.value.conversionMl} мл`)
-  else parts.push('100 мл')
-  if (selectedProduct.value.conversionPieces != null)
-    parts.push(`${selectedProduct.value.conversionPieces} шт`)
-  else parts.push('1 шт')
-  return parts.join(' = ')
+  const measures = selectedProduct.value?.measures ?? []
+  if (measures.length === 0) return 'Не указана'
+  return measures.map(m => `${m.amount} ${m.unitAbbr}`).join(' = ')
 })
 
 // Список единиц для раздела "Стоимость" — фильтруется по выбранным галочкам конвертации
@@ -622,8 +579,6 @@ function openCreate() {
     quantity_per_price: 0,
     measurement_unit_id: null,
     is_public: false,
-    nutritions_from_product_id: null,
-    price_from_product_id: null,
     g_measure: 100,
     ml_measure: 100,
     pcs_measure: 1,
@@ -636,6 +591,11 @@ function openCreate() {
 
 async function openEdit(product: Product) {
   editingProduct.value = product
+  const gMeasure = product.measures?.find(m => m.unitName === 'граммы')
+  const mlMeasure = product.measures?.find(m => m.unitName === 'миллилитры')
+  const pcsMeasure = product.measures?.find(m => m.unitName === 'штуки')
+  specifyVolume.value = mlMeasure != null
+  specifyPieces.value = pcsMeasure != null
   editForm.value = {
     image: product.image,
     title: product.name,
@@ -644,19 +604,13 @@ async function openEdit(product: Product) {
     carbs: product.carbs,
     user_price: product.priceRub,
     quantity_per_price: product.priceQty,
-    measurement_unit_id: null,
+    measurement_unit_id: product.measurementUnitId ?? null,
     is_public: product.isPublic ?? false,
-    nutritions_from_product_id: null,
-    price_from_product_id: null,
-    g_measure: product.conversionGrams ?? 100,
-    ml_measure: product.conversionMl ?? 100,
-    pcs_measure: product.conversionPieces ?? 1,
+    g_measure: gMeasure?.amount ?? 100,
+    ml_measure: mlMeasure?.amount ?? 100,
+    pcs_measure: pcsMeasure?.amount ?? 1,
   }
-  specifyVolume.value = product.conversionMl != null
-  specifyPieces.value = product.conversionPieces != null
   await fetchMeasurements()
-  const unit = measurements.value.find((m) => m.unit_name === product.priceUnit)
-  editForm.value.measurement_unit_id = unit?.measurement_unit_id ?? null
   showEditModal.value = true
 }
 
@@ -706,12 +660,11 @@ async function onFormSubmit() {
       user_price: editForm.value.user_price!,
       quantity_per_price: editForm.value.quantity_per_price!,
       measurement_unit_id: editForm.value.measurement_unit_id!,
-      // Поля конвертации передаются только при активных галочках
-      ...(specifyVolume.value || specifyPieces.value
-        ? { g_measure: editForm.value.g_measure }
-        : {}),
-      ...(specifyVolume.value ? { ml_measure: editForm.value.ml_measure ?? undefined } : {}),
-      ...(specifyPieces.value ? { pcs_measure: editForm.value.pcs_measure ?? undefined } : {}),
+      is_public: editForm.value.is_public,
+      // null если галочка снята — сервер фильтрует null и не создаёт запись
+      g_measure: (specifyVolume.value || specifyPieces.value) ? editForm.value.g_measure : null,
+      ml_measure: specifyVolume.value ? editForm.value.ml_measure : null,
+      pcs_measure: specifyPieces.value ? editForm.value.pcs_measure : null,
     }
     if (editingProduct.value) {
       await updateProduct(editingProduct.value.id, body)

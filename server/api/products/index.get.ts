@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
     calories: 0,
     isPublic: p.isPublic,
     isOwn: true,
+    measurementUnitId: p.measurementUnitId,
     measures: p.productMeasuresInUnits.map((m) => ({
       unitId: m.measurementUnitId,
       unitName: m.measurementUnitsRef.unitName,

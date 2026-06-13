@@ -60,7 +60,10 @@ export default defineEventHandler(async (event) => {
 
   const row = await db.query.products.findFirst({
     where: (p, { eq }) => eq(p.productId, created.productId),
-    with: { measurementUnitsRef: true },
+    with: {
+      measurementUnitsRef: true,
+      productMeasuresInUnits: { with: { measurementUnitsRef: true } },
+    },
   })
 
   return {
@@ -74,5 +77,13 @@ export default defineEventHandler(async (event) => {
     fat: Number(row!.fats ?? 0),
     carbs: Number(row!.carbs ?? 0),
     calories: 0,
+    isPublic: row!.isPublic,
+    isOwn: true,
+    measures: row!.productMeasuresInUnits.map((m) => ({
+      unitId: m.measurementUnitId,
+      unitName: m.measurementUnitsRef.unitName,
+      unitAbbr: m.measurementUnitsRef.unitAbbr,
+      amount: Number(m.productMeasureAmount),
+    })),
   }
 })

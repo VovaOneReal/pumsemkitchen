@@ -29,7 +29,8 @@ export const useProducts = () => {
 
   const updateProduct = async (id: number, body: UpdateProductForm) => {
     const updated = await $fetch<Product>(`/api/products/${id}`, { method: 'PATCH', body })
-    products.value = products.value.map(p => (p.id === id ? updated : p))
+    // Мёрж сохраняет поля isOwn/isPublic из исходного объекта
+    products.value = products.value.map(p => p.id === id ? { ...p, ...updated } : p)
     return updated
   }
 

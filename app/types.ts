@@ -54,6 +54,7 @@ export type Product = {
   calories: number
   isPublic?: boolean
   isOwn?: boolean
+  measurementUnitId?: number
   authorName?: string
   createdAt?: string
   modifierName?: string

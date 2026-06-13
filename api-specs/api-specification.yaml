@@ -57,7 +57,8 @@ paths:
       summary: Список публичных продуктов
       description: >
         Возвращает все продукты с флагом is_public = true.
-        Не требует аутентификации.
+        Не требует авторизации. isOwn всегда false.
+        Дополнительно включает measurementUnitId, priceFromProductId, nutritionsFromProductId.
       responses:
         "200":
           description: Массив публичных продуктов
@@ -66,12 +67,28 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Product"
+                  allOf:
+                    - $ref: "#/components/schemas/ProductResponse"
+                    - type: object
+                      properties:
+                        measurementUnitId:
+                          type: integer
+                          description: ID основной единицы измерения продукта
+                        priceFromProductId:
+                          type: integer
+                          nullable: true
+                          description: ID продукта-источника цены
+                        nutritionsFromProductId:
+                          type: integer
+                          nullable: true
+                          description: ID продукта-источника КБЖУ
+        "401":
+          description: Пользователь не авторизован
   /products:
     get:
       summary: Список продуктов пользователя
       description: >
-        Возвращает все продукты, принадлежащие аутентифицированному пользователю.
+        Возвращает все продукты, принадлежащие аутентифицированному пользователю (isOwn: true).
         Требует активной сессии (cookie).
       responses:
         "200":
@@ -81,7 +98,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Product"
+                  $ref: "#/components/schemas/ProductResponse"
         "401":
           description: Пользователь не авторизован
     post:
@@ -102,7 +119,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Product"
+                $ref: "#/components/schemas/ProductResponse"
         "401":
           description: Пользователь не авторизован
         "422":
@@ -111,7 +128,7 @@ paths:
     get:
       summary: Получить продукт по ID
       description: >
-        Возвращает продукт по его ID.
+        Возвращает продукт по его ID вместе с мерами конвертации.
         Пользователь может получить только свой продукт.
         Требует активной сессии (cookie).
       parameters:
@@ -127,7 +144,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Product"
+                $ref: "#/components/schemas/ProductResponse"
         "401":
           description: Пользователь не авторизован
         "403":
@@ -159,7 +176,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Product"
+                $ref: "#/components/schemas/ProductResponse"
         "401":
           description: Пользователь не авторизован
         "404":
@@ -525,7 +542,6 @@ components:
           description: ID единицы измерения из справочника
         family_id:
           type: integer
-          nullable: true
           description: ID семьи, которой принадлежит продукт. Если не указан — продукт принадлежит только пользователю
         g_measure:
           type: number
@@ -751,74 +767,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CreateRecipeStepData"
-    Product:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-          maxLength: 128
-        image:
-          type: string
-          nullable: true
-        priceRub:
-          type: number
-          description: Цена в рублях
-        priceQty:
-          type: number
-          description: Количество единиц, за которое указана цена
-        priceUnit:
-          type: string
-          description: Единица измерения (название из measurement_units)
-        protein:
-          type: number
-          description: Белки на 100 г продукта
-        fat:
-          type: number
-          description: Жиры на 100 г продукта
-        carbs:
-          type: number
-          description: Углеводы на 100 г продукта
-        calories:
-          type: number
-          description: Калории на 100 г продукта
-        measures:
-          type: array
-          description: Пропорции продукта в базовых единицах измерения
-          items:
-            type: object
-            properties:
-              unitId:
-                type: integer
-              unitName:
-                type: string
-              unitAbbr:
-                type: string
-              amount:
-                type: number
-                description: Количество единиц, соответствующее одной единице measurement_unit_id продукта
-        isPublic:
-          type: boolean
-          description: Доступен ли продукт другим пользователям
-        isOwn:
-          type: boolean
-          description: Принадлежит ли продукт текущему пользователю
-        priceFromProductId:
-          type: integer
-          nullable: true
-          description: ID продукта, от которого наследуется цена
-        nutritionsFromProductId:
-          type: integer
-          nullable: true
-          description: ID продукта, от которого наследуются нутриенты
-        measures:
-          type: array
-          description: Конвертационные величины из таблицы product_measures_in_units
-          items:
-            $ref: "#/components/schemas/ProductMeasure"
     ProductMeasure:
       type: object
+      description: Запись конвертации из таблицы product_measures_in_units
+      required: [unitId, unitName, unitAbbr]
       properties:
         unitId:
           type: integer
@@ -832,7 +784,52 @@ components:
         amount:
           type: number
           nullable: true
-          description: Количество данной единицы, соответствующее одной базовой единице продукта
+          description: Количество данной единицы, эквивалентное одной основной единице продукта
+    ProductResponse:
+      type: object
+      description: Ответ GET-запросов для продуктов
+      required: [id, name, priceRub, priceQty, priceUnit, protein, fat, carbs, calories, isPublic, isOwn, measures]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          maxLength: 128
+        image:
+          type: string
+          nullable: true
+        priceRub:
+          type: number
+          description: Цена (userPrice, либо quantityPerPrice если userPrice не задан)
+        priceQty:
+          type: number
+          description: Количество единиц, за которое указана цена (quantityPerPrice)
+        priceUnit:
+          type: string
+          description: Аббревиатура основной единицы измерения (unitAbbr из measurement_units_ref)
+        protein:
+          type: number
+          description: Белки на 100 г продукта
+        fat:
+          type: number
+          description: Жиры на 100 г продукта
+        carbs:
+          type: number
+          description: Углеводы на 100 г продукта
+        calories:
+          type: number
+          description: Всегда 0 — поле отсутствует в схеме БД, зарезервировано
+        isPublic:
+          type: boolean
+          description: Доступен ли продукт другим пользователям
+        isOwn:
+          type: boolean
+          description: true — продукт принадлежит текущему пользователю, false — публичный чужой
+        measures:
+          type: array
+          description: Конвертационные пропорции из product_measures_in_units
+          items:
+            $ref: "#/components/schemas/ProductMeasure"
     UserMe:
       type: object
       properties:
