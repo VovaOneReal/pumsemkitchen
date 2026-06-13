@@ -17,6 +17,8 @@ export default defineEventHandler(async () => {
     fat: Number(p.fats ?? 0),
     carbs: Number(p.carbs ?? 0),
     calories: 0,
+    isPublic: true,
+    isOwn: false,
     priceFromProductId: p.priceFromProductId,
     nutritionsFromProductId: p.nutritionsFromProductId,
   }))

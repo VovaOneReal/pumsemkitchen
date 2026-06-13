@@ -9,7 +9,13 @@ export const useProducts = () => {
     if (products.value.length > 0) return // кеш-гард: не делать повторный запрос
     loading.value = true
     try {
-      products.value = await $fetch<Product[]>('/api/products')
+      const [own, pub] = await Promise.all([
+        $fetch<Product[]>('/api/products'),
+        $fetch<Product[]>('/api/products/public'),
+      ])
+      // Собственные продукты приоритетны — перекрывают публичные с тем же id
+      const ownIds = new Set(own.map(p => p.id))
+      products.value = [...own, ...pub.filter(p => !ownIds.has(p.id))]
     } finally {
       loading.value = false
     }

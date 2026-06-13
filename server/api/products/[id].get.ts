@@ -8,7 +8,10 @@ export default defineEventHandler(async (event) => {
 
   const product = await db.query.products.findFirst({
     where: (p, { eq }) => eq(p.productId, id),
-    with: { measurementUnit: true },
+    with: {
+      measurementUnitsRef: true,
+      productMeasuresInUnits: { with: { measurementUnitsRef: true } },
+    },
   })
 
   if (!product) throw createError({ statusCode: 404, statusMessage: 'Not found' })
@@ -20,12 +23,20 @@ export default defineEventHandler(async (event) => {
     id: product.productId,
     name: product.title,
     image: null,
-    priceRub: Number(product.userPrice ?? product.quantityPrice),
-    priceQty: Number(product.quantityPrice),
-    priceUnit: product.measurementUnit.unitName,
-    protein: Number(product.userProteins ?? 0),
-    fat: Number(product.userFats ?? 0),
-    carbs: Number(product.userCarbs ?? 0),
-    calories: Number(product.userCalories ?? 0),
+    priceRub: Number(product.userPrice ?? product.quantityPerPrice ?? 0),
+    priceQty: Number(product.quantityPerPrice ?? 0),
+    priceUnit: product.measurementUnitsRef.unitAbbr,
+    protein: Number(product.proteins ?? 0),
+    fat: Number(product.fats ?? 0),
+    carbs: Number(product.carbs ?? 0),
+    calories: 0,
+    isPublic: product.isPublic,
+    isOwn: true,
+    measures: product.productMeasuresInUnits.map((m) => ({
+      unitId: m.measurementUnitId,
+      unitName: m.measurementUnitsRef.unitName,
+      unitAbbr: m.measurementUnitsRef.unitAbbr,
+      amount: m.productMeasureAmount !== null ? Number(m.productMeasureAmount) : null,
+    })),
   }
 })

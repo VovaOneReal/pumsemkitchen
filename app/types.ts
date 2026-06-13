@@ -34,6 +34,13 @@ export type RecipeDetail = Recipe & {
   steps: RecipeStep[]
 }
 
+export type ProductMeasure = {
+  unitId: number
+  unitName: string
+  unitAbbr: string
+  amount: number | null
+}
+
 export type Product = {
   id: number
   name: string
@@ -45,15 +52,13 @@ export type Product = {
   fat: number
   carbs: number
   calories: number
-  // Поля из обновлённой схемы БД
   isPublic?: boolean
+  isOwn?: boolean
   authorName?: string
   createdAt?: string
   modifierName?: string
   updatedAt?: string
   nutritionsFromProductName?: string | null
   priceFromProductName?: string | null
-  conversionGrams?: number
-  conversionMl?: number | null
-  conversionPieces?: number | null
+  measures: ProductMeasure[]
 }

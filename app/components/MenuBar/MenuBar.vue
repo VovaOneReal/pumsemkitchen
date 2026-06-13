@@ -48,6 +48,7 @@ const toast = useToast()
 async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
   await refreshSession()
+  clearNuxtState()
   toast.add({ title: 'Вы вышли из системы', color: 'success' })
   await navigateTo('/login')
 }
@@ -55,7 +56,7 @@ async function logout() {
 const topItems = computed(() => [
   ...(user.value?.role === 'admin'
     ? [
-        { label: 'Пользователи', icon: 'i-lucide-user-cog', to: '/users', disabled: true },
+        // { label: 'Пользователи', icon: 'i-lucide-user-cog', to: '/users', disabled: true },
         // { label: 'Меры измерений',  icon: 'i-lucide-scale',    to: '/measurement-units' },
       ]
     : []),

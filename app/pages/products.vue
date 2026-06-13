@@ -13,11 +13,11 @@
     />
 
     <UTable :data="filteredProducts" :columns="columns" :empty="emptyText">
-      <template #image-cell="{ row }">
-        <img
-          :src="row.original.image ?? 'https://placehold.co/40x40'"
-          alt=""
-          class="w-10 h-10 rounded-md object-cover"
+      <template #isPublic-cell="{ row }">
+        <UIcon
+          v-if="row.original.isPublic"
+          name="i-lucide-earth"
+          class="text-primary w-5 h-5"
         />
       </template>
 
@@ -31,7 +31,7 @@
       </template>
 
       <template #actions-cell="{ row }">
-        <div class="flex gap-1">
+        <div v-if="row.original.isOwn" class="flex gap-1">
           <UButton
             icon="i-lucide-pencil"
             variant="subtle"
@@ -589,7 +589,7 @@ onMounted(async () => {
 })
 
 const columns: TableColumn<Product>[] = [
-  { id: 'image', header: '' },
+  { id: 'isPublic', header: '' },
   { accessorKey: 'name', header: 'Название' },
   {
     accessorKey: 'priceRub',

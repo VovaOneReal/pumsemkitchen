@@ -783,6 +783,27 @@ components:
         calories:
           type: number
           description: Калории на 100 г продукта
+        measures:
+          type: array
+          description: Пропорции продукта в базовых единицах измерения
+          items:
+            type: object
+            properties:
+              unitId:
+                type: integer
+              unitName:
+                type: string
+              unitAbbr:
+                type: string
+              amount:
+                type: number
+                description: Количество единиц, соответствующее одной единице measurement_unit_id продукта
+        isPublic:
+          type: boolean
+          description: Доступен ли продукт другим пользователям
+        isOwn:
+          type: boolean
+          description: Принадлежит ли продукт текущему пользователю
         priceFromProductId:
           type: integer
           nullable: true
@@ -791,6 +812,27 @@ components:
           type: integer
           nullable: true
           description: ID продукта, от которого наследуются нутриенты
+        measures:
+          type: array
+          description: Конвертационные величины из таблицы product_measures_in_units
+          items:
+            $ref: "#/components/schemas/ProductMeasure"
+    ProductMeasure:
+      type: object
+      properties:
+        unitId:
+          type: integer
+          description: ID единицы измерения
+        unitName:
+          type: string
+          description: Полное название единицы измерения
+        unitAbbr:
+          type: string
+          description: Аббревиатура единицы измерения
+        amount:
+          type: number
+          nullable: true
+          description: Количество данной единицы, соответствующее одной базовой единице продукта
     UserMe:
       type: object
       properties:
