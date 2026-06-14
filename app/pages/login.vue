@@ -3,7 +3,7 @@
     <UAuthForm
       title="Сервис планирования питания"
       :fields="fields"
-      :submit="{ label: 'Войти', block: true }"
+      :submit="{ label: 'Войти', block: true, loading }"
       class="w-full max-w-sm"
       @submit="onSubmit"
     >
@@ -29,6 +29,8 @@ const route = useRoute()
 const toast = useToast()
 const { fetch: refreshSession } = useUserSession()
 
+const loading = ref(false)
+
 onMounted(() => {
   if (route.query.unauthorized) {
     toast.add({ title: 'Отказано в доступе', description: 'Пожалуйста, войдите в аккаунт.', color: 'error' })
@@ -51,6 +53,7 @@ const fields = [
 ]
 
 async function onSubmit(event: FormSubmitEvent<LoginForm>) {
+  loading.value = true
   try {
     await axios.post('/api/auth/login', event.data)
     await refreshSession()
@@ -60,6 +63,8 @@ async function onSubmit(event: FormSubmitEvent<LoginForm>) {
     if (axios.isAxiosError(error)) {
       toast.add({ title: error.response?.data?.statusMessage ?? 'Ошибка входа', color: 'error' })
     }
+  } finally {
+    loading.value = false
   }
 }
 </script>

@@ -4,7 +4,7 @@
       title="Сервис планирования питания"
       :fields="fields"
       :schema="signupSchema"
-      :submit="{ label: 'Зарегистрироваться', block: true }"
+      :submit="{ label: 'Зарегистрироваться', block: true, loading }"
       class="w-full max-w-sm"
       @submit="onSubmit"
     >
@@ -50,7 +50,10 @@ const fields = [
 const { fetch: refreshSession } = useUserSession()
 const toast = useToast()
 
+const loading = ref(false)
+
 async function onSubmit(event: FormSubmitEvent<SignupForm>) {
+  loading.value = true
   try {
     await $fetch('/api/auth/register', { method: 'POST', body: event.data })
     await refreshSession()
@@ -63,6 +66,8 @@ async function onSubmit(event: FormSubmitEvent<SignupForm>) {
       : statusCode === 400 ? 'Неверный пригласительный код'
       : 'Ошибка при регистрации'
     toast.add({ title: message, color: 'error' })
+  } finally {
+    loading.value = false
   }
 }
 </script>
