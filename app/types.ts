@@ -34,6 +34,18 @@ export type RecipeDetail = Recipe & {
   steps: RecipeStep[]
 }
 
+export type Menu = {
+  id: number
+  title: string
+  authorName: string
+  createdAt: string
+  editedAt: string
+  editorName: string | null
+  dateFrom: string | null
+  dateTo: string | null
+  estimatedCost: number | null
+}
+
 export type ProductMeasure = {
   unitId: number
   unitName: string

@@ -47,18 +47,8 @@
             </UPopover>
           </div>
           <div class="flex gap-2">
-            <UTooltip text="Добавить в коллекцию">
-              <UButton disabled variant="outline" class="flex-1 justify-center">
-                <template #leading><FolderPlus :size="16" /></template>
-              </UButton>
-            </UTooltip>
-            <UTooltip text="Настроить доступ">
-              <UButton disabled variant="outline" class="flex-1 justify-center">
-                <template #leading><Link2 :size="16" /></template>
-              </UButton>
-            </UTooltip>
             <UTooltip text="Добавить в меню питания">
-              <UButton disabled variant="outline" class="flex-1 justify-center">
+              <UButton variant="outline" class="flex-1 justify-center" @click="addToMenuOpen = true">
                 <template #leading><CalendarPlus :size="16" /></template>
               </UButton>
             </UTooltip>
@@ -69,6 +59,50 @@
             </UTooltip>
           </div>
         </div>
+
+        <!-- Модальное окно: Добавление в меню -->
+        <UModal v-model:open="addToMenuOpen">
+          <template #content>
+            <div class="p-6 flex flex-col gap-6">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">Добавление в меню</h2>
+                <UButton icon="i-lucide-x" variant="ghost" square size="sm" @click="addToMenuOpen = false" />
+              </div>
+              <div class="flex flex-col gap-4">
+                <UFormField label="Выберите меню" required>
+                  <USelect
+                    v-model="selectedMenu"
+                    :items="mockMenus"
+                    placeholder="Выберите меню..."
+                    class="w-full"
+                  />
+                </UFormField>
+                <UFormField v-if="selectedMenu" label="Выберите день меню" required>
+                  <USelect
+                    v-model="selectedDay"
+                    :items="mockDays"
+                    placeholder="Выберите день..."
+                    class="w-full"
+                  />
+                </UFormField>
+                <UFormField v-if="selectedDay" label="Выберите приём пищи" required>
+                  <USelect
+                    v-model="selectedMeal"
+                    :items="mockMeals"
+                    placeholder="Выберите приём пищи..."
+                    class="w-full"
+                  />
+                </UFormField>
+                <UFormField v-if="selectedMeal" label="Укажите число порций" required>
+                  <UInputNumber v-model="addPortions" :min="1" orientation="horizontal" class="w-full" />
+                </UFormField>
+              </div>
+              <div class="flex justify-end">
+                <UButton color="primary" :disabled="!selectedMeal">Добавить</UButton>
+              </div>
+            </div>
+          </template>
+        </UModal>
 
         <!-- Пищевая ценность -->
         <UCard v-if="false">
@@ -152,7 +186,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ArrowLeft, Pencil, Trash2, FolderPlus, Link2, CalendarPlus, ListPlus, Minus, Plus, Clock } from 'lucide-vue-next'
+import { ArrowLeft, Pencil, Trash2, CalendarPlus, ListPlus, Minus, Plus, Clock } from 'lucide-vue-next'
 import IngredientListElement from '@/components/IngredientListElement.vue'
 import NutritionProgressBar from '@/components/NutritionProgressBar.vue'
 import RecipeStep from '@/components/RecipeStep.vue'
@@ -164,6 +198,20 @@ const { currentRecipe, detailLoading, fetchRecipeById, deleteRecipe } = useRecip
 
 const deleting = ref(false)
 const deletePopoverOpen = ref(false)
+
+// Модалка: Добавление в меню
+const addToMenuOpen = ref(false)
+const selectedMenu = ref<string | null>(null)
+const selectedDay = ref<string | null>(null)
+const selectedMeal = ref<string | null>(null)
+const addPortions = ref(1)
+
+const mockMenus = ['Меню на неделю', 'Праздничное меню', 'Диетическое меню']
+const mockDays = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+const mockMeals = ['Завтрак', 'Обед', 'Ужин', 'Перекус']
+
+watch(selectedMenu, () => { selectedDay.value = null; selectedMeal.value = null })
+watch(selectedDay, () => { selectedMeal.value = null })
 
 async function onDelete() {
   if (!currentRecipe.value) return

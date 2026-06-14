@@ -457,8 +457,147 @@ paths:
           description: Сессия очищена
         "401":
           description: Нет активной сессии
+  /menus:
+    get:
+      summary: Список меню текущего пользователя
+      description: Возвращает все меню, созданные текущим пользователем, с датами периода.
+      responses:
+        "200":
+          description: Массив меню
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuResponse"
+        "401":
+          description: Не авторизован
+    post:
+      summary: Создание нового меню
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuForm"
+      responses:
+        "200":
+          description: Созданное меню
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuResponse"
+        "401":
+          description: Не авторизован
+        "422":
+          description: Ошибка валидации
+  /menus/{id}:
+    patch:
+      summary: Обновление меню
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuForm"
+      responses:
+        "200":
+          description: Обновлённое меню
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuResponse"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню не найдено
+        "422":
+          description: Ошибка валидации
+    delete:
+      summary: Удаление меню
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Меню удалено
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню не найдено
 components:
   schemas:
+    MenuForm:
+      type: object
+      required:
+        - title
+        - dateFrom
+        - dateTo
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Название меню
+        dateFrom:
+          type: string
+          format: date
+          description: Дата начала периода меню (YYYY-MM-DD)
+        dateTo:
+          type: string
+          format: date
+          description: Дата окончания периода меню (YYYY-MM-DD)
+    MenuResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID меню
+        title:
+          type: string
+          description: Название меню
+        authorName:
+          type: string
+          description: Имя автора
+        createdAt:
+          type: string
+          format: date
+          description: Дата создания
+        editedAt:
+          type: string
+          format: date
+          description: Дата последнего редактирования
+        editorName:
+          type: string
+          nullable: true
+          description: Имя последнего редактора
+        dateFrom:
+          type: string
+          format: date
+          nullable: true
+          description: Дата начала периода (min из plan_dates)
+        dateTo:
+          type: string
+          format: date
+          nullable: true
+          description: Дата окончания периода (max из plan_dates)
+        estimatedCost:
+          type: number
+          nullable: true
+          description: Примерная стоимость меню в рублях (всегда null — не реализовано)
     LoginData:
       type: object
       required:

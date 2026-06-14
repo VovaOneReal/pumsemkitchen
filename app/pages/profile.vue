@@ -32,8 +32,10 @@
         <UButton
           type="submit"
           label="Обновить имя"
-          variant="outline"
-          color="primary"
+          variant="subtle"
+          color="neutral"
+          :disabled="!isNameChanged"
+          :loading="isNameLoading"
         />
       </div>
     </UForm>
@@ -56,9 +58,10 @@
         <UButton
           type="submit"
           label="Сменить пароль"
-          variant="outline"
-          color="warning"
-          :disabled="true"
+          variant="subtle"
+          color="neutral"
+          :disabled="!isPasswordFormValid"
+          :loading="isPasswordLoading"
         />
       </div>
     </UForm>
@@ -110,8 +113,11 @@ async function copyLogin() {
 // Отображаемое имя
 const originalDisplayName = ref(user.value?.name ?? '')
 const nameForm = reactive({ displayName: user.value?.name ?? '' })
+const isNameChanged = computed(() => nameForm.displayName !== originalDisplayName.value)
+const isNameLoading = ref(false)
 
 async function onUpdateName() {
+  isNameLoading.value = true
   try {
     await $fetch('/api/users/me', { method: 'PATCH', body: { name: nameForm.displayName } })
     await refreshSession()
@@ -119,6 +125,8 @@ async function onUpdateName() {
     toast.add({ title: 'Имя успешно обновлено', color: 'success' })
   } catch {
     toast.add({ title: 'Ошибка при обновлении имени', color: 'error' })
+  } finally {
+    isNameLoading.value = false
   }
 }
 
@@ -129,19 +137,30 @@ const passwordForm = reactive({
   confirmPassword: '',
 })
 
-const isPasswordFormFilled = computed(
-  () =>
-    passwordForm.currentPassword.length > 0 &&
-    passwordForm.newPassword.length > 0 &&
-    passwordForm.confirmPassword.length > 0,
-)
+const isPasswordFormValid = computed(() => changePasswordSchema.safeParse(passwordForm).success)
+const isPasswordLoading = ref(false)
 
 async function onChangePassword() {
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    toast.add({ title: 'Пароли не совпадают', color: 'error' })
-    return
+  isPasswordLoading.value = true
+  try {
+    await $fetch('/api/users/me/password', {
+      method: 'PATCH',
+      body: {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      },
+    })
+    toast.add({ title: 'Пароль успешно изменён', color: 'success' })
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } catch (error: unknown) {
+    const statusCode = (error as { statusCode?: number }).statusCode
+    const message = statusCode === 400 ? 'Текущий пароль введён неверно' : 'Ошибка при смене пароля'
+    toast.add({ title: message, color: 'error' })
+  } finally {
+    isPasswordLoading.value = false
   }
-  // TODO: отправить PATCH /api/profile/password
 }
 
 // Удаление профиля

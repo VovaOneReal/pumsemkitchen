@@ -100,7 +100,7 @@ const topItems = computed(() => [
   { label: 'Семьи', icon: 'i-lucide-users', to: '/families' },
   { label: 'Рецепты', icon: 'i-lucide-utensils', to: '/recipes' },
   // { label: 'Коллекции', icon: 'i-lucide-folder-open', to: '/collections', disabled: true },
-  { label: 'Меню', icon: 'i-lucide-calendar-days', to: '/menu', disabled: true },
+  { label: 'Меню', icon: 'i-lucide-calendar-days', to: '/menu' },
   { label: 'Покупки', icon: 'i-lucide-list-checks', to: '/shopping' },
   { label: 'Продукты', icon: 'i-lucide-package', to: '/products' },
 ])
