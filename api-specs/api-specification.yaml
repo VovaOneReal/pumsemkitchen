@@ -402,6 +402,37 @@ paths:
                     type: boolean
         "401":
           description: Пользователь не авторизован
+  /users/me/password:
+    patch:
+      summary: Сменить пароль текущего пользователя
+      description: >
+        Проверяет совпадение currentPassword с паролем из БД.
+        При совпадении заменяет пароль на newPassword (bcrypt, 10 раундов).
+        Требует активной сессии (cookie).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordData"
+      responses:
+        "200":
+          description: Пароль успешно изменён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "400":
+          description: Текущий пароль введён неверно
+        "401":
+          description: Пользователь не авторизован
+        "404":
+          description: Пользователь не найден
+        "422":
+          description: Ошибка валидации входных данных
   /measurements:
     get:
       summary: Список единиц измерения
@@ -849,3 +880,19 @@ components:
           minLength: 1
           maxLength: 32
           description: Новое отображаемое имя (без спецсимволов, кроме «-»)
+    ChangePasswordData:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          minLength: 8
+          maxLength: 1024
+          description: Текущий пароль пользователя
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 1024
+          description: Новый пароль пользователя

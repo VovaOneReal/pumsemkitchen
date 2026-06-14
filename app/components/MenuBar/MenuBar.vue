@@ -4,6 +4,19 @@
       <div class="px-2 pb-4">
         <ServiceLogo :collapsed="false" />
       </div>
+
+      <!-- Выбор пространства: личное или семейное -->
+      <UDropdownMenu :items="workspaceItems" class="pb-2">
+        <UButton
+          :label="activeWorkspace.label"
+          trailing-icon="i-lucide-chevron-down"
+          variant="ghost"
+          color="neutral"
+          block
+          class="justify-between font-semibold"
+        />
+      </UDropdownMenu>
+
       <UButton
         v-for="item in topItems"
         :key="item.to"
@@ -45,6 +58,29 @@ const route = useRoute()
 const { user, fetch: refreshSession } = useUserSession()
 const toast = useToast()
 
+// Моканые пространства: личное + семьи
+const workspaces = [
+  { id: 'personal', label: 'Ваше пространство' },
+  { id: 'family-1', label: 'Семья Ивановых' },
+  { id: 'family-2', label: 'Семья Петровых' },
+]
+
+const activeWorkspaceId = ref('personal')
+const activeWorkspace = computed(
+  () => workspaces.find((w) => w.id === activeWorkspaceId.value) ?? workspaces[0],
+)
+
+const workspaceItems = computed(() =>
+  workspaces.map((w) => ({
+    label: w.label,
+    type: 'checkbox' as const,
+    checked: activeWorkspaceId.value === w.id,
+    onSelect() {
+      activeWorkspaceId.value = w.id
+    },
+  })),
+)
+
 async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
   await refreshSession()
@@ -61,7 +97,7 @@ const topItems = computed(() => [
       ]
     : []),
   { label: 'Профиль', icon: 'i-lucide-user', to: '/profile' },
-  { label: 'Семьи', icon: 'i-lucide-users', to: '/families', disabled: true },
+  { label: 'Семьи', icon: 'i-lucide-users', to: '/families' },
   { label: 'Рецепты', icon: 'i-lucide-utensils', to: '/recipes' },
   // { label: 'Коллекции', icon: 'i-lucide-folder-open', to: '/collections', disabled: true },
   { label: 'Меню', icon: 'i-lucide-calendar-days', to: '/menu', disabled: true },

@@ -9,3 +9,15 @@ export const updateUserSchema = z.object({
 })
 
 export type UpdateUserForm = z.infer<typeof updateUserSchema>
+
+const passwordField = z
+  .string({ error: 'Пожалуйста, заполните поле' })
+  .min(8, 'Пароль должен содержать не менее 8 символов')
+  .max(1024, 'Пароль не должен превышать 1024 символа')
+
+export const changePasswordSchema = z.object({
+  currentPassword: passwordField,
+  newPassword: passwordField,
+})
+
+export type ChangePasswordForm = z.infer<typeof changePasswordSchema>
