@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { db } from '~~/server/utils/db'
 import { products, productMeasuresInUnits, measurementUnitsRef } from '~~/db/schema'
 import { updateProductSchema } from '~~/schemas/product'
@@ -54,16 +54,34 @@ export default defineEventHandler(async (event) => {
       .filter((m): m is { unitId: number; amount: number } => m.unitId != null)
 
     if (measuresToUpsert.length > 0) {
-      await db.insert(productMeasuresInUnits)
-        .values(measuresToUpsert.map((m) => ({
-          productId: id,
-          measurementUnitId: m.unitId,
-          productMeasureAmount: String(m.amount),
-        })))
-        .onConflictDoUpdate({
-          target: [productMeasuresInUnits.productId, productMeasuresInUnits.measurementUnitId],
-          set: { productMeasureAmount: sql`excluded.product_measure_amount` },
-        })
+      const existingMeasures = await db
+        .select({ measurementUnitId: productMeasuresInUnits.measurementUnitId })
+        .from(productMeasuresInUnits)
+        .where(eq(productMeasuresInUnits.productId, id))
+
+      const existingUnitIds = new Set(existingMeasures.map((m) => m.measurementUnitId))
+
+      const toInsert = measuresToUpsert.filter((m) => !existingUnitIds.has(m.unitId))
+      const toUpdate = measuresToUpsert.filter((m) => existingUnitIds.has(m.unitId))
+
+      if (toInsert.length > 0) {
+        await db.insert(productMeasuresInUnits).values(
+          toInsert.map((m) => ({
+            productId: id,
+            measurementUnitId: m.unitId,
+            productMeasureAmount: String(m.amount),
+          })),
+        )
+      }
+
+      for (const m of toUpdate) {
+        await db.update(productMeasuresInUnits)
+          .set({ productMeasureAmount: String(m.amount) })
+          .where(and(
+            eq(productMeasuresInUnits.productId, id),
+            eq(productMeasuresInUnits.measurementUnitId, m.unitId),
+          ))
+      }
     }
   }
 
