@@ -33,6 +33,7 @@
             variant="subtle"
             color="primary"
             size="sm"
+            :loading="openingEditId === row.original.id"
             @click="openEdit(row.original)"
           />
           <UButton
@@ -81,36 +82,46 @@
                 <p class="text-lg font-bold">{{ selectedProduct?.name }}</p>
                 <!-- Бейджи: доступность, автор, даты -->
                 <div class="flex items-center gap-2 flex-wrap">
-                  <UBadge
-                    :label="(selectedProduct?.isPublic ?? true) ? 'Публичный' : 'Приватный'"
-                    :icon="(selectedProduct?.isPublic ?? true) ? 'i-lucide-globe' : 'i-lucide-lock'"
-                    variant="subtle"
-                    :color="(selectedProduct?.isPublic ?? true) ? 'success' : 'neutral'"
-                  />
-                  <UBadge
-                    :label="selectedProduct?.authorName ?? 'admin'"
-                    icon="i-lucide-user"
-                    variant="subtle"
-                    color="neutral"
-                  />
-                  <UBadge
-                    :label="selectedProduct?.createdAt ?? '20-10-2026'"
-                    icon="i-lucide-calendar"
-                    variant="subtle"
-                    color="neutral"
-                  />
-                  <UBadge
-                    :label="selectedProduct?.modifierName ?? 'admin'"
-                    icon="i-lucide-user"
-                    variant="subtle"
-                    color="neutral"
-                  />
-                  <UBadge
-                    :label="selectedProduct?.updatedAt ?? '21-10-2026'"
-                    icon="i-lucide-calendar"
-                    variant="subtle"
-                    color="neutral"
-                  />
+                  <UTooltip text="Видимость продукта для других пользователей">
+                    <UBadge
+                      :label="(selectedProduct?.isPublic ?? true) ? 'Публичный' : 'Приватный'"
+                      :icon="(selectedProduct?.isPublic ?? true) ? 'i-lucide-globe' : 'i-lucide-lock'"
+                      variant="subtle"
+                      :color="(selectedProduct?.isPublic ?? true) ? 'success' : 'neutral'"
+                    />
+                  </UTooltip>
+                  <UTooltip text="Автор продукта">
+                    <UBadge
+                      :label="selectedProduct?.authorName ?? '—'"
+                      icon="i-lucide-user"
+                      variant="subtle"
+                      color="neutral"
+                    />
+                  </UTooltip>
+                  <UTooltip text="Дата создания продукта">
+                    <UBadge
+                      :label="selectedProduct?.createdAt ?? '—'"
+                      icon="i-lucide-calendar"
+                      variant="subtle"
+                      color="neutral"
+                    />
+                  </UTooltip>
+                  <UTooltip text="Автор последнего изменения">
+                    <UBadge
+                      :label="selectedProduct?.modifierName ?? '—'"
+                      icon="i-lucide-user-pen"
+                      variant="subtle"
+                      color="neutral"
+                    />
+                  </UTooltip>
+                  <UTooltip text="Дата последнего изменения">
+                    <UBadge
+                      :label="selectedProduct?.updatedAt ?? '—'"
+                      icon="i-lucide-calendar-check"
+                      variant="subtle"
+                      color="neutral"
+                    />
+                  </UTooltip>
                 </div>
               </div>
 
@@ -135,6 +146,10 @@
                     <div class="flex justify-between gap-4">
                       <span class="text-gray-700">Углеводы</span>
                       <span>{{ selectedProduct?.carbs }} г</span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                      <span class="text-gray-700">Калории</span>
+                      <span>{{ calcCalories(selectedProduct?.protein ?? 0, selectedProduct?.fat ?? 0, selectedProduct?.carbs ?? 0) }} ккал</span>
                     </div>
                   </div>
                 </div>
@@ -168,6 +183,7 @@
                   color="primary"
                   variant="soft"
                   block
+                  :loading="openingEditId === selectedProduct?.id"
                   @click="openEditFromView"
                 />
                 <UButton
@@ -449,6 +465,7 @@ const showViewModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const saving = ref(false)
+const openingEditId = ref<number | null>(null)
 const specifyVolume = ref(false)
 const specifyPieces = ref(false)
 const selectedProduct = ref<Product | null>(null)
@@ -593,6 +610,7 @@ function openCreate() {
 }
 
 async function openEdit(product: Product) {
+  openingEditId.value = product.id
   editingProduct.value = product
   specifyVolume.value = product.mlMeasure != null
   specifyPieces.value = product.pcsMeasure != null
@@ -613,6 +631,7 @@ async function openEdit(product: Product) {
   await fetchMeasurements()
   // Устанавливаем единицу после загрузки справочника, чтобы вотч её не сбросил
   editForm.value.measurement_unit_id = product.measurementUnitId ?? null
+  openingEditId.value = null
   showEditModal.value = true
 }
 

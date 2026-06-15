@@ -135,16 +135,21 @@
         <div v-if="currentRecipe.ingredients.length" class="flex flex-col gap-3">
           <div class="flex items-center justify-between flex-wrap gap-2">
             <h3>Ингредиенты</h3>
-            <div class="flex items-center gap-2">
-              <span class="text-sm">Порции:</span>
-              <div class="flex items-center gap-1">
-                <UButton size="xs" variant="ghost" :disabled="portions <= 1" @click="portions--">
-                  <template #leading><Minus :size="14" /></template>
-                </UButton>
-                <span class="text-sm min-w-6 text-center">{{ portions }}</span>
-                <UButton size="xs" variant="ghost" @click="portions++">
-                  <template #leading><Plus :size="14" /></template>
-                </UButton>
+            <div class="flex items-center gap-3 flex-wrap">
+              <span v-if="totalCost !== undefined" class="text-sm text-muted">
+                ~{{ totalCost.toLocaleString('ru-RU') }} ₽
+              </span>
+              <div class="flex items-center gap-2">
+                <span class="text-sm">Порции:</span>
+                <div class="flex items-center gap-1">
+                  <UButton size="xs" variant="ghost" :disabled="portions <= 1" @click="portions--">
+                    <template #leading><Minus :size="14" /></template>
+                  </UButton>
+                  <span class="text-sm min-w-6 text-center">{{ portions }}</span>
+                  <UButton size="xs" variant="ghost" @click="portions++">
+                    <template #leading><Plus :size="14" /></template>
+                  </UButton>
+                </div>
               </div>
             </div>
           </div>
@@ -157,6 +162,7 @@
               :measure="ing.amountType"
               :optional="ing.isOptional"
               :note="ing.note ?? undefined"
+              :cost="ingredientCost(ing)"
             />
           </div>
         </div>
@@ -195,6 +201,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const { currentRecipe, detailLoading, fetchRecipeById, deleteRecipe } = useRecipes()
+const { products, fetchProducts } = useProducts()
 
 const deleting = ref(false)
 const deletePopoverOpen = ref(false)
@@ -236,6 +243,21 @@ function scaledAmount(baseAmount: number): number {
   return Math.round(baseAmount * (portions.value / basePortions.value) * 10) / 10
 }
 
+// Стоимость ингредиента: количество * цена / единица цены
+function ingredientCost(ing: { productId: number; amount: number; isOptional: boolean }): number | undefined {
+  if (ing.isOptional) return undefined
+  const product = products.value.find((p) => p.id === ing.productId)
+  if (!product || !product.priceQty) return undefined
+  return Math.round(scaledAmount(ing.amount) * product.priceRub / product.priceQty * 100) / 100
+}
+
+const totalCost = computed(() => {
+  if (!currentRecipe.value) return undefined
+  const costs = currentRecipe.value.ingredients.map((ing) => ingredientCost(ing))
+  if (costs.every((c) => c === undefined)) return undefined
+  return Math.round(costs.reduce((sum, c) => sum + (c ?? 0), 0) * 100) / 100
+})
+
 watch(
   () => route.query.id,
   (id) => {
@@ -247,4 +269,6 @@ watch(
   },
   { immediate: true },
 )
+
+onMounted(() => fetchProducts())
 </script>

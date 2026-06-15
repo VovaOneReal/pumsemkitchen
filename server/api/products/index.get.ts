@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   const rows = await db.query.products.findMany({
     where: (p, { eq }) => eq(p.userId, user.userId),
-    with: { measurementUnitsRef: true },
+    with: { measurementUnitsRef: true, user_userId: true, user_editUserId: true },
   })
 
   return rows.map((p) => ({
@@ -23,6 +23,10 @@ export default defineEventHandler(async (event) => {
     isPublic: p.isPublic,
     isOwn: true,
     measurementUnitId: p.measurementUnitId,
+    authorName: p.user_userId.name,
+    createdAt: p.createdAt,
+    modifierName: p.user_editUserId?.name ?? null,
+    updatedAt: p.editedAt,
     gMeasure: p.gMeasure !== null ? Number(p.gMeasure) : null,
     mlMeasure: p.mlMeasure !== null ? Number(p.mlMeasure) : null,
     pcsMeasure: p.pcsMeasure !== null ? Number(p.pcsMeasure) : null,

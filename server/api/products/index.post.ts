@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   const row = await db.query.products.findFirst({
     where: (p, { eq }) => eq(p.productId, created.productId),
-    with: { measurementUnitsRef: true },
+    with: { measurementUnitsRef: true, user_userId: true, user_editUserId: true },
   })
 
   return {
@@ -47,6 +47,10 @@ export default defineEventHandler(async (event) => {
     isPublic: row!.isPublic,
     isOwn: true,
     measurementUnitId: row!.measurementUnitId,
+    authorName: row!.user_userId.name,
+    createdAt: row!.createdAt,
+    modifierName: row!.user_editUserId?.name ?? null,
+    updatedAt: row!.editedAt,
     gMeasure: row!.gMeasure !== null ? Number(row!.gMeasure) : null,
     mlMeasure: row!.mlMeasure !== null ? Number(row!.mlMeasure) : null,
     pcsMeasure: row!.pcsMeasure !== null ? Number(row!.pcsMeasure) : null,

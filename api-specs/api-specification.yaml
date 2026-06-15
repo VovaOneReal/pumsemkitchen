@@ -985,6 +985,21 @@ components:
             ID основной единицы измерения (из measurement_units_ref).
             Присутствует в GET /products, GET /products/public, POST /products, PATCH /products/{id}.
             Отсутствует в GET /products/{id}.
+        authorName:
+          type: string
+          description: Отображаемое имя пользователя, создавшего продукт
+        createdAt:
+          type: string
+          format: date
+          description: Дата создания продукта (YYYY-MM-DD)
+        modifierName:
+          type: string
+          nullable: true
+          description: Отображаемое имя последнего редактора (null — если продукт не редактировался)
+        updatedAt:
+          type: string
+          format: date
+          description: Дата последнего изменения продукта (YYYY-MM-DD)
         gMeasure:
           type: number
           nullable: true

@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
   const product = await db.query.products.findFirst({
     where: (p, { eq }) => eq(p.productId, id),
-    with: { measurementUnitsRef: true },
+    with: { measurementUnitsRef: true, user_userId: true, user_editUserId: true },
   })
 
   if (!product) throw createError({ statusCode: 404, statusMessage: 'Not found' })
@@ -29,6 +29,10 @@ export default defineEventHandler(async (event) => {
     calories: 0,
     isPublic: product.isPublic,
     isOwn: true,
+    authorName: product.user_userId.name,
+    createdAt: product.createdAt,
+    modifierName: product.user_editUserId?.name ?? null,
+    updatedAt: product.editedAt,
     gMeasure: product.gMeasure !== null ? Number(product.gMeasure) : null,
     mlMeasure: product.mlMeasure !== null ? Number(product.mlMeasure) : null,
     pcsMeasure: product.pcsMeasure !== null ? Number(product.pcsMeasure) : null,
