@@ -194,19 +194,19 @@
         </UModal>
 
         <!-- Пищевая ценность -->
-        <UCard>
+        <UCard v-if="nutritionPer100g">
           <template #header>
             <div class="flex flex-col items-center gap-1">
               <p class="font-bold text-lg">Пищевая ценность</p>
-              <p class="text-sm text-muted">на 100 гр. сырых продуктов</p>
+              <p class="text-sm text-muted">на 100 г блюда</p>
             </div>
           </template>
           <template #default>
             <div class="flex flex-col gap-1">
-              <NutritionProgressBar type="proteins" label="Белки" :value="1.4" />
-              <NutritionProgressBar type="fats" label="Жиры" :value="1.4" />
-              <NutritionProgressBar type="carbs" label="Углеводы" :value="1.4" />
-              <NutritionProgressBar type="calories" label="Калорий" :value="1024" />
+              <NutritionProgressBar type="proteins" label="Белки"    :value="nutritionPer100g.protein"  />
+              <NutritionProgressBar type="fats"     label="Жиры"     :value="nutritionPer100g.fat"      />
+              <NutritionProgressBar type="carbs"    label="Углеводы" :value="nutritionPer100g.carbs"    />
+              <NutritionProgressBar type="calories" label="Калорий"  :value="nutritionPer100g.calories" />
             </div>
           </template>
         </UCard>
@@ -442,6 +442,38 @@ const totalCost = computed(() => {
   const costs = [...ingredientCosts.value.values()]
   if (costs.every(c => c === undefined)) return undefined
   return Math.round(costs.reduce((sum, c) => sum + (c ?? 0), 0) * 100) / 100
+})
+
+// КБЖУ блюда на 100 г (опциональные и неконвертируемые ингредиенты исключаются)
+const nutritionPer100g = computed(() => {
+  if (!currentRecipe.value) return null
+
+  let totalWeight = 0
+  let totalProtein = 0
+  let totalFat = 0
+  let totalCarbs = 0
+
+  for (const ing of currentRecipe.value.ingredients) {
+    if (ing.isOptional) continue
+    const product = products.value.find(p => p.id === ing.productId)
+    if (!product) continue
+    const grams = unitToGrams(ing.amount, ing.measurementUnitId, product)
+    if (grams === null) continue
+
+    totalWeight  += grams
+    totalProtein += (grams * product.protein) / 100
+    totalFat     += (grams * product.fat)     / 100
+    totalCarbs   += (grams * product.carbs)   / 100
+  }
+
+  if (totalWeight === 0) return null
+
+  const protein  = Math.round((totalProtein * 100) / totalWeight * 10) / 10
+  const fat      = Math.round((totalFat     * 100) / totalWeight * 10) / 10
+  const carbs    = Math.round((totalCarbs   * 100) / totalWeight * 10) / 10
+  const calories = Math.round((protein * 4 + fat * 9 + carbs * 4) * 10) / 10
+
+  return { protein, fat, carbs, calories }
 })
 
 watch(

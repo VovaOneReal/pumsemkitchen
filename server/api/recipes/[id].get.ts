@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
       isOptional: ing.isOptional,
       amount: Number(ing.quantity),
       measurementUnitId: ing.measurementUnitsRef.measurementUnitId,
-      amountType: ing.measurementUnitsRef.unitName,
+      amountType: ing.measurementUnitsRef.unitAbbr,
     })),
     steps: recipe.recipeSteps.map((s) => ({
       step: Number(s.order),
