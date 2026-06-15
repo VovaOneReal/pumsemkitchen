@@ -16,8 +16,11 @@ export default defineEventHandler(async (event) => {
 
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Not found' })
 
-  // Запрещаем обнулять меры продукта, если он используется хотя бы в одном рецепте
-  const isMeasureBeingNulled = body.g_measure === null || body.ml_measure === null || body.pcs_measure === null
+  // Запрещаем убирать ранее заданные меры, если продукт используется хотя бы в одном рецепте
+  const isMeasureBeingNulled =
+    (body.g_measure === null && existing.gMeasure !== null) ||
+    (body.ml_measure === null && existing.mlMeasure !== null) ||
+    (body.pcs_measure === null && existing.pcsMeasure !== null)
   if (isMeasureBeingNulled) {
     const usedInIngredient = await db.query.ingredients.findFirst({
       where: (i, { eq }) => eq(i.productId, id),
