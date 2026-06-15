@@ -104,6 +104,95 @@
           </template>
         </UModal>
 
+        <!-- Модальное окно: Карточка продукта -->
+        <UModal v-model:open="showProductModal" :ui="{ content: 'sm:max-w-3xl' }">
+          <template #content>
+            <div class="p-6 flex flex-col gap-5">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold">Карточка продукта</h3>
+                <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="showProductModal = false" />
+              </div>
+
+              <div class="flex gap-6">
+                <div class="flex flex-col gap-4 flex-1 min-w-0">
+                  <div class="flex flex-col gap-2">
+                    <p class="text-lg font-bold">{{ selectedViewProduct?.name }}</p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <UTooltip text="Видимость продукта для других пользователей">
+                        <UBadge
+                          :label="(selectedViewProduct?.isPublic ?? true) ? 'Публичный' : 'Приватный'"
+                          :icon="(selectedViewProduct?.isPublic ?? true) ? 'i-lucide-globe' : 'i-lucide-lock'"
+                          variant="subtle"
+                          :color="(selectedViewProduct?.isPublic ?? true) ? 'success' : 'neutral'"
+                        />
+                      </UTooltip>
+                      <UTooltip text="Автор продукта">
+                        <UBadge :label="selectedViewProduct?.authorName ?? '—'" icon="i-lucide-user" variant="subtle" color="neutral" />
+                      </UTooltip>
+                      <UTooltip text="Дата создания продукта">
+                        <UBadge :label="selectedViewProduct?.createdAt ?? '—'" icon="i-lucide-calendar" variant="subtle" color="neutral" />
+                      </UTooltip>
+                      <UTooltip text="Автор последнего изменения">
+                        <UBadge :label="selectedViewProduct?.modifierName ?? '—'" icon="i-lucide-user-pen" variant="subtle" color="neutral" />
+                      </UTooltip>
+                      <UTooltip text="Дата последнего изменения">
+                        <UBadge :label="selectedViewProduct?.updatedAt ?? '—'" icon="i-lucide-calendar-check" variant="subtle" color="neutral" />
+                      </UTooltip>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-6">
+                    <!-- Пищевая ценность -->
+                    <div class="flex flex-col gap-2">
+                      <p class="font-semibold text-sm">Пищевая ценность</p>
+                      <p v-if="selectedViewProduct?.nutritionsFromProductName" class="text-xs text-primary">
+                        Указаны значения из продукта {{ selectedViewProduct.nutritionsFromProductName }}
+                      </p>
+                      <p class="text-xs text-gray-500">на 100 г продукта</p>
+                      <div class="flex flex-col gap-1 text-sm">
+                        <div class="flex justify-between gap-4">
+                          <span class="text-gray-700">Белки</span>
+                          <span>{{ selectedViewProduct?.protein }} г</span>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                          <span class="text-gray-700">Жиры</span>
+                          <span>{{ selectedViewProduct?.fat }} г</span>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                          <span class="text-gray-700">Углеводы</span>
+                          <span>{{ selectedViewProduct?.carbs }} г</span>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                          <span class="text-gray-700">Калории</span>
+                          <span>{{ calcCalories(selectedViewProduct?.protein ?? 0, selectedViewProduct?.fat ?? 0, selectedViewProduct?.carbs ?? 0) }} ккал</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Конвертация + Стоимость -->
+                    <div class="flex flex-col gap-4">
+                      <div class="flex flex-col gap-1">
+                        <p class="font-semibold text-sm">Конвертация</p>
+                        <p class="text-sm">{{ viewConversionText }}</p>
+                      </div>
+                      <div class="flex flex-col gap-1">
+                        <p class="font-semibold text-sm">Стоимость</p>
+                        <p v-if="selectedViewProduct?.priceFromProductName" class="text-xs text-primary">
+                          Указана стоимость из публичного продукта {{ selectedViewProduct.priceFromProductName }}
+                        </p>
+                        <p class="text-sm">
+                          {{ selectedViewProduct?.priceRub }} ₽
+                          <span class="text-gray-500">&nbsp;за {{ selectedViewProduct?.priceQty }} {{ selectedViewProduct?.priceUnit }}.</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </UModal>
+
         <!-- Пищевая ценность -->
         <UCard>
           <template #header>
@@ -174,6 +263,7 @@
               :optional="ing.isOptional"
               :note="ing.note ?? undefined"
               :cost="ingredientCosts.get(ing.id)"
+              @name-click="openProductView(ing)"
             />
           </div>
         </div>
@@ -219,6 +309,30 @@ const { converts, fetchConverts } = useConverts()
 
 const deleting = ref(false)
 const deletePopoverOpen = ref(false)
+
+// Просмотр карточки продукта из списка ингредиентов
+const selectedViewProduct = ref<Product | null>(null)
+const showProductModal = ref(false)
+
+function openProductView(ing: { productId: number }) {
+  const product = products.value.find(p => p.id === ing.productId)
+  if (!product) return
+  selectedViewProduct.value = product
+  showProductModal.value = true
+}
+
+function calcCalories(protein: number, fat: number, carbs: number): number {
+  return Math.round((4 * protein + 9 * fat + 4 * carbs) * 10) / 10
+}
+
+const viewConversionText = computed(() => {
+  const p = selectedViewProduct.value
+  if (!p || p.gMeasure == null) return 'Не указана'
+  const parts = [`${p.gMeasure} г`]
+  if (p.mlMeasure != null) parts.push(`${p.mlMeasure} мл`)
+  if (p.pcsMeasure != null) parts.push(`${p.pcsMeasure} шт`)
+  return parts.join(' = ')
+})
 
 // Модалка: Добавление в меню
 const addToMenuOpen = ref(false)
@@ -283,14 +397,14 @@ function unitToGrams(qty: number, unitId: number, product: Product): number | nu
       if (!conv) return null
       mlQty = qty * conv.coefficient
     }
-    // Мл → граммы с учётом плотности продукта
-    return mlQty * (product.mlMeasure / product.gMeasure)
+    // Мл → граммы: mlMeasure мл = gMeasure г
+    return (mlQty / product.mlMeasure) * product.gMeasure
   }
 
   if (unit.measure_type === 'piece') {
-    // Штуки → граммы: pcs_measure и g_measure должны быть заполнены одновременно
+    // Штуки → граммы: pcsMeasure шт = gMeasure г
     if (!product.pcsMeasure || !product.gMeasure) return null
-    return qty * (product.pcsMeasure / product.gMeasure)
+    return (qty / product.pcsMeasure) * product.gMeasure
   }
 
   // 'extra' — конвертация невозможна

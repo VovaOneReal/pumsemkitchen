@@ -2,7 +2,7 @@
   <div class="flex gap-3 items-start w-full py-1">
     <UCheckbox size="xl" class="shrink-0 mt-0.5" />
     <div class="flex-1 min-w-0">
-      <p class="text-sm">{{ name }}</p>
+      <button class="text-sm text-left hover:text-primary transition-colors" @click="emit('nameClick')">{{ name }}</button>
       <p v-if="note" class="text-xs text-muted">{{ note }}</p>
     </div>
     <div class="flex items-center gap-1 shrink-0">
@@ -27,4 +27,6 @@ const props = defineProps({
   note: String,
   cost: Number,
 })
+
+const emit = defineEmits<{ nameClick: [] }>()
 </script>
