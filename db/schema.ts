@@ -1,13 +1,62 @@
-import { pgTable, index, uniqueIndex, foreignKey, check, serial, integer, varchar, text, date, boolean, numeric, primaryKey, pgView } from "drizzle-orm/pg-core"
+import { pgTable, uniqueIndex, check, serial, varchar, boolean, text, index, date, foreignKey, integer, numeric, primaryKey, unique, pgView } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
+
+export const measurementUnitsRef = pgTable("measurement_units_ref", {
+	measurementUnitId: serial("measurement_unit_id").primaryKey().notNull(),
+	unitName: varchar("unit_name", { length: 50 }).notNull(),
+	unitAbbr: varchar("unit_abbr", { length: 32 }).notNull(),
+	isStandart: boolean("is_standart").notNull(),
+	measureType: varchar("measure_type", { length: 32 }).notNull(),
+}, (table) => [
+	uniqueIndex("measure_unit_abbr_index").using("btree", table.unitAbbr.asc().nullsLast().op("text_ops")),
+	uniqueIndex("measurement_units_ref_pk").using("btree", table.measurementUnitId.asc().nullsLast().op("int4_ops")),
+	check("ckc_measure_type_measurem", sql`(measure_type)::text = ANY ((ARRAY['piece'::character varying, 'weight'::character varying, 'volume'::character varying, 'volume_extra'::character varying, 'extra'::character varying])::text[])`),
+]);
+
+export const emissGoods = pgTable("emiss_goods", {
+	emissGoodsId: serial("emiss_goods_id").primaryKey().notNull(),
+	emissGoodsName: text("emiss_goods_name").notNull(),
+}, (table) => [
+	uniqueIndex("emiss_goods_pk").using("btree", table.emissGoodsId.asc().nullsLast().op("int4_ops")),
+]);
+
+export const users = pgTable("users", {
+	userId: serial("user_id").primaryKey().notNull(),
+	login: varchar({ length: 32 }).notNull(),
+	password: varchar({ length: 1024 }).notNull(),
+	name: varchar({ length: 32 }).notNull(),
+	createdAt: date("created_at").notNull(),
+	role: varchar({ length: 32 }).notNull(),
+}, (table) => [
+	index("user_created_at_index").using("btree", table.createdAt.asc().nullsLast().op("date_ops")),
+	uniqueIndex("user_login_index").using("btree", table.login.asc().nullsLast().op("text_ops")),
+	uniqueIndex("users_pk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
+	check("ckc_role_users", sql`(role)::text = ANY ((ARRAY['user'::character varying, 'admin'::character varying])::text[])`),
+]);
+
+export const families = pgTable("families", {
+	familyId: serial("family_id").primaryKey().notNull(),
+	ownerUserId: integer("owner_user_id").notNull(),
+	title: varchar({ length: 128 }).notNull(),
+	createdAt: date("created_at").notNull(),
+}, (table) => [
+	uniqueIndex("families_pk").using("btree", table.familyId.asc().nullsLast().op("int4_ops")),
+	index("family_created_at_index").using("btree", table.createdAt.asc().nullsLast().op("date_ops")),
+	index("user_families_fk").using("btree", table.ownerUserId.asc().nullsLast().op("int4_ops")),
+	foreignKey({
+			columns: [table.ownerUserId],
+			foreignColumns: [users.userId],
+			name: "fk_families_user_fami_users"
+		}).onUpdate("restrict").onDelete("cascade"),
+]);
 
 export const recipes = pgTable("recipes", {
 	recipeId: serial("recipe_id").primaryKey().notNull(),
 	userId: integer("user_id").notNull(),
 	editUserId: integer("edit_user_id"),
-	familyId: integer("family_id").notNull(),
+	familyId: integer("family_id"),
 	title: varchar({ length: 128 }).notNull(),
 	description: text(),
 	cookingTimeMin: integer("cooking_time_min"),
@@ -40,87 +89,6 @@ export const recipes = pgTable("recipes", {
 			name: "fk_recipes_user_reci_users"
 		}).onUpdate("restrict").onDelete("cascade"),
 	check("ckc_portions_recipes", sql`portions >= 0`),
-]);
-
-export const collections = pgTable("collections", {
-	collectionId: serial("collection_id").primaryKey().notNull(),
-	userId: integer("user_id").notNull(),
-	editUserId: integer("edit_user_id"),
-	familyId: integer("family_id").notNull(),
-	title: varchar({ length: 128 }).notNull(),
-	createdAt: date("created_at").notNull(),
-	editedAt: date("edited_at").notNull(),
-}, (table) => [
-	index("collection_created_at_index").using("btree", table.createdAt.asc().nullsLast().op("date_ops")),
-	index("collection_edited_at_index").using("btree", table.editedAt.asc().nullsLast().op("date_ops")),
-	uniqueIndex("collections_pk").using("btree", table.collectionId.asc().nullsLast().op("int4_ops")),
-	index("family_collections_fk").using("btree", table.familyId.asc().nullsLast().op("int4_ops")),
-	index("user_collections_fk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
-	index("user_edits_collections_fk").using("btree", table.editUserId.asc().nullsLast().op("int4_ops")),
-	foreignKey({
-			columns: [table.familyId],
-			foreignColumns: [families.familyId],
-			name: "fk_collecti_family_co_families"
-		}).onUpdate("restrict").onDelete("cascade"),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [users.userId],
-			name: "fk_collecti_user_coll_users"
-		}).onUpdate("restrict").onDelete("cascade"),
-	foreignKey({
-			columns: [table.editUserId],
-			foreignColumns: [users.userId],
-			name: "fk_collecti_user_edit_users"
-		}).onUpdate("restrict").onDelete("cascade"),
-]);
-
-export const families = pgTable("families", {
-	familyId: serial("family_id").primaryKey().notNull(),
-	ownerUserId: integer("owner_user_id").notNull(),
-	title: varchar({ length: 128 }).notNull(),
-	createdAt: date("created_at").notNull(),
-}, (table) => [
-	uniqueIndex("families_pk").using("btree", table.familyId.asc().nullsLast().op("int4_ops")),
-	index("family_created_at_index").using("btree", table.createdAt.asc().nullsLast().op("date_ops")),
-	index("user_families_fk").using("btree", table.ownerUserId.asc().nullsLast().op("int4_ops")),
-	foreignKey({
-			columns: [table.ownerUserId],
-			foreignColumns: [users.userId],
-			name: "fk_families_user_fami_users"
-		}).onUpdate("restrict").onDelete("cascade"),
-]);
-
-export const users = pgTable("users", {
-	userId: serial("user_id").primaryKey().notNull(),
-	login: varchar({ length: 32 }).notNull(),
-	password: varchar({ length: 1024 }).notNull(),
-	name: varchar({ length: 32 }).notNull(),
-	createdAt: date("created_at").notNull(),
-	role: varchar({ length: 32 }).notNull(),
-}, (table) => [
-	index("user_created_at_index").using("btree", table.createdAt.asc().nullsLast().op("date_ops")),
-	uniqueIndex("user_login_index").using("btree", table.login.asc().nullsLast().op("text_ops")),
-	uniqueIndex("users_pk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
-	check("ckc_role_users", sql`(role)::text = ANY ((ARRAY['user'::character varying, 'admin'::character varying])::text[])`),
-]);
-
-export const measurementUnitsRef = pgTable("measurement_units_ref", {
-	measurementUnitId: serial("measurement_unit_id").primaryKey().notNull(),
-	unitName: varchar("unit_name", { length: 50 }).notNull(),
-	unitAbbr: varchar("unit_abbr", { length: 32 }).notNull(),
-	isStandart: boolean("is_standart").notNull(),
-	measureType: varchar("measure_type", { length: 32 }).notNull(),
-}, (table) => [
-	uniqueIndex("measure_unit_abbr_index").using("btree", table.unitAbbr.asc().nullsLast().op("text_ops")),
-	uniqueIndex("measurement_units_ref_pk").using("btree", table.measurementUnitId.asc().nullsLast().op("int4_ops")),
-	check("ckc_measure_type_measurem", sql`(measure_type)::text = ANY ((ARRAY['piece'::character varying, 'weight'::character varying, 'volume'::character varying])::text[])`),
-]);
-
-export const emissGoods = pgTable("emiss_goods", {
-	emissGoodsId: serial("emiss_goods_id").primaryKey().notNull(),
-	emissGoodsName: text("emiss_goods_name").notNull(),
-}, (table) => [
-	uniqueIndex("emiss_goods_pk").using("btree", table.emissGoodsId.asc().nullsLast().op("int4_ops")),
 ]);
 
 export const ingredients = pgTable("ingredients", {
@@ -161,25 +129,24 @@ export const products = pgTable("products", {
 	emissGoodsId: integer("emiss_goods_id"),
 	editUserId: integer("edit_user_id"),
 	familyId: integer("family_id"),
-	priceFromProductId: integer("price_from_product_id"),
-	nutritionsFromProductId: integer("nutritions_from_product_id"),
 	title: varchar({ length: 128 }).notNull(),
+	price: numeric().default('0'),
 	quantityPerPrice: numeric("quantity_per_price").default('0'),
-	userPrice: numeric("user_price").default('0'),
 	proteins: numeric().default('0'),
 	fats: numeric().default('0'),
 	carbs: numeric().default('0'),
 	createdAt: date("created_at").notNull(),
 	editedAt: date("edited_at").notNull(),
+	gMeasure: numeric("g_measure"),
+	mlMeasure: numeric("ml_measure"),
+	pcsMeasure: numeric("pcs_measure"),
 	isPublic: boolean("is_public").default(false).notNull(),
 }, (table) => [
 	index("family_products_fk").using("btree", table.familyId.asc().nullsLast().op("int4_ops")),
-	index("prod_ref_pub_nutritions_fk").using("btree", table.nutritionsFromProductId.asc().nullsLast().op("int4_ops")),
 	index("product_created_at_index").using("btree", table.createdAt.asc().nullsLast().op("date_ops")),
 	index("product_edited_at_index").using("btree", table.editedAt.asc().nullsLast().op("date_ops")),
 	index("product_emiss_goods_fk").using("btree", table.emissGoodsId.asc().nullsLast().op("int4_ops")),
 	index("product_price_per_unit_fk").using("btree", table.measurementUnitId.asc().nullsLast().op("int4_ops")),
-	index("product_refs_public_price_fk").using("btree", table.priceFromProductId.asc().nullsLast().op("int4_ops")),
 	uniqueIndex("products_pk").using("btree", table.productId.asc().nullsLast().op("int4_ops")),
 	index("user_edits_products_fk").using("btree", table.editUserId.asc().nullsLast().op("int4_ops")),
 	index("user_products_fk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
@@ -199,16 +166,6 @@ export const products = pgTable("products", {
 			name: "fk_products_product_p_measurem"
 		}).onUpdate("restrict").onDelete("restrict"),
 	foreignKey({
-			columns: [table.nutritionsFromProductId],
-			foreignColumns: [table.productId],
-			name: "fk_products_refs_pub_nutrition"
-		}).onUpdate("restrict").onDelete("set null"),
-	foreignKey({
-			columns: [table.priceFromProductId],
-			foreignColumns: [table.productId],
-			name: "fk_products_refs_pub_price"
-		}).onUpdate("restrict").onDelete("set null"),
-	foreignKey({
 			columns: [table.editUserId],
 			foreignColumns: [users.userId],
 			name: "fk_products_user_edit_users"
@@ -218,11 +175,14 @@ export const products = pgTable("products", {
 			foreignColumns: [users.userId],
 			name: "fk_products_user_prod_users"
 		}).onUpdate("restrict").onDelete("cascade"),
-	check("ckc_fats_products", sql`(fats IS NULL) OR (fats >= (0)::numeric)`),
+	check("ckc_price_products", sql`(price IS NULL) OR (price >= (0)::numeric)`),
 	check("ckc_quantity_per_pric_products", sql`(quantity_per_price IS NULL) OR (quantity_per_price >= (0)::numeric)`),
-	check("ckc_user_price_products", sql`(user_price IS NULL) OR (user_price >= (0)::numeric)`),
 	check("ckc_proteins_products", sql`(proteins IS NULL) OR (proteins >= (0)::numeric)`),
+	check("ckc_fats_products", sql`(fats IS NULL) OR (fats >= (0)::numeric)`),
 	check("ckc_carbs_products", sql`(carbs IS NULL) OR (carbs >= (0)::numeric)`),
+	check("ckc_g_measure_products", sql`(g_measure IS NULL) OR (g_measure >= (0)::numeric)`),
+	check("ckc_ml_measure_products", sql`(ml_measure IS NULL) OR (ml_measure >= (0)::numeric)`),
+	check("ckc_pcs_measure_products", sql`(pcs_measure IS NULL) OR (pcs_measure >= (0)::numeric)`),
 ]);
 
 export const invitations = pgTable("invitations", {
@@ -249,49 +209,11 @@ export const invitations = pgTable("invitations", {
 	check("ckc_status_invitati", sql`(status)::text = ANY ((ARRAY['sent'::character varying, 'accepted'::character varying, 'denied'::character varying, 'cancelled'::character varying])::text[])`),
 ]);
 
-export const listElements = pgTable("list_elements", {
-	elementId: serial("element_id").primaryKey().notNull(),
-	shoppingListId: integer("shopping_list_id").notNull(),
-	measurementUnitId: integer("measurement_unit_id").notNull(),
-	userId: integer("user_id"),
-	productId: integer("product_id"),
-	isChecked: boolean("is_checked").notNull(),
-	userProductTitle: varchar("user_product_title", { length: 128 }),
-	quantity: numeric().default('1').notNull(),
-}, (table) => [
-	index("list_elem_meas_units_fk").using("btree", table.measurementUnitId.asc().nullsLast().op("int4_ops")),
-	uniqueIndex("list_elements_pk").using("btree", table.elementId.asc().nullsLast().op("int4_ops")),
-	index("product_list_items_fk").using("btree", table.productId.asc().nullsLast().op("int4_ops")),
-	index("shopping_list_list_elements_fk").using("btree", table.shoppingListId.asc().nullsLast().op("int4_ops")),
-	index("user_adds_elements_fk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
-	foreignKey({
-			columns: [table.measurementUnitId],
-			foreignColumns: [measurementUnitsRef.measurementUnitId],
-			name: "fk_list_ele_list_elem_measurem"
-		}).onUpdate("restrict").onDelete("restrict"),
-	foreignKey({
-			columns: [table.productId],
-			foreignColumns: [products.productId],
-			name: "fk_list_ele_product_l_products"
-		}).onUpdate("restrict").onDelete("restrict"),
-	foreignKey({
-			columns: [table.shoppingListId],
-			foreignColumns: [shoppingLists.shoppingListId],
-			name: "fk_list_ele_shopping__shopping"
-		}).onUpdate("restrict").onDelete("cascade"),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [users.userId],
-			name: "fk_list_ele_user_adds_users"
-		}).onUpdate("restrict").onDelete("cascade"),
-	check("ckc_quantity_list_ele", sql`quantity >= (0)::numeric`),
-]);
-
 export const shoppingLists = pgTable("shopping_lists", {
 	shoppingListId: serial("shopping_list_id").primaryKey().notNull(),
 	userId: integer("user_id").notNull(),
 	editUserId: integer("edit_user_id"),
-	familyId: integer("family_id").notNull(),
+	familyId: integer("family_id"),
 	title: varchar({ length: 128 }).notNull(),
 	createdAt: date("created_at").notNull(),
 	editedAt: date("edited_at").notNull(),
@@ -317,6 +239,30 @@ export const shoppingLists = pgTable("shopping_lists", {
 			foreignColumns: [users.userId],
 			name: "fk_shopping_user_shop_users"
 		}).onUpdate("restrict").onDelete("cascade"),
+]);
+
+export const listElements = pgTable("list_elements", {
+	elementId: serial("element_id").primaryKey().notNull(),
+	shoppingListId: integer("shopping_list_id").notNull(),
+	userId: integer("user_id"),
+	isChecked: boolean("is_checked").notNull(),
+	title: varchar({ length: 128 }).notNull(),
+	quantity: numeric().default('1').notNull(),
+}, (table) => [
+	uniqueIndex("list_elements_pk").using("btree", table.elementId.asc().nullsLast().op("int4_ops")),
+	index("shopping_list_list_elements_fk").using("btree", table.shoppingListId.asc().nullsLast().op("int4_ops")),
+	index("user_adds_elements_fk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
+	foreignKey({
+			columns: [table.shoppingListId],
+			foreignColumns: [shoppingLists.shoppingListId],
+			name: "fk_list_ele_shopping__shopping"
+		}).onUpdate("restrict").onDelete("cascade"),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.userId],
+			name: "fk_list_ele_user_adds_users"
+		}).onUpdate("restrict").onDelete("cascade"),
+	check("ckc_quantity_list_ele", sql`quantity >= (0)::numeric`),
 ]);
 
 export const meals = pgTable("meals", {
@@ -353,7 +299,7 @@ export const menus = pgTable("menus", {
 	menuId: serial("menu_id").primaryKey().notNull(),
 	userId: integer("user_id").notNull(),
 	editUserId: integer("edit_user_id"),
-	familyId: integer("family_id").notNull(),
+	familyId: integer("family_id"),
 	menuTitle: varchar("menu_title", { length: 128 }).notNull(),
 	createdAt: date("created_at").notNull(),
 	editedAt: date("edited_at").notNull(),
@@ -381,26 +327,6 @@ export const menus = pgTable("menus", {
 		}).onUpdate("restrict").onDelete("cascade"),
 ]);
 
-export const collectionRecipes = pgTable("collection_recipes", {
-	recipeId: integer("recipe_id").notNull(),
-	collectionId: integer("collection_id").notNull(),
-}, (table) => [
-	index("collection_recipes2_fk").using("btree", table.collectionId.asc().nullsLast().op("int4_ops")),
-	index("collection_recipes_fk").using("btree", table.recipeId.asc().nullsLast().op("int4_ops")),
-	uniqueIndex("collection_recipes_pk").using("btree", table.recipeId.asc().nullsLast().op("int4_ops"), table.collectionId.asc().nullsLast().op("int4_ops")),
-	foreignKey({
-			columns: [table.recipeId],
-			foreignColumns: [recipes.recipeId],
-			name: "fk_collecti_collectio_recipes"
-		}).onUpdate("restrict").onDelete("cascade"),
-	foreignKey({
-			columns: [table.collectionId],
-			foreignColumns: [collections.collectionId],
-			name: "fk_collecti_collectio_collecti"
-		}).onUpdate("restrict").onDelete("cascade"),
-	primaryKey({ columns: [table.recipeId, table.collectionId], name: "pk_collection_recipes"}),
-]);
-
 export const shoppingListMenus = pgTable("shopping_list_menus", {
 	menuId: integer("menu_id").notNull(),
 	shoppingListId: integer("shopping_list_id").notNull(),
@@ -419,6 +345,7 @@ export const shoppingListMenus = pgTable("shopping_list_menus", {
 			name: "fk_shopping_shopping__shopping"
 		}).onUpdate("restrict").onDelete("cascade"),
 	primaryKey({ columns: [table.shoppingListId, table.menuId], name: "pk_shopping_list_menus"}),
+	unique("ak_identifier_1_shopping").on(table.shoppingListId, table.menuId),
 ]);
 
 export const userAMemberOfFamilies = pgTable("user_a_member_of_families", {
@@ -439,6 +366,7 @@ export const userAMemberOfFamilies = pgTable("user_a_member_of_families", {
 			name: "fk_user_a_m_user_a_me_users"
 		}).onUpdate("restrict").onDelete("cascade"),
 	primaryKey({ columns: [table.userId, table.familyId], name: "pk_user_a_member_of_families"}),
+	unique("ak_identifier_1_user_a_m").on(table.userId, table.familyId),
 ]);
 
 export const converts = pgTable("converts", {
@@ -450,16 +378,17 @@ export const converts = pgTable("converts", {
 	index("converts_fk").using("btree", table.toUnitId.asc().nullsLast().op("int4_ops")),
 	uniqueIndex("converts_pk").using("btree", table.fromUnitId.asc().nullsLast().op("int4_ops"), table.toUnitId.asc().nullsLast().op("int4_ops")),
 	foreignKey({
-			columns: [table.toUnitId],
-			foreignColumns: [measurementUnitsRef.measurementUnitId],
-			name: "fk_converts_from_unit"
-		}).onUpdate("restrict").onDelete("restrict"),
-	foreignKey({
 			columns: [table.fromUnitId],
 			foreignColumns: [measurementUnitsRef.measurementUnitId],
 			name: "fk_converts_to_unit"
 		}).onUpdate("restrict").onDelete("restrict"),
+	foreignKey({
+			columns: [table.toUnitId],
+			foreignColumns: [measurementUnitsRef.measurementUnitId],
+			name: "fk_converts_from_unit"
+		}).onUpdate("restrict").onDelete("restrict"),
 	primaryKey({ columns: [table.toUnitId, table.fromUnitId], name: "pk_converts"}),
+	unique("ak_identifier_1_converts").on(table.toUnitId, table.fromUnitId),
 ]);
 
 export const mealRecipes = pgTable("meal_recipes", {
@@ -481,27 +410,7 @@ export const mealRecipes = pgTable("meal_recipes", {
 			name: "fk_meal_rec_meal_reci_meals"
 		}).onUpdate("restrict").onDelete("cascade"),
 	primaryKey({ columns: [table.recipeId, table.mealId], name: "pk_meal_recipes"}),
-]);
-
-export const productMeasuresInUnits = pgTable("product_measures_in_units", {
-	measurementUnitId: integer("measurement_unit_id").notNull(),
-	productId: integer("product_id").notNull(),
-	productMeasureAmount: numeric("product_measure_amount"),
-}, (table) => [
-	index("product_measures_in_units2_fk").using("btree", table.productId.asc().nullsLast().op("int4_ops")),
-	index("product_measures_in_units_fk").using("btree", table.measurementUnitId.asc().nullsLast().op("int4_ops")),
-	uniqueIndex("product_measures_in_units_pk").using("btree", table.measurementUnitId.asc().nullsLast().op("int4_ops"), table.productId.asc().nullsLast().op("int4_ops")),
-	foreignKey({
-			columns: [table.measurementUnitId],
-			foreignColumns: [measurementUnitsRef.measurementUnitId],
-			name: "fk_product__product_m_measurem"
-		}).onUpdate("restrict").onDelete("restrict"),
-	foreignKey({
-			columns: [table.productId],
-			foreignColumns: [products.productId],
-			name: "fk_product__product_m_products"
-		}).onUpdate("restrict").onDelete("cascade"),
-	primaryKey({ columns: [table.productId, table.measurementUnitId], name: "pk_product_measures_in_units"}),
+	unique("ak_identifier_1_meal_rec").on(table.recipeId, table.mealId),
 ]);
 
 export const emissRecords = pgTable("emiss_records", {

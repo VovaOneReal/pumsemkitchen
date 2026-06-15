@@ -51,9 +51,9 @@ export default defineEventHandler(async (event) => {
   const row = await db.query.recipes.findFirst({
     where: (r, { eq }) => eq(r.recipeId, recipe.recipeId),
     with: {
-      user: true,
-      ingredients: { with: { product: true, measurementUnit: true } },
-      steps: true,
+      user_userId: true,
+      ingredients: { with: { product: true, measurementUnitsRef: true } },
+      recipeSteps: true,
     },
   })
 
@@ -65,18 +65,21 @@ export default defineEventHandler(async (event) => {
     portions: row!.portions,
     isPublic: row!.isPublic,
     pictureUrl: row!.pictureUrl,
+    sourceUrl: row!.sourceUrl,
     createdAt: row!.createdAt,
     editedAt: row!.editedAt,
-    authorName: row!.user.name,
+    authorName: row!.user_userId.name,
     ingredients: row!.ingredients.map((ing) => ({
       id: ing.ingredientId,
+      productId: ing.product.productId,
       name: ing.product.title,
       note: ing.note,
       isOptional: ing.isOptional,
       amount: Number(ing.quantity),
-      amountType: ing.measurementUnit.unitName,
+      measurementUnitId: ing.measurementUnitsRef.measurementUnitId,
+      amountType: ing.measurementUnitsRef.unitName,
     })),
-    steps: row!.steps.map((s) => ({
+    steps: row!.recipeSteps.map((s) => ({
       step: Number(s.order),
       description: s.description,
       pictureUrl: s.pictureUrl,

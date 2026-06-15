@@ -8,10 +8,7 @@ export default defineEventHandler(async (event) => {
 
   const product = await db.query.products.findFirst({
     where: (p, { eq }) => eq(p.productId, id),
-    with: {
-      measurementUnitsRef: true,
-      productMeasuresInUnits: { with: { measurementUnitsRef: true } },
-    },
+    with: { measurementUnitsRef: true },
   })
 
   if (!product) throw createError({ statusCode: 404, statusMessage: 'Not found' })
@@ -23,7 +20,7 @@ export default defineEventHandler(async (event) => {
     id: product.productId,
     name: product.title,
     image: null,
-    priceRub: Number(product.userPrice ?? product.quantityPerPrice ?? 0),
+    priceRub: Number(product.price ?? 0),
     priceQty: Number(product.quantityPerPrice ?? 0),
     priceUnit: product.measurementUnitsRef.unitAbbr,
     protein: Number(product.proteins ?? 0),
@@ -32,11 +29,8 @@ export default defineEventHandler(async (event) => {
     calories: 0,
     isPublic: product.isPublic,
     isOwn: true,
-    measures: product.productMeasuresInUnits.map((m) => ({
-      unitId: m.measurementUnitId,
-      unitName: m.measurementUnitsRef.unitName,
-      unitAbbr: m.measurementUnitsRef.unitAbbr,
-      amount: m.productMeasureAmount !== null ? Number(m.productMeasureAmount) : null,
-    })),
+    gMeasure: product.gMeasure !== null ? Number(product.gMeasure) : null,
+    mlMeasure: product.mlMeasure !== null ? Number(product.mlMeasure) : null,
+    pcsMeasure: product.pcsMeasure !== null ? Number(product.pcsMeasure) : null,
   }
 })

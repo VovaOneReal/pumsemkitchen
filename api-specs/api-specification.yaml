@@ -58,7 +58,6 @@ paths:
       description: >
         Возвращает все продукты с флагом is_public = true.
         Не требует авторизации. isOwn всегда false.
-        Дополнительно включает measurementUnitId, priceFromProductId, nutritionsFromProductId.
       responses:
         "200":
           description: Массив публичных продуктов
@@ -67,21 +66,7 @@ paths:
               schema:
                 type: array
                 items:
-                  allOf:
-                    - $ref: "#/components/schemas/ProductResponse"
-                    - type: object
-                      properties:
-                        measurementUnitId:
-                          type: integer
-                          description: ID основной единицы измерения продукта
-                        priceFromProductId:
-                          type: integer
-                          nullable: true
-                          description: ID продукта-источника цены
-                        nutritionsFromProductId:
-                          type: integer
-                          nullable: true
-                          description: ID продукта-источника КБЖУ
+                  $ref: "#/components/schemas/ProductResponse"
         "401":
           description: Пользователь не авторизован
   /products:
@@ -89,6 +74,7 @@ paths:
       summary: Список продуктов пользователя
       description: >
         Возвращает все продукты, принадлежащие аутентифицированному пользователю (isOwn: true).
+        Включает measurementUnitId.
         Требует активной сессии (cookie).
       responses:
         "200":
@@ -105,7 +91,9 @@ paths:
       summary: Создать продукт
       description: >
         Создаёт новый продукт для аутентифицированного пользователя.
-        Если переданы g_measure, ml_measure или pcs_measure — записи добавляются в таблицу product_measures_in_units.
+        Поля g_measure, ml_measure, pcs_measure хранятся прямо в таблице products.
+        Если передан ml_measure или pcs_measure, поле g_measure обязательно.
+        Возвращает measurementUnitId.
         Требует активной сессии (cookie).
       requestBody:
         required: true
@@ -130,6 +118,7 @@ paths:
       description: >
         Возвращает продукт по его ID вместе с мерами конвертации.
         Пользователь может получить только свой продукт.
+        measurementUnitId в ответе отсутствует.
         Требует активной сессии (cookie).
       parameters:
         - name: id
@@ -155,7 +144,9 @@ paths:
       summary: Обновить продукт
       description: >
         Обновляет данные существующего продукта.
-        Если переданы g_measure, ml_measure или pcs_measure — записи в product_measures_in_units создаются или обновляются.
+        Поля g_measure, ml_measure, pcs_measure хранятся прямо в таблице products.
+        Если ml_measure или pcs_measure передан как null, а продукт используется хотя бы в одном рецепте — запрос отклоняется с 422.
+        Возвращает measurementUnitId.
         Требует активной сессии (cookie).
       parameters:
         - name: id
@@ -182,7 +173,7 @@ paths:
         "404":
           description: Продукт не найден
         "422":
-          description: Ошибка валидации входных данных
+          description: Ошибка валидации или попытка обнулить меры у продукта из рецептов
     delete:
       summary: Удалить продукт
       description: >
@@ -678,7 +669,7 @@ components:
         - proteins
         - fats
         - carbs
-        - user_price
+        - price
         - quantity_per_price
         - measurement_unit_id
       properties:
@@ -699,7 +690,7 @@ components:
           type: number
           minimum: 0
           description: Углеводы на 100 г
-        user_price:
+        price:
           type: number
           minimum: 0
           description: Стоимость продукта
@@ -717,17 +708,17 @@ components:
           type: number
           exclusiveMinimum: 0
           nullable: true
-          description: Масса продукта в граммах, соответствующая одной единице measurement_unit_id
+          description: Масса в граммах как базовая единица пропорций. Обязательно, если передан ml_measure или pcs_measure
         ml_measure:
           type: number
           exclusiveMinimum: 0
           nullable: true
-          description: Объём продукта в миллилитрах, соответствующий одной единице measurement_unit_id
+          description: Объём в миллилитрах, соответствующий g_measure граммам
         pcs_measure:
           type: number
           exclusiveMinimum: 0
           nullable: true
-          description: Количество штук продукта, соответствующее одной единице measurement_unit_id
+          description: Количество штук, соответствующее g_measure граммам
         is_public:
           type: boolean
           default: false
@@ -775,6 +766,9 @@ components:
       properties:
         id:
           type: integer
+        productId:
+          type: integer
+          description: ID продукта
         name:
           type: string
           description: Название продукта
@@ -788,6 +782,9 @@ components:
         amount:
           type: number
           description: Количество
+        measurementUnitId:
+          type: integer
+          description: ID единицы измерения
         amountType:
           type: string
           description: Единица измерения
@@ -937,28 +934,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CreateRecipeStepData"
-    ProductMeasure:
-      type: object
-      description: Запись конвертации из таблицы product_measures_in_units
-      required: [unitId, unitName, unitAbbr]
-      properties:
-        unitId:
-          type: integer
-          description: ID единицы измерения
-        unitName:
-          type: string
-          description: Полное название единицы измерения
-        unitAbbr:
-          type: string
-          description: Аббревиатура единицы измерения
-        amount:
-          type: number
-          nullable: true
-          description: Количество данной единицы, эквивалентное одной основной единице продукта
     ProductResponse:
       type: object
-      description: Ответ GET-запросов для продуктов
-      required: [id, name, priceRub, priceQty, priceUnit, protein, fat, carbs, calories, isPublic, isOwn, measures]
+      description: >
+        Ответ для продуктов. measurementUnitId присутствует во всех эндпоинтах, кроме GET /products/{id}.
+      required: [id, name, priceRub, priceQty, priceUnit, protein, fat, carbs, calories, isPublic, isOwn]
       properties:
         id:
           type: integer
@@ -970,7 +950,7 @@ components:
           nullable: true
         priceRub:
           type: number
-          description: Цена (userPrice, либо quantityPerPrice если userPrice не задан)
+          description: Цена продукта (поле price из таблицы products)
         priceQty:
           type: number
           description: Количество единиц, за которое указана цена (quantityPerPrice)
@@ -995,11 +975,24 @@ components:
         isOwn:
           type: boolean
           description: true — продукт принадлежит текущему пользователю, false — публичный чужой
-        measures:
-          type: array
-          description: Конвертационные пропорции из product_measures_in_units
-          items:
-            $ref: "#/components/schemas/ProductMeasure"
+        measurementUnitId:
+          type: integer
+          description: >
+            ID основной единицы измерения (из measurement_units_ref).
+            Присутствует в GET /products, GET /products/public, POST /products, PATCH /products/{id}.
+            Отсутствует в GET /products/{id}.
+        gMeasure:
+          type: number
+          nullable: true
+          description: Масса в граммах, соответствующая базовой единице измерения (null — не задана)
+        mlMeasure:
+          type: number
+          nullable: true
+          description: Объём в миллилитрах, соответствующий gMeasure граммам (null — не задан)
+        pcsMeasure:
+          type: number
+          nullable: true
+          description: Количество штук, соответствующее gMeasure граммам (null — не задано)
     UserMe:
       type: object
       properties:

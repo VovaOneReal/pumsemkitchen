@@ -46,13 +46,6 @@ export type Menu = {
   estimatedCost: number | null
 }
 
-export type ProductMeasure = {
-  unitId: number
-  unitName: string
-  unitAbbr: string
-  amount: number | null
-}
-
 export type Product = {
   id: number
   name: string
@@ -73,5 +66,7 @@ export type Product = {
   updatedAt?: string
   nutritionsFromProductName?: string | null
   priceFromProductName?: string | null
-  measures: ProductMeasure[]
+  gMeasure: number | null
+  mlMeasure: number | null
+  pcsMeasure: number | null
 }

@@ -6,17 +6,14 @@ export default defineEventHandler(async (event) => {
 
   const rows = await db.query.products.findMany({
     where: (p, { eq }) => eq(p.userId, user.userId),
-    with: {
-      measurementUnitsRef: true,
-      productMeasuresInUnits: { with: { measurementUnitsRef: true } },
-    },
+    with: { measurementUnitsRef: true },
   })
 
   return rows.map((p) => ({
     id: p.productId,
     name: p.title,
     image: null,
-    priceRub: Number(p.userPrice ?? p.quantityPerPrice ?? 0),
+    priceRub: Number(p.price ?? 0),
     priceQty: Number(p.quantityPerPrice ?? 0),
     priceUnit: p.measurementUnitsRef.unitAbbr,
     protein: Number(p.proteins ?? 0),
@@ -26,11 +23,8 @@ export default defineEventHandler(async (event) => {
     isPublic: p.isPublic,
     isOwn: true,
     measurementUnitId: p.measurementUnitId,
-    measures: p.productMeasuresInUnits.map((m) => ({
-      unitId: m.measurementUnitId,
-      unitName: m.measurementUnitsRef.unitName,
-      unitAbbr: m.measurementUnitsRef.unitAbbr,
-      amount: m.productMeasureAmount !== null ? Number(m.productMeasureAmount) : null,
-    })),
+    gMeasure: p.gMeasure !== null ? Number(p.gMeasure) : null,
+    mlMeasure: p.mlMeasure !== null ? Number(p.mlMeasure) : null,
+    pcsMeasure: p.pcsMeasure !== null ? Number(p.pcsMeasure) : null,
   }))
 })

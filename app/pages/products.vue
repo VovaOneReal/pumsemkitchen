@@ -272,9 +272,9 @@
                   <div class="flex flex-col gap-2">
                     <p class="font-semibold text-sm">Стоимость</p>
                     <div class="flex items-center gap-2 flex-wrap">
-                      <UFormField name="user_price">
+                      <UFormField name="price">
                         <UInputNumber
-                          v-model="editForm.user_price"
+                          v-model="editForm.price"
                           :step="0.01"
                           :min="0"
                           :format-options="{ useGrouping: false, maximumFractionDigits: 2 }"
@@ -429,7 +429,7 @@ interface EditForm {
   proteins: number | null
   fats: number | null
   carbs: number | null
-  user_price: number | null
+  price: number | null
   quantity_per_price: number | null
   measurement_unit_id: number | null
   is_public: boolean
@@ -461,7 +461,7 @@ const editForm = ref<EditForm>({
   proteins: 0,
   fats: 0,
   carbs: 0,
-  user_price: 0,
+  price: 0,
   quantity_per_price: 0,
   measurement_unit_id: null,
   is_public: false,
@@ -482,9 +482,12 @@ const editCalories = computed(() =>
 )
 
 const viewConversionText = computed(() => {
-  const measures = selectedProduct.value?.measures ?? []
-  if (measures.length === 0) return 'Не указана'
-  return measures.map(m => `${m.amount} ${m.unitAbbr}`).join(' = ')
+  const p = selectedProduct.value
+  if (!p || p.gMeasure == null) return 'Не указана'
+  const parts = [`${p.gMeasure} г`]
+  if (p.mlMeasure != null) parts.push(`${p.mlMeasure} мл`)
+  if (p.pcsMeasure != null) parts.push(`${p.pcsMeasure} шт`)
+  return parts.join(' = ')
 })
 
 // Список единиц для раздела "Стоимость" — фильтруется по выбранным галочкам конвертации
@@ -510,7 +513,7 @@ watch(filteredMeasurementItems, (items) => {
 // Схема расширяется динамически: показанные поля конвертации обязательны
 const activeSchema = computed(() => {
   if (!specifyVolume.value && !specifyPieces.value) return productFormSchema
-  return productFormSchema.extend({
+  return productFormSchema.safeExtend({
     g_measure: z.number({ error: 'Введите значение' }).min(1),
     ...(specifyVolume.value && { ml_measure: z.number({ error: 'Введите значение' }).min(1) }),
     ...(specifyPieces.value && {
@@ -575,7 +578,7 @@ function openCreate() {
     proteins: 0,
     fats: 0,
     carbs: 0,
-    user_price: 0,
+    price: 0,
     quantity_per_price: 0,
     measurement_unit_id: null,
     is_public: false,
@@ -591,26 +594,25 @@ function openCreate() {
 
 async function openEdit(product: Product) {
   editingProduct.value = product
-  const gMeasure = product.measures?.find(m => m.unitName === 'граммы')
-  const mlMeasure = product.measures?.find(m => m.unitName === 'миллилитры')
-  const pcsMeasure = product.measures?.find(m => m.unitName === 'штуки')
-  specifyVolume.value = mlMeasure != null
-  specifyPieces.value = pcsMeasure != null
+  specifyVolume.value = product.mlMeasure != null
+  specifyPieces.value = product.pcsMeasure != null
   editForm.value = {
     image: product.image,
     title: product.name,
     proteins: product.protein,
     fats: product.fat,
     carbs: product.carbs,
-    user_price: product.priceRub,
+    price: product.priceRub,
     quantity_per_price: product.priceQty,
-    measurement_unit_id: product.measurementUnitId ?? null,
+    measurement_unit_id: null,
     is_public: product.isPublic ?? false,
-    g_measure: gMeasure?.amount ?? 100,
-    ml_measure: mlMeasure?.amount ?? 100,
-    pcs_measure: pcsMeasure?.amount ?? 1,
+    g_measure: product.gMeasure ?? 100,
+    ml_measure: product.mlMeasure ?? 100,
+    pcs_measure: product.pcsMeasure ?? 1,
   }
   await fetchMeasurements()
+  // Устанавливаем единицу после загрузки справочника, чтобы вотч её не сбросил
+  editForm.value.measurement_unit_id = product.measurementUnitId ?? null
   showEditModal.value = true
 }
 
@@ -657,7 +659,7 @@ async function onFormSubmit() {
       proteins: editForm.value.proteins!,
       fats: editForm.value.fats!,
       carbs: editForm.value.carbs!,
-      user_price: editForm.value.user_price!,
+      price: editForm.value.price!,
       quantity_per_price: editForm.value.quantity_per_price!,
       measurement_unit_id: editForm.value.measurement_unit_id!,
       is_public: editForm.value.is_public,

@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       ...(body.is_public !== undefined && { isPublic: body.is_public }),
       ...(body.picture_url !== undefined && { pictureUrl: body.picture_url }),
       editedAt: today,
-      editedByUserId: user.userId,
+      editUserId: user.userId,
     }).where(eq(recipes.recipeId, id))
 
     if (body.ingredients !== undefined) {
@@ -66,9 +66,9 @@ export default defineEventHandler(async (event) => {
   const row = await db.query.recipes.findFirst({
     where: (r, { eq }) => eq(r.recipeId, id),
     with: {
-      user: true,
-      ingredients: { with: { product: true, measurementUnit: true } },
-      steps: true,
+      user_userId: true,
+      ingredients: { with: { product: true, measurementUnitsRef: true } },
+      recipeSteps: true,
     },
   })
 
@@ -80,9 +80,10 @@ export default defineEventHandler(async (event) => {
     portions: row!.portions,
     isPublic: row!.isPublic,
     pictureUrl: row!.pictureUrl,
+    sourceUrl: row!.sourceUrl,
     createdAt: row!.createdAt,
     editedAt: row!.editedAt,
-    authorName: row!.user.name,
+    authorName: row!.user_userId.name,
     ingredients: row!.ingredients.map((ing) => ({
       id: ing.ingredientId,
       productId: ing.product.productId,
@@ -90,10 +91,10 @@ export default defineEventHandler(async (event) => {
       note: ing.note,
       isOptional: ing.isOptional,
       amount: Number(ing.quantity),
-      measurementUnitId: ing.measurementUnit.measurementUnitId,
-      amountType: ing.measurementUnit.unitName,
+      measurementUnitId: ing.measurementUnitsRef.measurementUnitId,
+      amountType: ing.measurementUnitsRef.unitName,
     })),
-    steps: row!.steps.map((s) => ({
+    steps: row!.recipeSteps.map((s) => ({
       step: Number(s.order),
       description: s.description,
       pictureUrl: s.pictureUrl,

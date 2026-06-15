@@ -3,17 +3,14 @@ import { db } from '~~/server/utils/db'
 export default defineEventHandler(async () => {
   const rows = await db.query.products.findMany({
     where: (p, { eq }) => eq(p.isPublic, true),
-    with: {
-      measurementUnitsRef: true,
-      productMeasuresInUnits: { with: { measurementUnitsRef: true } },
-    },
+    with: { measurementUnitsRef: true },
   })
 
   return rows.map((p) => ({
     id: p.productId,
     name: p.title,
     image: null,
-    priceRub: Number(p.userPrice ?? p.quantityPerPrice ?? 0),
+    priceRub: Number(p.price ?? 0),
     priceQty: Number(p.quantityPerPrice ?? 0),
     priceUnit: p.measurementUnitsRef.unitAbbr,
     protein: Number(p.proteins ?? 0),
@@ -23,13 +20,8 @@ export default defineEventHandler(async () => {
     isPublic: true,
     isOwn: false,
     measurementUnitId: p.measurementUnitId,
-    priceFromProductId: p.priceFromProductId,
-    nutritionsFromProductId: p.nutritionsFromProductId,
-    measures: p.productMeasuresInUnits.map((m) => ({
-      unitId: m.measurementUnitId,
-      unitName: m.measurementUnitsRef.unitName,
-      unitAbbr: m.measurementUnitsRef.unitAbbr,
-      amount: Number(m.productMeasureAmount ?? 0),
-    })),
+    gMeasure: p.gMeasure !== null ? Number(p.gMeasure) : null,
+    mlMeasure: p.mlMeasure !== null ? Number(p.mlMeasure) : null,
+    pcsMeasure: p.pcsMeasure !== null ? Number(p.pcsMeasure) : null,
   }))
 })
