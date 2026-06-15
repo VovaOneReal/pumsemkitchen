@@ -198,15 +198,25 @@
           <template #header>
             <div class="flex flex-col items-center gap-1">
               <p class="font-bold text-lg">Пищевая ценность</p>
-              <p class="text-sm text-muted">на 100 г блюда</p>
+              <div class="flex items-center gap-1 text-sm text-muted">
+                <span>на</span>
+                <USelect
+                  v-model="nutritionMode"
+                  :items="nutritionModeItems"
+                  value-key="value"
+                  size="xs"
+                  class="w-28"
+                />
+                <span>блюда</span>
+              </div>
             </div>
           </template>
           <template #default>
             <div class="flex flex-col gap-1">
-              <NutritionProgressBar type="proteins" label="Белки"    :value="nutritionPer100g.protein"  />
-              <NutritionProgressBar type="fats"     label="Жиры"     :value="nutritionPer100g.fat"      />
-              <NutritionProgressBar type="carbs"    label="Углеводы" :value="nutritionPer100g.carbs"    />
-              <NutritionProgressBar type="calories" label="Калорий"  :value="nutritionPer100g.calories" />
+              <NutritionProgressBar type="proteins" label="Белки"    :value="displayedNutrition?.protein  ?? 0" />
+              <NutritionProgressBar type="fats"     label="Жиры"     :value="displayedNutrition?.fat      ?? 0" />
+              <NutritionProgressBar type="carbs"    label="Углеводы" :value="displayedNutrition?.carbs    ?? 0" />
+              <NutritionProgressBar type="calories" label="Калорий"  :value="displayedNutrition?.calories ?? 0" />
             </div>
           </template>
         </UCard>
@@ -473,8 +483,35 @@ const nutritionPer100g = computed(() => {
   const carbs    = Math.round((totalCarbs   * 100) / totalWeight * 10) / 10
   const calories = Math.round((protein * 4 + fat * 9 + carbs * 4) * 10) / 10
 
-  return { protein, fat, carbs, calories }
+  return { protein, fat, carbs, calories, totalWeight }
 })
+
+// Режим отображения карточки пищевой ценности
+const nutritionMode = ref<'100g' | 'serving'>('100g')
+
+const nutritionModeItems = [
+  { label: '100 г',    value: '100g'    },
+  { label: '1 порцию', value: 'serving' },
+]
+
+// КБЖУ на 1 порцию: (КБЖУ_100г × вес_порции) / 100
+const nutritionPerServing = computed(() => {
+  const n = nutritionPer100g.value
+  if (!n) return null
+  const weightPerServing = n.totalWeight / basePortions.value
+  const round = (v: number) => Math.round(v * 10) / 10
+  return {
+    protein:  round((n.protein  * weightPerServing) / 100),
+    fat:      round((n.fat      * weightPerServing) / 100),
+    carbs:    round((n.carbs    * weightPerServing) / 100),
+    calories: round((n.calories * weightPerServing) / 100),
+  }
+})
+
+// Значения для отображения в карточке в зависимости от выбранного режима
+const displayedNutrition = computed(() =>
+  nutritionMode.value === 'serving' ? nutritionPerServing.value : nutritionPer100g.value
+)
 
 watch(
   () => route.query.id,
