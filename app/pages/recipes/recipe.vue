@@ -105,7 +105,7 @@
         </UModal>
 
         <!-- Пищевая ценность -->
-        <UCard v-if="false">
+        <UCard>
           <template #header>
             <div class="flex flex-col items-center gap-1">
               <p class="font-bold text-lg">Пищевая ценность</p>
@@ -131,14 +131,22 @@
           <p>{{ currentRecipe.description }}</p>
         </div>
 
+        <!-- Источник -->
+        <div v-if="currentRecipe.sourceUrl" class="flex items-center gap-2 min-w-0">
+          <span class="text-sm text-muted shrink-0">Источник:</span>
+          <a
+            :href="currentRecipe.sourceUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm text-primary truncate hover:underline"
+          >{{ currentRecipe.sourceUrl }}</a>
+        </div>
+
         <!-- Ингредиенты -->
         <div v-if="currentRecipe.ingredients.length" class="flex flex-col gap-3">
           <div class="flex items-center justify-between flex-wrap gap-2">
             <h3>Ингредиенты</h3>
             <div class="flex items-center gap-3 flex-wrap">
-              <span v-if="totalCost !== undefined" class="text-sm text-muted">
-                ~{{ totalCost.toLocaleString('ru-RU') }} ₽
-              </span>
               <div class="flex items-center gap-2">
                 <span class="text-sm">Порции:</span>
                 <div class="flex items-center gap-1">
@@ -151,6 +159,9 @@
                   </UButton>
                 </div>
               </div>
+              <span v-if="totalCost !== undefined" class="text-sm text-muted">
+                ~{{ totalCost.toLocaleString('ru-RU') }} ₽
+              </span>
             </div>
           </div>
           <div class="flex flex-col">
@@ -162,7 +173,7 @@
               :measure="ing.amountType"
               :optional="ing.isOptional"
               :note="ing.note ?? undefined"
-              :cost="ingredientCost(ing)"
+              :cost="ingredientCosts.get(ing.id)"
             />
           </div>
         </div>
@@ -193,6 +204,7 @@
 
 <script lang="ts" setup>
 import { ArrowLeft, Pencil, Trash2, CalendarPlus, ListPlus, Minus, Plus, Clock } from 'lucide-vue-next'
+import type { Product } from '~/types'
 import IngredientListElement from '@/components/IngredientListElement.vue'
 import NutritionProgressBar from '@/components/NutritionProgressBar.vue'
 import RecipeStep from '@/components/RecipeStep.vue'
@@ -202,6 +214,8 @@ const router = useRouter()
 const toast = useToast()
 const { currentRecipe, detailLoading, fetchRecipeById, deleteRecipe } = useRecipes()
 const { products, fetchProducts } = useProducts()
+const { measurements, fetchMeasurements } = useMeasurements()
+const { converts, fetchConverts } = useConverts()
 
 const deleting = ref(false)
 const deletePopoverOpen = ref(false)
@@ -243,18 +257,76 @@ function scaledAmount(baseAmount: number): number {
   return Math.round(baseAmount * (portions.value / basePortions.value) * 10) / 10
 }
 
-// Стоимость ингредиента: количество * цена / единица цены
-function ingredientCost(ing: { productId: number; amount: number; isOptional: boolean }): number | undefined {
-  if (ing.isOptional) return undefined
-  const product = products.value.find((p) => p.id === ing.productId)
-  if (!product || !product.priceQty) return undefined
-  return Math.round(scaledAmount(ing.amount) * product.priceRub / product.priceQty * 100) / 100
+// Конвертирует qty в единице unitId в граммы для конкретного продукта.
+// Возвращает null, если конвертация невозможна (нет коэффициента или нужных полей продукта).
+function unitToGrams(qty: number, unitId: number, product: Product): number | null {
+  const unit = measurements.value.find(u => u.measurement_unit_id === unitId)
+  if (!unit) return null
+
+  if (unit.measure_type === 'weight') {
+    // Уже граммы — конвертация не нужна
+    if (unit.is_standart) return qty
+    // Конвертация в граммы через таблицу converts
+    const stdGram = measurements.value.find(u => u.measure_type === 'weight' && u.is_standart)
+    const conv = converts.value.find(c => c.fromUnitId === unitId && c.toUnitId === stdGram?.measurement_unit_id)
+    return conv ? qty * conv.coefficient : null
+  }
+
+  if (unit.measure_type === 'volume' || unit.measure_type === 'volume_extra') {
+    if (!product.mlMeasure || !product.gMeasure) return null
+    // Стандартная единица объёма — мл (volume + is_standart)
+    const stdMl = measurements.value.find(u => u.measure_type === 'volume' && u.is_standart)
+    let mlQty = qty
+    // Если не мл (литры, ложки, стаканы) — сначала приводим к мл через converts
+    if (unitId !== stdMl?.measurement_unit_id) {
+      const conv = converts.value.find(c => c.fromUnitId === unitId && c.toUnitId === stdMl?.measurement_unit_id)
+      if (!conv) return null
+      mlQty = qty * conv.coefficient
+    }
+    // Мл → граммы с учётом плотности продукта
+    return mlQty * (product.mlMeasure / product.gMeasure)
+  }
+
+  if (unit.measure_type === 'piece') {
+    // Штуки → граммы: pcs_measure и g_measure должны быть заполнены одновременно
+    if (!product.pcsMeasure || !product.gMeasure) return null
+    return qty * (product.pcsMeasure / product.gMeasure)
+  }
+
+  // 'extra' — конвертация невозможна
+  return null
 }
+
+// Реактивный кэш стоимостей по id ингредиента.
+// Пересчитывается при изменении portions, converts, measurements или списка продуктов.
+const ingredientCosts = computed<Map<number, number | undefined>>(() => {
+  const map = new Map<number, number | undefined>()
+  if (!currentRecipe.value) return map
+
+  for (const ing of currentRecipe.value.ingredients) {
+    if (ing.isOptional) { map.set(ing.id, undefined); continue }
+
+    const product = products.value.find(p => p.id === ing.productId)
+    if (!product || !product.priceQty || !product.measurementUnitId) {
+      map.set(ing.id, undefined); continue
+    }
+
+    // Количество ингредиента (с учётом масштаба порций) → граммы
+    const ingGrams = unitToGrams(scaledAmount(ing.amount), ing.measurementUnitId, product)
+    // Количество продукта за указанную цену → граммы
+    const priceGrams = unitToGrams(product.priceQty, product.measurementUnitId, product)
+
+    if (ingGrams === null || !priceGrams) { map.set(ing.id, undefined); continue }
+
+    map.set(ing.id, Math.round(ingGrams * (product.priceRub / priceGrams) * 100) / 100)
+  }
+  return map
+})
 
 const totalCost = computed(() => {
   if (!currentRecipe.value) return undefined
-  const costs = currentRecipe.value.ingredients.map((ing) => ingredientCost(ing))
-  if (costs.every((c) => c === undefined)) return undefined
+  const costs = [...ingredientCosts.value.values()]
+  if (costs.every(c => c === undefined)) return undefined
   return Math.round(costs.reduce((sum, c) => sum + (c ?? 0), 0) * 100) / 100
 })
 
@@ -270,5 +342,9 @@ watch(
   { immediate: true },
 )
 
-onMounted(() => fetchProducts())
+onMounted(() => {
+  fetchProducts()
+  fetchMeasurements()
+  fetchConverts()
+})
 </script>

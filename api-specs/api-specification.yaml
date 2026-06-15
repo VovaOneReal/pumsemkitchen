@@ -529,8 +529,42 @@ paths:
           description: Нет доступа к меню
         "404":
           description: Меню не найдено
+  /converts:
+    get:
+      summary: Справочник коэффициентов конвертации единиц измерения
+      description: >
+        Возвращает все записи таблицы converts: пары единиц измерения с коэффициентом конвертации.
+        Используется на клиенте для расчёта стоимости ингредиентов.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Массив правил конвертации
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Convert"
+        "401":
+          description: Пользователь не авторизован
 components:
   schemas:
+    Convert:
+      type: object
+      properties:
+        fromUnitId:
+          type: integer
+          description: ID исходной единицы измерения
+        toUnitId:
+          type: integer
+          description: ID целевой единицы измерения
+        coefficient:
+          type: number
+          description: Коэффициент конвертации (fromUnit * coefficient = toUnit)
+      required:
+        - fromUnitId
+        - toUnitId
+        - coefficient
     MenuForm:
       type: object
       required:
