@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
       portions: body.portions ?? 4,
       isPublic: body.is_public ?? false,
       pictureUrl: body.picture_url ?? null,
+      sourceUrl: body.source_url ?? null,
       createdAt: today,
       editedAt: today,
     }).returning()

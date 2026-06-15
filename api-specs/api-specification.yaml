@@ -926,6 +926,10 @@ components:
           type: string
           nullable: true
           description: URL изображения рецепта
+        source_url:
+          type: string
+          nullable: true
+          description: URL источника рецепта
         ingredients:
           type: array
           items:

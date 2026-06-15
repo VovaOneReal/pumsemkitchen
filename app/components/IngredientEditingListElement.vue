@@ -18,6 +18,7 @@
       orientation="horizontal"
       class="w-28"
       :min="0"
+      :step="0.1"
       v-model="amount"
     />
 
@@ -72,13 +73,27 @@ const selectedProduct = computed({
     return productItems.value.find((item) => item.value === productId.value)
   },
   set(item: { label: string; value: number } | undefined) {
+    // Сбрасываем единицу измерения при смене продукта
+    if ((item?.value ?? null) !== productId.value) {
+      measurementUnitId.value = null
+    }
     productId.value = item?.value ?? null
   },
 })
 
-const measurementItems = computed(() =>
-  measurements.value.map((m) => ({ label: m.unit_name, value: m.measurement_unit_id }))
+const selectedProductData = computed(() =>
+  products.value.find((p) => p.id === productId.value) ?? null
 )
+
+const measurementItems = computed(() => {
+  const p = selectedProductData.value
+  const allowedTypes = new Set<string>(['weight'])
+  if (p?.mlMeasure != null) { allowedTypes.add('volume'); allowedTypes.add('volume_extra') }
+  if (p?.pcsMeasure != null) allowedTypes.add('piece')
+  return measurements.value
+    .filter((m) => allowedTypes.has(m.measure_type))
+    .map((m) => ({ label: m.unit_abbr, value: m.measurement_unit_id }))
+})
 
 const selectedMeasurementUnitId = computed({
   get() {
@@ -87,5 +102,13 @@ const selectedMeasurementUnitId = computed({
   set(v: number | null) {
     measurementUnitId.value = v
   },
+})
+
+// При включении "по вкусу" фиксируем количество = 0 и единицу = стандартный грамм
+watch(isOptional, (val) => {
+  if (!val) return
+  amount.value = 0
+  const gram = measurements.value.find((m) => m.measure_type === 'weight' && m.is_standart)
+  if (gram) measurementUnitId.value = gram.measurement_unit_id
 })
 </script>

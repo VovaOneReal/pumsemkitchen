@@ -47,6 +47,19 @@
           />
         </div>
 
+        <!-- URL источника рецепта -->
+        <div class="flex flex-col gap-2">
+          <h3 class="font-semibold">Источник</h3>
+          <UFormField :error="sourceUrlError">
+            <UInput
+              v-model="sourceUrl"
+              type="url"
+              class="w-full"
+              placeholder="https://..."
+            />
+          </UFormField>
+        </div>
+
         <!-- Ингредиенты -->
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
@@ -56,9 +69,6 @@
               <UInputNumber v-model="portions" orientation="horizontal" :min="1" class="w-28" />
             </div>
           </div>
-          <UButton block variant="soft" icon="i-lucide-plus" @click="addIngredient">
-            Добавить ингредиент
-          </UButton>
           <div class="flex flex-col w-full gap-1">
             <div
               v-for="(ingredient, index) in ingredients"
@@ -81,19 +91,14 @@
               />
             </div>
           </div>
+          <UButton block variant="soft" icon="i-lucide-plus" @click="addIngredient">
+            Добавить ингредиент
+          </UButton>
         </div>
 
         <!-- Готовка -->
         <div class="flex flex-col gap-2">
           <h3 class="font-semibold">Готовка</h3>
-          <UButton
-            block
-            variant="soft"
-            icon="i-lucide-plus"
-            @click="recipeSteps.push({ step: recipeSteps.length, description: '', pictureUrl: null })"
-          >
-            Добавить шаг
-          </UButton>
           <div class="flex flex-col w-full gap-1">
             <div
               v-for="(step, index) in recipeSteps"
@@ -113,6 +118,14 @@
               />
             </div>
           </div>
+          <UButton
+            block
+            variant="soft"
+            icon="i-lucide-plus"
+            @click="recipeSteps.push({ step: recipeSteps.length, description: '', pictureUrl: null })"
+          >
+            Добавить шаг
+          </UButton>
         </div>
       </div>
     </div>
@@ -145,6 +158,12 @@ const editingId = computed(() => route.query.id ? Number(route.query.id) : null)
 const title = ref('')
 const description = ref('')
 const coverImage = ref<string | null>(null)
+const sourceUrl = ref<string | null>(null)
+const sourceUrlError = computed(() => {
+  if (!sourceUrl.value) return undefined
+  try { new URL(sourceUrl.value); return undefined }
+  catch { return 'Введите корректный URL' }
+})
 const portions = ref(4)
 const cookingTime = ref(0)
 const saving = ref(false)
@@ -168,6 +187,7 @@ onMounted(async () => {
   cookingTime.value = r.cookingTimeMin ?? 0
   portions.value = r.portions ?? 4
   coverImage.value = r.pictureUrl
+  sourceUrl.value = r.sourceUrl ?? null
 
   ingredients.push(
     ...r.ingredients.map((ing, i) => ({
@@ -221,6 +241,7 @@ async function onSave() {
     portions: portions.value,
     is_public: false,
     picture_url: coverImage.value,
+    source_url: sourceUrl.value || null,
     ingredients: ingredients.map((ing) => ({
       product_id: ing.productId!,
       measurement_unit_id: ing.measurementUnitId!,

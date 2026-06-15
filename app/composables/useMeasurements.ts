@@ -1,8 +1,9 @@
 export type MeasurementUnit = {
   measurement_unit_id: number
   unit_name: string
+  unit_abbr: string
   unit_plural_name: string | null
-  measure_type: 'piece' | 'weight' | 'volume'
+  measure_type: 'piece' | 'weight' | 'volume' | 'volume_extra' | 'extra'
   is_standart: boolean
 }
 

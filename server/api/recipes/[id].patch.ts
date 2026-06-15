@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
       ...(body.portions !== undefined && { portions: body.portions }),
       ...(body.is_public !== undefined && { isPublic: body.is_public }),
       ...(body.picture_url !== undefined && { pictureUrl: body.picture_url }),
+      ...(body.source_url !== undefined && { sourceUrl: body.source_url }),
       editedAt: today,
       editUserId: user.userId,
     }).where(eq(recipes.recipeId, id))
