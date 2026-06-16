@@ -1,4 +1,4 @@
-import { pgTable, uniqueIndex, check, serial, varchar, boolean, text, index, date, foreignKey, integer, numeric, primaryKey, unique, pgView } from "drizzle-orm/pg-core"
+import { pgTable, uniqueIndex, check, serial, varchar, boolean, text, index, date, foreignKey, integer, numeric, primaryKey, unique } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -175,10 +175,10 @@ export const products = pgTable("products", {
 			foreignColumns: [users.userId],
 			name: "fk_products_user_prod_users"
 		}).onUpdate("restrict").onDelete("cascade"),
+	check("ckc_fats_products", sql`(fats IS NULL) OR (fats >= (0)::numeric)`),
 	check("ckc_price_products", sql`(price IS NULL) OR (price >= (0)::numeric)`),
 	check("ckc_quantity_per_pric_products", sql`(quantity_per_price IS NULL) OR (quantity_per_price >= (0)::numeric)`),
 	check("ckc_proteins_products", sql`(proteins IS NULL) OR (proteins >= (0)::numeric)`),
-	check("ckc_fats_products", sql`(fats IS NULL) OR (fats >= (0)::numeric)`),
 	check("ckc_carbs_products", sql`(carbs IS NULL) OR (carbs >= (0)::numeric)`),
 	check("ckc_g_measure_products", sql`(g_measure IS NULL) OR (g_measure >= (0)::numeric)`),
 	check("ckc_ml_measure_products", sql`(ml_measure IS NULL) OR (ml_measure >= (0)::numeric)`),
@@ -207,6 +207,37 @@ export const invitations = pgTable("invitations", {
 			name: "fk_invitati_user_invi_users"
 		}).onUpdate("restrict").onDelete("cascade"),
 	check("ckc_status_invitati", sql`(status)::text = ANY ((ARRAY['sent'::character varying, 'accepted'::character varying, 'denied'::character varying, 'cancelled'::character varying])::text[])`),
+]);
+
+export const listElements = pgTable("list_elements", {
+	elementId: serial("element_id").primaryKey().notNull(),
+	shoppingListId: integer("shopping_list_id").notNull(),
+	userId: integer("user_id"),
+	measurementUnitId: integer("measurement_unit_id").notNull(),
+	isChecked: boolean("is_checked").notNull(),
+	title: varchar({ length: 128 }).notNull(),
+	quantity: numeric().default('1').notNull(),
+}, (table) => [
+	uniqueIndex("list_elements_pk").using("btree", table.elementId.asc().nullsLast().op("int4_ops")),
+	index("shopping_element_measures_fk").using("btree", table.measurementUnitId.asc().nullsLast().op("int4_ops")),
+	index("shopping_list_list_elements_fk").using("btree", table.shoppingListId.asc().nullsLast().op("int4_ops")),
+	index("user_adds_elements_fk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
+	foreignKey({
+			columns: [table.measurementUnitId],
+			foreignColumns: [measurementUnitsRef.measurementUnitId],
+			name: "fk_list_ele_shopping__measurem"
+		}).onUpdate("restrict").onDelete("cascade"),
+	foreignKey({
+			columns: [table.shoppingListId],
+			foreignColumns: [shoppingLists.shoppingListId],
+			name: "fk_list_ele_shopping__shopping"
+		}).onUpdate("restrict").onDelete("cascade"),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.userId],
+			name: "fk_list_ele_user_adds_users"
+		}).onUpdate("restrict").onDelete("cascade"),
+	check("ckc_quantity_list_ele", sql`quantity >= (0)::numeric`),
 ]);
 
 export const shoppingLists = pgTable("shopping_lists", {
@@ -239,30 +270,6 @@ export const shoppingLists = pgTable("shopping_lists", {
 			foreignColumns: [users.userId],
 			name: "fk_shopping_user_shop_users"
 		}).onUpdate("restrict").onDelete("cascade"),
-]);
-
-export const listElements = pgTable("list_elements", {
-	elementId: serial("element_id").primaryKey().notNull(),
-	shoppingListId: integer("shopping_list_id").notNull(),
-	userId: integer("user_id"),
-	isChecked: boolean("is_checked").notNull(),
-	title: varchar({ length: 128 }).notNull(),
-	quantity: numeric().default('1').notNull(),
-}, (table) => [
-	uniqueIndex("list_elements_pk").using("btree", table.elementId.asc().nullsLast().op("int4_ops")),
-	index("shopping_list_list_elements_fk").using("btree", table.shoppingListId.asc().nullsLast().op("int4_ops")),
-	index("user_adds_elements_fk").using("btree", table.userId.asc().nullsLast().op("int4_ops")),
-	foreignKey({
-			columns: [table.shoppingListId],
-			foreignColumns: [shoppingLists.shoppingListId],
-			name: "fk_list_ele_shopping__shopping"
-		}).onUpdate("restrict").onDelete("cascade"),
-	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [users.userId],
-			name: "fk_list_ele_user_adds_users"
-		}).onUpdate("restrict").onDelete("cascade"),
-	check("ckc_quantity_list_ele", sql`quantity >= (0)::numeric`),
 ]);
 
 export const meals = pgTable("meals", {
@@ -450,12 +457,3 @@ export const recipeSteps = pgTable("recipe_steps", {
 		}).onUpdate("restrict").onDelete("cascade"),
 	primaryKey({ columns: [table.recipeId, table.order], name: "pk_recipe_steps"}),
 ]);
-export const unitsWithConverts = pgView("units_with_converts", {	measurementUnitId: integer("measurement_unit_id"),
-	unitName: varchar("unit_name", { length: 50 }),
-	unitAbbr: varchar("unit_abbr", { length: 32 }),
-	isStandart: boolean("is_standart"),
-	measureType: varchar("measure_type", { length: 32 }),
-	fromUnitId: integer("from_unit_id"),
-	toUnitId: integer("to_unit_id"),
-	convertationCoefficient: numeric("convertation_coefficient"),
-}).as(sql`SELECT measurement_units_ref.measurement_unit_id, measurement_units_ref.unit_name, measurement_units_ref.unit_abbr, measurement_units_ref.is_standart, measurement_units_ref.measure_type, converts.from_unit_id, converts.to_unit_id, converts.convertation_coefficient FROM measurement_units_ref JOIN converts ON measurement_units_ref.measurement_unit_id = converts.from_unit_id`);

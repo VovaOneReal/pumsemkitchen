@@ -49,5 +49,9 @@ export const useShoppingLists = () => {
     }
   }
 
-  return { lists, loading, creating, deletingId, editingId, fetchLists, createList, updateList, deleteList }
+  const fetchList = async (id: number) => {
+    return await $fetch<ShoppingList>(`/api/shopping-lists/${id}`)
+  }
+
+  return { lists, loading, creating, deletingId, editingId, fetchLists, createList, updateList, deleteList, fetchList }
 }

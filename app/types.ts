@@ -46,6 +46,16 @@ export type Menu = {
   estimatedCost: number | null
 }
 
+export type ListElement = {
+  id: number
+  title: string
+  quantity: number
+  measurementUnitId: number
+  measurementUnitAbbr: string | null
+  isChecked: boolean
+  authorName: string | null
+}
+
 export type ShoppingList = {
   id: number
   title: string

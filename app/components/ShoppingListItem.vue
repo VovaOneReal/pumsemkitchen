@@ -14,15 +14,27 @@
         :disabled="draft.quantity <= 0"
         @click="draft.quantity = Math.max(0, draft.quantity - 1)"
       />
-      <span class="w-10 text-center text-sm select-none">{{ draft.quantity }}</span>
+      <input
+        v-model.number="draft.quantity"
+        type="number"
+        step="0.1"
+        min="0"
+        class="w-14 text-center text-sm bg-transparent outline-none"
+      />
       <UButton icon="i-lucide-plus" variant="ghost" size="sm" @click="draft.quantity++" />
     </div>
 
-    <!-- Выпадающий список мер -->
+    <!-- Выпадающий список мер (только вес, объём, штуки) -->
     <USelect v-model="draft.measurementUnitId" :items="measurementOptions" class="w-32" />
 
     <!-- Сохранить -->
-    <UButton icon="i-lucide-save" color="primary" @click="onSave" />
+    <UButton
+      icon="i-lucide-save"
+      color="primary"
+      :loading="saving"
+      :disabled="!canSave"
+      @click="onSave"
+    />
 
     <!-- Отмена -->
     <UButton icon="i-lucide-circle-x" color="error" variant="subtle" @click="onCancel" />
@@ -30,7 +42,7 @@
 
   <!-- Режим просмотра -->
   <div v-else class="flex items-center gap-2 py-3 border-b border-default">
-    <UCheckbox v-model="localChecked" @change="$emit('check', localChecked)" />
+    <UCheckbox v-model="localChecked" :disabled="checking" @change="$emit('check', localChecked)" />
 
     <span class="flex-1 text-sm" :class="{ 'line-through text-muted': localChecked }">
       {{ name }}
@@ -45,7 +57,14 @@
     </span>
 
     <UButton icon="i-lucide-pencil" variant="ghost" size="sm" @click="startEdit" />
-    <UButton icon="i-lucide-x" variant="ghost" color="error" size="sm" @click="$emit('delete')" />
+    <UButton
+      icon="i-lucide-x"
+      variant="ghost"
+      color="error"
+      size="sm"
+      :loading="deleting"
+      @click="$emit('delete')"
+    />
   </div>
 </template>
 
@@ -54,6 +73,7 @@ interface Measurement {
   measurement_unit_id: number
   unit_name: string
   unit_abbr: string
+  measure_type: string
 }
 
 const props = defineProps<{
@@ -67,6 +87,9 @@ const props = defineProps<{
   measurements: Measurement[]
   // isNew — элемент только создаётся, у него нет сохранённых данных
   isNew?: boolean
+  saving?: boolean
+  deleting?: boolean
+  checking?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -88,12 +111,16 @@ const draft = reactive({
   measurementUnitId: props.measurementUnitId ?? (null as number | null),
 })
 
+// Только вес, объём и штуки — без столовых ложек, щепоток и т.п.
+const ALLOWED_TYPES = ['weight', 'volume', 'piece']
+
 const measurementOptions = computed(() =>
-  props.measurements.map((m) => ({
-    label: m.unit_abbr,
-    value: m.measurement_unit_id,
-  })),
+  props.measurements
+    .filter((m) => ALLOWED_TYPES.includes(m.measure_type))
+    .map((m) => ({ label: m.unit_abbr, value: m.measurement_unit_id })),
 )
+
+const canSave = computed(() => !!draft.name.trim() && draft.measurementUnitId != null)
 
 function startEdit() {
   draft.name = props.name ?? ''
@@ -103,6 +130,7 @@ function startEdit() {
 }
 
 function onSave() {
+  if (!canSave.value) return
   emit('save', {
     name: draft.name,
     quantity: draft.quantity,

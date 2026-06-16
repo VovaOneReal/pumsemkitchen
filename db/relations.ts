@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { users, families, recipes, ingredients, measurementUnitsRef, products, emissGoods, invitations, shoppingLists, listElements, planDates, meals, menus, shoppingListMenus, userAMemberOfFamilies, converts, mealRecipes, emissRecords, recipeSteps } from "./schema";
+import { users, families, recipes, ingredients, measurementUnitsRef, products, emissGoods, invitations, listElements, shoppingLists, planDates, meals, menus, shoppingListMenus, userAMemberOfFamilies, converts, mealRecipes, emissRecords, recipeSteps } from "./schema";
 
 export const familiesRelations = relations(families, ({one, many}) => ({
 	user: one(users, {
@@ -29,13 +29,13 @@ export const usersRelations = relations(users, ({many}) => ({
 		relationName: "products_userId_users_userId"
 	}),
 	invitations: many(invitations),
+	listElements: many(listElements),
 	shoppingLists_editUserId: many(shoppingLists, {
 		relationName: "shoppingLists_editUserId_users_userId"
 	}),
 	shoppingLists_userId: many(shoppingLists, {
 		relationName: "shoppingLists_userId_users_userId"
 	}),
-	listElements: many(listElements),
 	menus_editUserId: many(menus, {
 		relationName: "menus_editUserId_users_userId"
 	}),
@@ -83,6 +83,7 @@ export const ingredientsRelations = relations(ingredients, ({one}) => ({
 export const measurementUnitsRefRelations = relations(measurementUnitsRef, ({many}) => ({
 	ingredients: many(ingredients),
 	products: many(products),
+	listElements: many(listElements),
 	converts_fromUnitId: many(converts, {
 		relationName: "converts_fromUnitId_measurementUnitsRef_measurementUnitId"
 	}),
@@ -134,7 +135,23 @@ export const invitationsRelations = relations(invitations, ({one}) => ({
 	}),
 }));
 
+export const listElementsRelations = relations(listElements, ({one}) => ({
+	measurementUnitsRef: one(measurementUnitsRef, {
+		fields: [listElements.measurementUnitId],
+		references: [measurementUnitsRef.measurementUnitId]
+	}),
+	shoppingList: one(shoppingLists, {
+		fields: [listElements.shoppingListId],
+		references: [shoppingLists.shoppingListId]
+	}),
+	user: one(users, {
+		fields: [listElements.userId],
+		references: [users.userId]
+	}),
+}));
+
 export const shoppingListsRelations = relations(shoppingLists, ({one, many}) => ({
+	listElements: many(listElements),
 	family: one(families, {
 		fields: [shoppingLists.familyId],
 		references: [families.familyId]
@@ -149,19 +166,7 @@ export const shoppingListsRelations = relations(shoppingLists, ({one, many}) => 
 		references: [users.userId],
 		relationName: "shoppingLists_userId_users_userId"
 	}),
-	listElements: many(listElements),
 	shoppingListMenus: many(shoppingListMenus),
-}));
-
-export const listElementsRelations = relations(listElements, ({one}) => ({
-	shoppingList: one(shoppingLists, {
-		fields: [listElements.shoppingListId],
-		references: [shoppingLists.shoppingListId]
-	}),
-	user: one(users, {
-		fields: [listElements.userId],
-		references: [users.userId]
-	}),
 }));
 
 export const mealsRelations = relations(meals, ({one, many}) => ({
