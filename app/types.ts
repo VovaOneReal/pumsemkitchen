@@ -46,6 +46,15 @@ export type Menu = {
   estimatedCost: number | null
 }
 
+export type ShoppingList = {
+  id: number
+  title: string
+  authorName: string
+  createdAt: string
+  editorName: string | null
+  editedAt: string
+}
+
 export type Product = {
   id: number
   name: string

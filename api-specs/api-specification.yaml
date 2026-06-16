@@ -547,8 +547,136 @@ paths:
                   $ref: "#/components/schemas/Convert"
         "401":
           description: Пользователь не авторизован
+  /shopping-lists:
+    get:
+      summary: Получить списки покупок
+      description: Возвращает все списки покупок текущего пользователя, отсортированные по дате создания (новые первыми).
+      responses:
+        "200":
+          description: Массив списков покупок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShoppingListResponse"
+        "401":
+          description: Пользователь не авторизован
+    post:
+      summary: Создать список покупок
+      description: Создаёт новый список покупок для текущего пользователя.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShoppingListRequest"
+      responses:
+        "200":
+          description: Список создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingListResponse"
+        "401":
+          description: Пользователь не авторизован
+        "422":
+          description: Ошибка валидации входных данных
+  /shopping-lists/{id}:
+    patch:
+      summary: Переименовать список покупок
+      description: Обновляет название списка покупок. Доступно только владельцу списка.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID списка покупок
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateShoppingListRequest"
+      responses:
+        "200":
+          description: Список обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingListResponse"
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к списку
+        "404":
+          description: Список не найден
+        "422":
+          description: Ошибка валидации входных данных
+    delete:
+      summary: Удалить список покупок
+      description: Удаляет список покупок. Доступно только владельцу списка.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID списка покупок
+      responses:
+        "200":
+          description: Список удалён
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к списку
+        "404":
+          description: Список не найден
 components:
   schemas:
+    ShoppingListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID списка покупок
+        title:
+          type: string
+          description: Название списка
+        authorName:
+          type: string
+          description: Отображаемое имя автора
+        createdAt:
+          type: string
+          description: Дата создания в формате DD.MM.YYYY
+        editorName:
+          type: string
+          nullable: true
+          description: Отображаемое имя последнего редактора (null — список не редактировался)
+        editedAt:
+          type: string
+          description: Дата последнего изменения в формате DD.MM.YYYY
+    CreateShoppingListRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Название нового списка покупок
+    UpdateShoppingListRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Новое название списка покупок
     Convert:
       type: object
       properties:
