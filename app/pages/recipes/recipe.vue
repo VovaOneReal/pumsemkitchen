@@ -53,12 +53,32 @@
               </UButton>
             </UTooltip>
             <UTooltip text="Сформировать список покупок">
-              <UButton disabled variant="outline" class="flex-1 justify-center">
+              <UButton variant="outline" class="flex-1 justify-center" :loading="creatingShoppingList" @click="shoppingListModalOpen = true">
                 <template #leading><ListPlus :size="16" /></template>
               </UButton>
             </UTooltip>
           </div>
         </div>
+
+        <!-- Модальное окно: Формирование списка покупок -->
+        <UModal v-model:open="shoppingListModalOpen">
+          <template #content>
+            <div class="p-6 flex flex-col gap-6">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">Формирование списка покупок</h2>
+                <UButton icon="i-lucide-x" variant="ghost" color="neutral" size="sm" @click="shoppingListModalOpen = false" />
+              </div>
+              <p>
+                Будет создан список покупок для рецепта «{{ currentRecipe?.title }}» на
+                <strong>{{ portions }} {{ portions === 1 ? 'порцию' : portions < 5 ? 'порции' : 'порций' }}</strong>.
+              </p>
+              <div class="flex justify-end gap-3">
+                <UButton variant="ghost" @click="shoppingListModalOpen = false">Отменить</UButton>
+                <UButton :loading="creatingShoppingList" @click="onCreateShoppingList">Сформировать</UButton>
+              </div>
+            </div>
+          </template>
+        </UModal>
 
         <!-- Модальное окно: Добавление в меню -->
         <UModal v-model:open="addToMenuOpen">
@@ -319,6 +339,26 @@ const { converts, fetchConverts } = useConverts()
 
 const deleting = ref(false)
 const deletePopoverOpen = ref(false)
+
+const shoppingListModalOpen = ref(false)
+const creatingShoppingList = ref(false)
+
+async function onCreateShoppingList() {
+  if (!currentRecipe.value) return
+  creatingShoppingList.value = true
+  try {
+    const result = await $fetch<{ id: number; title: string }>(`/api/recipes/${currentRecipe.value.id}/shopping-list`, {
+      method: 'POST',
+      body: { portions: portions.value },
+    })
+    shoppingListModalOpen.value = false
+    toast.add({ title: 'Список создан', description: result.title, color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка', description: 'Не удалось создать список покупок', color: 'error' })
+  } finally {
+    creatingShoppingList.value = false
+  }
+}
 
 // Просмотр карточки продукта из списка ингредиентов
 const selectedViewProduct = ref<Product | null>(null)

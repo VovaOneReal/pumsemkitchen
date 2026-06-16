@@ -334,6 +334,55 @@ paths:
           description: Нет доступа к рецепту
         "404":
           description: Рецепт не найден
+  /recipes/{id}/shopping-list:
+    post:
+      summary: Сформировать список покупок из рецепта
+      description: >
+        Создаёт новый список покупок на основе ингредиентов рецепта с учётом указанного числа порций.
+        Выполняет масштабирование количеств, конвертацию volume_extra → volume,
+        а также объединение дублирующихся продуктов в граммах.
+        Требует активной сессии (cookie).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - portions
+              properties:
+                portions:
+                  type: integer
+                  minimum: 1
+                  description: Количество порций, на которое формируется список
+      responses:
+        "200":
+          description: Созданный список покупок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: ID нового списка покупок
+                  title:
+                    type: string
+                    description: Заголовок нового списка покупок
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к рецепту
+        "404":
+          description: Рецепт не найден
+        "422":
+          description: Ошибка валидации входных данных
   /users/me:
     get:
       summary: Профиль текущего пользователя
