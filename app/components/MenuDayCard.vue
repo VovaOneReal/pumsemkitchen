@@ -39,7 +39,7 @@
         </UFormField>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="error" label="Отменить" @click="showEditModal = false" />
-          <UButton label="Сохранить" :disabled="!editDate" @click="onSaveDate" />
+          <UButton label="Сохранить" :disabled="!editDate" :loading="saving" @click="onSaveDate" />
         </div>
       </div>
     </template>
@@ -62,17 +62,22 @@
 
 <script lang="ts" setup>
 const props = defineProps<{
+  planDateId: number
   date: string   // YYYY-MM-DD
   menuId: string
 }>()
 
 const emit = defineEmits<{
   delete: []
-  'update-date': [newDate: string]
 }>()
+
+const toast = useToast()
+const menuIdNum = computed(() => Number(props.menuId))
+const { updatePlanDate } = usePlanDates(menuIdNum)
 
 const showDeleteModal = ref(false)
 const showEditModal = ref(false)
+const saving = ref(false)
 const editDate = ref(props.date)
 
 // "24 марта"
@@ -87,10 +92,19 @@ function openEditDate() {
   showEditModal.value = true
 }
 
-function onSaveDate() {
+async function onSaveDate() {
   if (!editDate.value) return
-  showEditModal.value = false
-  emit('update-date', editDate.value)
+  saving.value = true
+  try {
+    await updatePlanDate(props.planDateId, editDate.value)
+    showEditModal.value = false
+    toast.add({ title: 'Дата изменена', color: 'success' })
+  } catch (err: any) {
+    const msg = err?.data?.statusMessage ?? 'Ошибка изменения даты'
+    toast.add({ title: msg, color: err?.data?.statusCode === 409 ? 'warning' : 'error' })
+  } finally {
+    saving.value = false
+  }
 }
 
 function onConfirmDelete() {

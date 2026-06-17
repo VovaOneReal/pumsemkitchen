@@ -34,6 +34,32 @@ export type RecipeDetail = Recipe & {
   steps: RecipeStep[]
 }
 
+export type MealRecipeItem = {
+  recipeId: number
+  title: string
+  portions: number
+  cookingTimeMin: number | null
+  pictureUrl: string | null
+}
+
+export type MealWithRecipes = {
+  mealId: number
+  mealTitle: string
+  mealOrder: number
+  recipes: MealRecipeItem[]
+}
+
+export type DayDetail = {
+  menuTitle: string
+  planDate: string
+  meals: MealWithRecipes[]
+}
+
+export type PlanDate = {
+  planDateId: number
+  planDate: string
+}
+
 export type Menu = {
   id: number
   title: string

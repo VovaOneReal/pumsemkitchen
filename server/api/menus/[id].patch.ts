@@ -1,5 +1,5 @@
 import { db } from '~~/server/utils/db'
-import { menus, planDates } from '~~/db/schema'
+import { menus } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
 import { updateMenuSchema } from '~~/schemas/menu'
 
@@ -17,24 +17,11 @@ export default defineEventHandler(async (event) => {
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Меню не найдено' })
   if (existing.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к меню' })
 
-  await db.transaction(async (tx) => {
-    await tx.update(menus).set({
-      ...(body.title !== undefined && { menuTitle: body.title }),
-      editUserId: user.userId,
-      editedAt: today,
-    }).where(eq(menus.menuId, id))
-
-    // Обновляем период — удаляем старые даты и вставляем новые
-    if (body.dateFrom !== undefined || body.dateTo !== undefined) {
-      await tx.delete(planDates).where(eq(planDates.menuId, id))
-      const from = body.dateFrom ?? existing.editedAt
-      const to = body.dateTo ?? existing.editedAt
-      await tx.insert(planDates).values([
-        { menuId: id, planDate: from },
-        { menuId: id, planDate: to },
-      ])
-    }
-  })
+  await db.update(menus).set({
+    ...(body.title !== undefined && { menuTitle: body.title }),
+    editUserId: user.userId,
+    editedAt: today,
+  }).where(eq(menus.menuId, id))
 
   const row = await db.query.menus.findFirst({
     where: (m, { eq }) => eq(m.menuId, id),

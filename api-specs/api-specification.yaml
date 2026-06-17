@@ -578,6 +578,211 @@ paths:
           description: Нет доступа к меню
         "404":
           description: Меню не найдено
+  /menus/{id}/plan-dates:
+    get:
+      summary: Список дней меню
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Название меню и список дней
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  menuTitle:
+                    type: string
+                  planDates:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PlanDateResponse"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню не найдено
+    post:
+      summary: Добавить день в меню
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanDateForm"
+      responses:
+        "200":
+          description: Созданный день
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDateResponse"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню не найдено
+        "409":
+          description: Этот день уже добавлен в меню
+        "422":
+          description: Ошибка валидации
+  /menus/{id}/plan-dates/{planDateId}:
+    patch:
+      summary: Изменить дату дня
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: planDateId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanDateForm"
+      responses:
+        "200":
+          description: Обновлённый день
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanDateResponse"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню или день не найден
+        "409":
+          description: Этот день уже добавлен в меню
+        "422":
+          description: Ошибка валидации
+    delete:
+      summary: Удалить день из меню
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: planDateId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: День удалён
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню или день не найден
+  /menus/{id}/days/{date}:
+    get:
+      summary: Содержимое дня меню
+      description: Возвращает приёмы пищи с рецептами для указанной даты в меню.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Детали дня
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DayDetailResponse"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню или дата не найдены
+  /meals/{mealId}/recipes/{recipeId}:
+    patch:
+      summary: Изменить количество порций рецепта в приёме пищи
+      parameters:
+        - in: path
+          name: mealId
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: recipeId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMealRecipeForm"
+      responses:
+        "200":
+          description: Обновлённая связь рецепта с приёмом пищи
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealRecipeResponse"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа
+        "404":
+          description: Приём пищи или рецепт не найден
+        "422":
+          description: Ошибка валидации
+    delete:
+      summary: Удалить рецепт из приёма пищи
+      parameters:
+        - in: path
+          name: mealId
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: recipeId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Рецепт удалён
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа
+        "404":
+          description: Приём пищи или рецепт не найден
   /converts:
     get:
       summary: Справочник коэффициентов конвертации единиц измерения
@@ -800,6 +1005,78 @@ components:
           type: number
           nullable: true
           description: Примерная стоимость меню в рублях (всегда null — не реализовано)
+    UpdateMealRecipeForm:
+      type: object
+      required:
+        - portions
+      properties:
+        portions:
+          type: integer
+          minimum: 1
+          description: Количество порций
+    MealRecipeResponse:
+      type: object
+      properties:
+        recipeId:
+          type: integer
+        mealId:
+          type: integer
+        portions:
+          type: integer
+    DayDetailResponse:
+      type: object
+      properties:
+        menuTitle:
+          type: string
+        planDate:
+          type: string
+          format: date
+        meals:
+          type: array
+          items:
+            type: object
+            properties:
+              mealId:
+                type: integer
+              mealTitle:
+                type: string
+              mealOrder:
+                type: integer
+              recipes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    recipeId:
+                      type: integer
+                    title:
+                      type: string
+                    portions:
+                      type: integer
+                    cookingTimeMin:
+                      type: integer
+                      nullable: true
+                    pictureUrl:
+                      type: string
+                      nullable: true
+    PlanDateForm:
+      type: object
+      required:
+        - planDate
+      properties:
+        planDate:
+          type: string
+          format: date
+          description: Дата дня (YYYY-MM-DD)
+    PlanDateResponse:
+      type: object
+      properties:
+        planDateId:
+          type: integer
+        planDate:
+          type: string
+          format: date
+          description: Дата дня (YYYY-MM-DD)
     LoginData:
       type: object
       required:

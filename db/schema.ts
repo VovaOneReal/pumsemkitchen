@@ -18,6 +18,7 @@ export const measurementUnitsRef = pgTable("measurement_units_ref", {
 export const emissGoods = pgTable("emiss_goods", {
 	emissGoodsId: serial("emiss_goods_id").primaryKey().notNull(),
 	emissGoodsName: text("emiss_goods_name").notNull(),
+	isShowingGoods: boolean("is_showing_goods").default(true).notNull(),
 }, (table) => [
 	uniqueIndex("emiss_goods_pk").using("btree", table.emissGoodsId.asc().nullsLast().op("int4_ops")),
 ]);

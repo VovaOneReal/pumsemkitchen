@@ -73,5 +73,5 @@ defineEmits<{
   'update-portions': [id: number, portions: number]
 }>()
 
-const nutritionOpen = ref(true)
+const nutritionOpen = ref(false)
 </script>

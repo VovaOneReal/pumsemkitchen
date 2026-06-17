@@ -8,14 +8,22 @@
           {{ title }}
         </NuxtLink>
         <div class="flex flex-wrap gap-1.5">
-          <UBadge variant="subtle" color="neutral" icon="i-lucide-user">{{ authorName }}</UBadge>
-          <UBadge variant="subtle" color="neutral" icon="i-lucide-calendar">{{ formatDate(createdAt) }}</UBadge>
-          <UBadge v-if="editorName" variant="subtle" color="neutral" icon="i-lucide-user-pen">
-            {{ editorName }}
-          </UBadge>
-          <UBadge v-if="editorName" variant="subtle" color="neutral" icon="i-lucide-calendar-check">
-            {{ formatDate(editedAt) }}
-          </UBadge>
+          <UTooltip text="Автор меню">
+            <UBadge variant="subtle" color="neutral" icon="i-lucide-user">{{ authorName }}</UBadge>
+          </UTooltip>
+          <UTooltip text="Дата создания">
+            <UBadge variant="subtle" color="neutral" icon="i-lucide-calendar">{{ formatDate(createdAt) }}</UBadge>
+          </UTooltip>
+          <UTooltip v-if="editorName" text="Последний редактор">
+            <UBadge variant="subtle" color="neutral" icon="i-lucide-user-pen">
+              {{ editorName }}
+            </UBadge>
+          </UTooltip>
+          <UTooltip v-if="editorName" text="Дата последнего изменения">
+            <UBadge variant="subtle" color="neutral" icon="i-lucide-calendar-check">
+              {{ formatDate(editedAt) }}
+            </UBadge>
+          </UTooltip>
         </div>
       </div>
       <div class="flex gap-1 shrink-0">

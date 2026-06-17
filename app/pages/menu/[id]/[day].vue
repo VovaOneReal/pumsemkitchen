@@ -3,88 +3,70 @@
     <!-- Заголовок -->
     <div class="flex items-center gap-2 min-w-0">
       <UButton icon="i-lucide-arrow-left" variant="ghost" color="neutral" :to="`/menu/${menuId}`" />
-      <h2 class="ui-header-2 truncate">{{ menuTitle }} / {{ formattedDay }}</h2>
+      <h2 class="ui-header-2 truncate">{{ dayDetail?.menuTitle ?? '...' }} / {{ formattedDay }}</h2>
     </div>
 
     <!-- Подзаголовок -->
     <h3 class="text-2xl font-bold">Приёмы пищи</h3>
 
+    <!-- Индикатор загрузки -->
+    <div v-if="loading" class="flex flex-col gap-4">
+      <USkeleton v-for="i in 5" :key="i" class="h-32 w-full rounded-xl" />
+    </div>
+
     <!-- Карточки приёмов пищи -->
-    <div class="flex flex-col gap-4">
+    <div v-else class="flex flex-col gap-4">
       <MealCard
-        v-for="meal in meals"
-        :key="meal.id"
-        :name="meal.name"
-        :recipes="meal.recipes"
-        :nutrition="meal.nutrition"
-        @delete-recipe="(recipeId) => deleteRecipe(meal.id, recipeId)"
-        @update-portions="(recipeId, portions) => updatePortions(meal.id, recipeId, portions)"
+        v-for="meal in dayDetail?.meals ?? []"
+        :key="meal.mealId"
+        :name="meal.mealTitle"
+        :recipes="meal.recipes.map((r) => ({ id: r.recipeId, title: r.title, imageUrl: r.pictureUrl, portions: r.portions }))"
+        :nutrition="stubNutrition"
+        @delete-recipe="(recipeId) => onDeleteRecipe(meal.mealId, recipeId)"
+        @update-portions="(recipeId, portions) => onUpdatePortions(meal.mealId, recipeId, portions)"
       />
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import type { MealRecipe, MealNutrition } from '@/components/MealCard.vue'
-
 useHead({ title: 'День меню' })
 
 const route = useRoute()
+const toast = useToast()
 
-const menuId = computed(() => String(route.params.id))
-const dayParam = computed(() => String(route.params.day))
+const menuId = computed(() => Number(route.params.id))
+const date = computed(() => String(route.params.day))
 
-const menuTitle = ref('Название меню')
+const { dayDetail, loading, fetchDay, updatePortions, deleteRecipe } = useMeals(menuId, date)
+
+onMounted(fetchDay)
 
 // "24 марта 2026"
 const formattedDay = computed(() => {
-  const [y, m, d] = dayParam.value.split('-')
-  const date = new Date(Number(y), Number(m) - 1, Number(d))
-  return date.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+  const [y, m, d] = date.value.split('-')
+  const dateObj = new Date(Number(y), Number(m) - 1, Number(d))
+  return dateObj.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 })
 
-interface Meal {
-  id: number
-  name: string
-  recipes: MealRecipe[]
-  nutrition: MealNutrition
+// Стаб КБЖУ — данные пока не реализованы
+const stubNutrition = { cost: 0, calories: 0, proteins: 0, fats: 0, carbs: 0 }
+
+async function onDeleteRecipe(mealId: number, recipeId: number) {
+  try {
+    await deleteRecipe(mealId, recipeId)
+    toast.add({ title: 'Рецепт удалён', color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка удаления рецепта', color: 'error' })
+  }
 }
 
-// Фиксированные приёмы пищи с моковыми рецептами
-const meals = ref<Meal[]>([
-  {
-    id: 1,
-    name: 'Завтрак',
-    recipes: [
-      { id: 1, title: 'Название рецепта', imageUrl: null, portions: 5 },
-      { id: 2, title: 'Название рецепта', imageUrl: null, portions: 5 },
-    ],
-    nutrition: { cost: 1500, calories: 1234, proteins: 340, fats: 340, carbs: 340 },
-  },
-  {
-    id: 2,
-    name: 'Обед',
-    recipes: [
-      { id: 3, title: 'Название рецепта', imageUrl: null, portions: 4 },
-    ],
-    nutrition: { cost: 800, calories: 980, proteins: 210, fats: 180, carbs: 290 },
-  },
-  {
-    id: 3,
-    name: 'Ужин',
-    recipes: [],
-    nutrition: { cost: 0, calories: 0, proteins: 0, fats: 0, carbs: 0 },
-  },
-])
-
-function deleteRecipe(mealId: number, recipeId: number) {
-  const meal = meals.value.find((m) => m.id === mealId)
-  if (meal) meal.recipes = meal.recipes.filter((r) => r.id !== recipeId)
-}
-
-function updatePortions(mealId: number, recipeId: number, portions: number) {
-  const meal = meals.value.find((m) => m.id === mealId)
-  const recipe = meal?.recipes.find((r) => r.id === recipeId)
-  if (recipe) recipe.portions = portions
+async function onUpdatePortions(mealId: number, recipeId: number, portions: number) {
+  try {
+    await updatePortions(mealId, recipeId, portions)
+    toast.add({ title: 'Количество порций обновлено', color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка обновления порций', color: 'error' })
+  }
 }
 </script>

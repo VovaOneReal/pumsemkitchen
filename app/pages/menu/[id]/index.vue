@@ -4,22 +4,27 @@
     <div class="flex items-center justify-between w-full">
       <div class="flex items-center gap-2 min-w-0">
         <UButton icon="i-lucide-arrow-left" variant="ghost" color="neutral" to="/menu" />
-        <h2 class="ui-header-2 truncate">{{ menu.title }}</h2>
+        <h2 class="ui-header-2 truncate">{{ menuTitle }}</h2>
       </div>
       <UButton leading-icon="i-lucide-plus" label="Добавить день" @click="openAddDay" />
     </div>
 
+    <!-- Индикатор загрузки -->
+    <div v-if="loading" class="flex flex-col gap-3">
+      <USkeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-xl" />
+    </div>
+
     <!-- Дни сгруппированы по месяцам -->
-    <template v-if="groupedDays.length > 0">
+    <template v-else-if="groupedDays.length > 0">
       <div v-for="group in groupedDays" :key="group.label" class="flex flex-col gap-3">
         <h3 class="text-2xl font-bold">{{ group.label }}</h3>
         <MenuDayCard
-          v-for="day in group.days"
-          :key="day"
-          :date="day"
-          :menu-id="menuId"
-          @delete="deleteDay(day)"
-          @update-date="(newDate) => updateDay(day, newDate)"
+          v-for="pd in group.days"
+          :key="pd.planDateId"
+          :plan-date-id="pd.planDateId"
+          :date="pd.planDate"
+          :menu-id="String(menuId)"
+          @delete="onDeleteDay(pd.planDateId)"
         />
       </div>
     </template>
@@ -38,7 +43,7 @@
           </UFormField>
           <div class="flex justify-end gap-2">
             <UButton variant="ghost" color="error" label="Отменить" @click="showAddDayModal = false" />
-            <UButton label="Добавить" :disabled="!newDayDate" @click="confirmAddDay" />
+            <UButton label="Добавить" :disabled="!newDayDate" :loading="saving" @click="confirmAddDay" />
           </div>
         </div>
       </template>
@@ -47,33 +52,28 @@
 </template>
 
 <script lang="ts" setup>
+import type { PlanDate } from '@/types'
+
 useHead({ title: 'Содержимое меню' })
 
 const route = useRoute()
 const toast = useToast()
 
-const menuId = computed(() => String(route.params.id))
+const menuId = computed(() => Number(route.params.id))
+const { planDates, menuTitle, loading, fetchPlanDates, createPlanDate, deletePlanDate } = usePlanDates(menuId)
 
-const menu = ref({ title: 'Название меню' })
-
-const days = ref<string[]>([
-  '2026-03-24',
-  '2026-03-25',
-  '2026-03-27',
-  '2026-04-01',
-  '2026-04-03',
-])
+onMounted(fetchPlanDates)
 
 const groupedDays = computed(() => {
-  const groups = new Map<string, string[]>()
-  for (const day of [...days.value].sort()) {
-    const key = day.slice(0, 7)
+  const groups = new Map<string, PlanDate[]>()
+  for (const pd of [...planDates.value].sort((a, b) => a.planDate.localeCompare(b.planDate))) {
+    const key = pd.planDate.slice(0, 7)
     if (!groups.has(key)) groups.set(key, [])
-    groups.get(key)!.push(day)
+    groups.get(key)!.push(pd)
   }
-  return Array.from(groups.entries()).map(([key, dayList]) => ({
+  return Array.from(groups.entries()).map(([key, days]) => ({
     label: monthLabel(key),
-    days: dayList,
+    days,
   }))
 })
 
@@ -86,35 +86,35 @@ function monthLabel(key: string): string {
 
 const showAddDayModal = ref(false)
 const newDayDate = ref('')
+const saving = ref(false)
 
 function openAddDay() {
   newDayDate.value = ''
   showAddDayModal.value = true
 }
 
-function confirmAddDay() {
+async function confirmAddDay() {
   if (!newDayDate.value) return
-  if (days.value.includes(newDayDate.value)) {
-    toast.add({ title: 'Этот день уже добавлен', color: 'warning' })
-    return
+  saving.value = true
+  try {
+    await createPlanDate(newDayDate.value)
+    showAddDayModal.value = false
+    toast.add({ title: 'День добавлен', color: 'success' })
+  } catch (err: any) {
+    const msg = err?.data?.statusMessage ?? 'Ошибка добавления дня'
+    toast.add({ title: msg, color: err?.data?.statusCode === 409 ? 'warning' : 'error' })
+  } finally {
+    saving.value = false
   }
-  days.value.push(newDayDate.value)
-  showAddDayModal.value = false
-  toast.add({ title: 'День добавлен', color: 'success' })
 }
 
-function deleteDay(date: string) {
-  days.value = days.value.filter((d) => d !== date)
-  toast.add({ title: 'День удалён', color: 'success' })
+async function onDeleteDay(planDateId: number) {
+  try {
+    await deletePlanDate(planDateId)
+    toast.add({ title: 'День удалён', color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка удаления дня', color: 'error' })
+  }
 }
 
-function updateDay(oldDate: string, newDate: string) {
-  if (days.value.includes(newDate) && newDate !== oldDate) {
-    toast.add({ title: 'Этот день уже добавлен', color: 'warning' })
-    return
-  }
-  const idx = days.value.indexOf(oldDate)
-  if (idx !== -1) days.value[idx] = newDate
-  toast.add({ title: 'Дата изменена', color: 'success' })
-}
 </script>

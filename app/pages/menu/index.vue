@@ -22,8 +22,13 @@
       </UDropdownMenu>
     </div>
 
+    <!-- Индикатор загрузки -->
+    <div v-if="loading" class="flex flex-col gap-3">
+      <USkeleton v-for="i in 3" :key="i" class="h-24 w-full rounded-lg" />
+    </div>
+
     <!-- Меню сгруппированы по месяцу даты начала -->
-    <template v-if="groupedMenus.length > 0">
+    <template v-else-if="groupedMenus.length > 0">
       <div v-for="group in groupedMenus" :key="group.label" class="flex flex-col gap-3">
         <h3 class="text-2xl font-bold">{{ group.label }}</h3>
         <MenuCard
@@ -94,43 +99,9 @@ import { menuFormSchema } from '~~/schemas/menu'
 useHead({ title: 'Меню' })
 
 const toast = useToast()
+const { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu } = useMenus()
 
-// Моковые данные — API не используется
-const menus = ref<Menu[]>([
-  {
-    id: 1,
-    title: 'Меню на январь',
-    authorName: 'Иван Иванов',
-    createdAt: '2026-01-01',
-    editedAt: '2026-01-03',
-    editorName: 'Мария Петрова',
-    dateFrom: '2026-01-01',
-    dateTo: '2026-01-31',
-    estimatedCost: 1500,
-  },
-  {
-    id: 2,
-    title: 'Праздничное меню',
-    authorName: 'Иван Иванов',
-    createdAt: '2026-01-10',
-    editedAt: '2026-01-10',
-    editorName: null,
-    dateFrom: '2026-01-10',
-    dateTo: '2026-01-12',
-    estimatedCost: 3200,
-  },
-  {
-    id: 3,
-    title: 'Меню на февраль',
-    authorName: 'Иван Иванов',
-    createdAt: '2026-02-01',
-    editedAt: '2026-02-05',
-    editorName: 'Иван Иванов',
-    dateFrom: '2026-02-01',
-    dateTo: '2026-02-28',
-    estimatedCost: 1500,
-  },
-])
+onMounted(fetchMenus)
 
 const searchQuery = ref('')
 const sortKey = ref<'dateFrom-desc' | 'dateFrom-asc' | 'createdAt-desc' | 'title-asc' | 'title-desc'>('dateFrom-desc')
@@ -260,39 +231,29 @@ function closeForm() {
 
 async function onFormSubmit() {
   saving.value = true
-  await new Promise((r) => setTimeout(r, 500)) // имитация запроса
-  if (editingMenu.value) {
-    const idx = menus.value.findIndex((m) => m.id === editingMenu.value!.id)
-    if (idx !== -1) {
-      menus.value[idx] = {
-        ...menus.value[idx],
-        title: formState.value.title,
-        dateFrom: formState.value.dateFrom,
-        dateTo: formState.value.dateTo,
-      }
+  try {
+    if (editingMenu.value) {
+      await updateMenu(editingMenu.value.id, { title: formState.value.title })
+      toast.add({ title: 'Меню обновлено', color: 'success' })
+    } else {
+      await createMenu({ title: formState.value.title })
+      toast.add({ title: 'Меню создано', color: 'success' })
     }
-    toast.add({ title: 'Меню обновлено', color: 'success' })
-  } else {
-    menus.value.unshift({
-      id: Date.now(),
-      title: formState.value.title,
-      authorName: 'Вы',
-      createdAt: new Date().toISOString().slice(0, 10),
-      editedAt: new Date().toISOString().slice(0, 10),
-      editorName: null,
-      dateFrom: null,
-      dateTo: null,
-      estimatedCost: null,
-    })
-    toast.add({ title: 'Меню создано', color: 'success' })
+    closeForm()
+  } catch {
+    toast.add({ title: 'Ошибка сохранения', color: 'error' })
+  } finally {
+    saving.value = false
   }
-  saving.value = false
-  closeForm()
 }
 
-function onDeleteMenu(id: number) {
-  menus.value = menus.value.filter((m) => m.id !== id)
-  toast.add({ title: 'Меню удалено', color: 'success' })
+async function onDeleteMenu(id: number) {
+  try {
+    await deleteMenu(id)
+    toast.add({ title: 'Меню удалено', color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка удаления', color: 'error' })
+  }
 }
 
 function onCreateShoppingList(_menuId: number) {
