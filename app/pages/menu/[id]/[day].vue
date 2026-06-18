@@ -14,16 +14,22 @@
       <USkeleton v-for="i in 5" :key="i" class="h-32 w-full rounded-xl" />
     </div>
 
-    <!-- Карточки приёмов пищи -->
+    <!-- Карточки приёмов пищи и итог дня -->
     <div v-else class="flex flex-col gap-4">
       <MealCard
-        v-for="meal in dayDetail?.meals ?? []"
+        v-for="(meal, idx) in dayDetail?.meals ?? []"
         :key="meal.mealId"
         :name="meal.mealTitle"
         :recipes="meal.recipes.map((r) => ({ id: r.recipeId, title: r.title, imageUrl: r.pictureUrl, portions: r.portions }))"
-        :nutrition="stubNutrition"
+        :nutrition="mealsNutrition[idx]"
         @delete-recipe="(recipeId) => onDeleteRecipe(meal.mealId, recipeId)"
         @update-portions="(recipeId, portions) => onUpdatePortions(meal.mealId, recipeId, portions)"
+      />
+
+      <DayNutritionSummary
+        v-if="dayDetail && (dayDetail.meals.length > 0)"
+        :nutrition="dayNutrition"
+        title="Итого за день"
       />
     </div>
   </div>
@@ -40,7 +46,7 @@ const toast = useToast()
 const menuId = computed(() => Number(route.params.id))
 const date = computed(() => String(route.params.day))
 
-const { dayDetail, loading, fetchDay, updatePortions, deleteRecipe } = useMeals(menuId, date)
+const { dayDetail, loading, fetchDay, updatePortions, deleteRecipe, mealsNutrition, dayNutrition } = useMeals(menuId, date)
 
 onMounted(fetchDay)
 
@@ -50,9 +56,6 @@ const formattedDay = computed(() => {
   const dateObj = new Date(Number(y), Number(m) - 1, Number(d))
   return dateObj.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 })
-
-// Стаб КБЖУ — данные пока не реализованы
-const stubNutrition = { cost: 0, calories: 0, proteins: 0, fats: 0, carbs: 0 }
 
 async function onDeleteRecipe(mealId: number, recipeId: number) {
   try {

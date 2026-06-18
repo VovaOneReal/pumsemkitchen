@@ -9,6 +9,14 @@
       <UButton leading-icon="i-lucide-plus" label="Добавить день" @click="openAddDay" />
     </div>
 
+    <!-- КБЖУ и стоимость меню -->
+    <DayNutritionSummary
+      v-if="menuNutrition"
+      :nutrition="menuNutrition"
+      title="Итого по меню"
+    />
+    <USkeleton v-else class="h-20 w-full rounded-xl" />
+
     <!-- Индикатор загрузки -->
     <div v-if="loading" class="flex flex-col gap-3">
       <USkeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-xl" />
@@ -52,7 +60,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { PlanDate } from '@/types'
+import type { PlanDate, NutritionValues } from '@/types'
 
 useHead({ title: 'Содержимое меню' })
 
@@ -62,7 +70,13 @@ const toast = useToast()
 const menuId = computed(() => Number(route.params.id))
 const { planDates, menuTitle, loading, fetchPlanDates, createPlanDate, deletePlanDate } = usePlanDates(menuId)
 
-onMounted(fetchPlanDates)
+// Итоговые КБЖУ и стоимость всего меню
+const menuNutrition = ref<NutritionValues | null>(null)
+
+onMounted(async () => {
+  await fetchPlanDates()
+  menuNutrition.value = await $fetch<NutritionValues>(`/api/menus/${menuId.value}/nutrition`)
+})
 
 const groupedDays = computed(() => {
   const groups = new Map<string, PlanDate[]>()

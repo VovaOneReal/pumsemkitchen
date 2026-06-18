@@ -42,7 +42,6 @@
           :editor-name="menu.editorName"
           :date-from="menu.dateFrom"
           :date-to="menu.dateTo"
-          :estimated-cost="menu.estimatedCost"
           @delete="onDeleteMenu(menu.id)"
           @edit="openEdit(menu)"
           @create-shopping-list="onCreateShoppingList(menu.id)"

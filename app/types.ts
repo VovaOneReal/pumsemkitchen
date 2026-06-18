@@ -34,12 +34,21 @@ export type RecipeDetail = Recipe & {
   steps: RecipeStep[]
 }
 
+export type NutritionValues = {
+  proteins: number
+  fats: number
+  carbs: number
+  calories: number
+  cost: number
+}
+
 export type MealRecipeItem = {
   recipeId: number
   title: string
   portions: number
   cookingTimeMin: number | null
   pictureUrl: string | null
+  nutritionPerPortion: NutritionValues
 }
 
 export type MealWithRecipes = {

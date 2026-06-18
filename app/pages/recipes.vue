@@ -12,23 +12,23 @@
           class="w-64"
           :trailing-icon="'i-lucide-search'"
         />
-        <!-- <UPopover>
-          <UButton variant="outline" leading-icon="i-lucide-arrow-up-down">Сортировка</UButton>
+        <UPopover>
+          <UButton variant="outline" leading-icon="i-lucide-arrow-up-down">{{ currentSortLabel }}</UButton>
           <template #content>
-            <div class="flex flex-col p-2 gap-1 min-w-[200px]">
+            <div class="flex flex-col p-2 gap-1 min-w-[180px]">
               <UButton
                 v-for="option in sortOptions"
                 :key="option.value"
                 variant="ghost"
                 class="justify-start"
-                :class="{ 'text-primary font-semibold': sortBy === option.value }"
+                :trailing-icon="sortBy === option.value ? 'i-lucide-check' : undefined"
                 @click="sortBy = option.value"
               >
                 {{ option.label }}
               </UButton>
             </div>
           </template>
-        </UPopover> -->
+        </UPopover>
       </div>
       <UPageList class="gap-2">
         <div v-if="loading" class="text-muted text-sm py-4">Ищем рецепты...</div>
@@ -62,13 +62,18 @@ const { startCreating } = useRecipeState()
 const { recipes, loading, fetchRecipes } = useRecipes()
 
 const searchQuery = ref('')
-const sortBy = ref<'title' | 'author' | 'date'>('date')
+const sortBy = ref<'title-asc' | 'title-desc' | 'date-desc' | 'date-asc'>('date-desc')
 
 const sortOptions = [
-  { label: 'По названию', value: 'title' },
-  { label: 'По автору', value: 'author' },
-  { label: 'По дате создания', value: 'date' },
+  { label: 'По названию А-Я', value: 'title-asc' },
+  { label: 'По названию Я-А', value: 'title-desc' },
+  { label: 'По дате создания: сначала новые', value: 'date-desc' },
+  { label: 'По дате создания: сначала старые', value: 'date-asc' },
 ] as const
+
+const currentSortLabel = computed(
+  () => sortOptions.find((o) => o.value === sortBy.value)?.label ?? 'Сортировка',
+)
 
 onMounted(fetchRecipes)
 
@@ -85,10 +90,12 @@ const filteredRecipes = computed(() => {
     r.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
   )
 
-  if (sortBy.value === 'title') {
-    result = [...result].sort((a, b) => a.title.localeCompare(b.title))
-  } else if (sortBy.value === 'author') {
-    result = [...result].sort((a, b) => a.authorName.localeCompare(b.authorName))
+  if (sortBy.value === 'title-asc') {
+    result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'ru'))
+  } else if (sortBy.value === 'title-desc') {
+    result = [...result].sort((a, b) => b.title.localeCompare(a.title, 'ru'))
+  } else if (sortBy.value === 'date-asc') {
+    result = [...result].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   } else {
     result = [...result].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }

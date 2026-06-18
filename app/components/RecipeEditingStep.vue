@@ -14,7 +14,7 @@
       :maxrows="12"
       autoresize
     />
-    <AppImageUpload v-model="imageSrc" class="w-24 h-24 min-w-24" />
+    <!-- <AppImageUpload v-model="imageSrc" class="w-24 h-24 min-w-24" /> -->
     <UButton color="error" variant="ghost" square class="mt-2" @click="$emit('delete', props.step)">
       <X />
     </UButton>

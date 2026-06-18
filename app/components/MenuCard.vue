@@ -67,12 +67,31 @@
       </UBadge>
     </div>
 
-    <!-- Подвал: примерная стоимость -->
-    <div class="px-4 py-3 border-t border-default text-sm">
-      Стоимость меню:
-      <span class="font-medium">
-        {{ estimatedCost !== null ? `${estimatedCost.toLocaleString('ru-RU')} ₽` : 'не рассчитана' }}
-      </span>
+    <!-- Collapsible: КБЖУ и стоимость меню -->
+    <div class="border-t border-default">
+      <button
+        class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-elevated transition-colors"
+        @click="toggleNutrition"
+      >
+        <span>КБЖУ и стоимость</span>
+        <UIcon
+          :name="nutritionOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          class="text-muted w-4 h-4"
+        />
+      </button>
+      <div v-if="nutritionOpen" class="px-4 pb-4 flex flex-col gap-1 text-sm">
+        <template v-if="nutritionLoading">
+          <USkeleton v-for="i in 5" :key="i" class="h-4 w-full rounded" />
+        </template>
+        <template v-else-if="nutrition">
+          <p><span class="font-semibold">Стоимость:</span> {{ fmt2(nutrition.cost) }} ₽</p>
+          <p><span class="font-semibold">Калории:</span> {{ fmt1(nutrition.calories) }} ккал</p>
+          <p><span class="font-semibold">Белки:</span> {{ fmt1(nutrition.proteins) }} г</p>
+          <p><span class="font-semibold">Жиры:</span> {{ fmt1(nutrition.fats) }} г</p>
+          <p><span class="font-semibold">Углеводы:</span> {{ fmt1(nutrition.carbs) }} г</p>
+        </template>
+        <p v-else class="text-muted">Не удалось загрузить данные</p>
+      </div>
     </div>
   </div>
 
@@ -92,7 +111,9 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{
+import type { NutritionValues } from '~~/app/types'
+
+const props = defineProps<{
   id: number
   title: string
   authorName: string
@@ -101,7 +122,6 @@ defineProps<{
   editorName: string | null
   dateFrom: string | null
   dateTo: string | null
-  estimatedCost: number | null
 }>()
 
 const emit = defineEmits<{
@@ -111,6 +131,27 @@ const emit = defineEmits<{
 }>()
 
 const showDeleteModal = ref(false)
+const nutritionOpen = ref(false)
+const nutritionLoading = ref(false)
+const nutrition = ref<NutritionValues | null>(null)
+
+// Загружаем данные только при первом раскрытии
+async function toggleNutrition() {
+  nutritionOpen.value = !nutritionOpen.value
+  if (nutritionOpen.value && nutrition.value === null && !nutritionLoading.value) {
+    nutritionLoading.value = true
+    try {
+      nutrition.value = await $fetch<NutritionValues>(`/api/menus/${props.id}/nutrition`)
+    } catch {
+      nutrition.value = null
+    } finally {
+      nutritionLoading.value = false
+    }
+  }
+}
+
+const fmt1 = (v: number) => (Math.round(v * 10) / 10).toLocaleString('ru-RU')
+const fmt2 = (v: number) => (Math.round(v * 100) / 100).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 // Форматирование даты ISO (YYYY-MM-DD) → DD.MM.YYYY
 function formatDate(date: string | null): string {

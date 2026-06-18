@@ -1,4 +1,5 @@
-import type { DayDetail } from '~~/app/types'
+import type { DayDetail, NutritionValues } from '~~/app/types'
+import { calcMealNutrition, calcDayNutrition } from '~/composables/useNutritionCalc'
 
 export const useMeals = (menuId: Ref<number>, date: Ref<string>) => {
   const dayDetail = useState<DayDetail | null>(`day-${menuId.value}-${date.value}`, () => null)
@@ -20,6 +21,7 @@ export const useMeals = (menuId: Ref<number>, date: Ref<string>) => {
     })
     const meal = dayDetail.value?.meals.find((m) => m.mealId === mealId)
     const recipe = meal?.recipes.find((r) => r.recipeId === recipeId)
+    // Мутация portions — Vue реактивно пересчитает mealsNutrition и dayNutrition
     if (recipe) recipe.portions = portions
   }
 
@@ -29,5 +31,15 @@ export const useMeals = (menuId: Ref<number>, date: Ref<string>) => {
     if (meal) meal.recipes = meal.recipes.filter((r) => r.recipeId !== recipeId)
   }
 
-  return { dayDetail, loading, fetchDay, updatePortions, deleteRecipe }
+  // КБЖУ каждого приёма пищи — индекс совпадает с dayDetail.meals
+  const mealsNutrition = computed<NutritionValues[]>(() =>
+    (dayDetail.value?.meals ?? []).map(m => calcMealNutrition(m.recipes)),
+  )
+
+  // КБЖУ всего дня
+  const dayNutrition = computed<NutritionValues>(() =>
+    calcDayNutrition(dayDetail.value?.meals ?? []),
+  )
+
+  return { dayDetail, loading, fetchDay, updatePortions, deleteRecipe, mealsNutrition, dayNutrition }
 }

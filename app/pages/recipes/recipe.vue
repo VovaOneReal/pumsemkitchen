@@ -16,48 +16,43 @@
     <div v-if="isCurrentPage && !detailLoading && currentRecipe" class="flex gap-6 w-full overflow-y-auto flex-1">
       <!-- Левая колонка (фиксированная ширина) -->
       <div class="flex flex-col gap-4 w-72 shrink-0">
-        <AppImage
+        <!-- <AppImage
           :src="currentRecipe.pictureUrl ?? undefined"
           :placeholder="!currentRecipe.pictureUrl"
           :width="288"
           :height="200"
           class="w-full h-48"
-        />
+        /> -->
 
         <!-- Кнопки действий -->
         <div class="flex flex-col gap-2">
-          <div class="flex gap-2">
-            <UButton class="flex-1 justify-center" variant="outline" :to="`/recipes/recipe/edit?id=${currentRecipe.id}`">
-              <template #leading><Pencil :size="16" /></template>
-              Редактировать
+          <UButton block variant="outline" :to="`/recipes/recipe/edit?id=${currentRecipe.id}`">
+            <template #leading><Pencil :size="16" /></template>
+            Редактировать
+          </UButton>
+          <UButton block variant="outline" @click="addToMenuOpen = true">
+            <template #leading><CalendarPlus :size="16" /></template>
+            Добавить в меню
+          </UButton>
+          <UButton block variant="outline" :loading="creatingShoppingList" @click="shoppingListModalOpen = true">
+            <template #leading><ListPlus :size="16" /></template>
+            Сформировать список покупок
+          </UButton>
+          <UPopover v-model:open="deletePopoverOpen">
+            <UButton block variant="outline" color="error">
+              <template #leading><Trash2 :size="16" /></template>
+              Удалить
             </UButton>
-            <UPopover v-model:open="deletePopoverOpen">
-              <UButton variant="outline" color="error">
-                <template #leading><Trash2 :size="16" /></template>
-              </UButton>
-              <template #content>
-                <div class="flex flex-col gap-4 p-4">
-                  <p class="text-lg font-bold text-center">Подтвердите удаление</p>
-                  <div class="flex gap-4">
-                    <UButton block color="error" :loading="deleting" @click="onDelete">Удалить</UButton>
-                    <UButton block variant="soft" @click="deletePopoverOpen = false">Отменить</UButton>
-                  </div>
+            <template #content>
+              <div class="flex flex-col gap-4 p-4">
+                <p class="text-lg font-bold text-center">Подтвердите удаление</p>
+                <div class="flex gap-4">
+                  <UButton block color="error" :loading="deleting" @click="onDelete">Удалить</UButton>
+                  <UButton block variant="soft" @click="deletePopoverOpen = false">Отменить</UButton>
                 </div>
-              </template>
-            </UPopover>
-          </div>
-          <div class="flex gap-2">
-            <UTooltip text="Добавить в меню питания">
-              <UButton variant="outline" class="flex-1 justify-center" @click="addToMenuOpen = true">
-                <template #leading><CalendarPlus :size="16" /></template>
-              </UButton>
-            </UTooltip>
-            <UTooltip text="Сформировать список покупок">
-              <UButton variant="outline" class="flex-1 justify-center" :loading="creatingShoppingList" @click="shoppingListModalOpen = true">
-                <template #leading><ListPlus :size="16" /></template>
-              </UButton>
-            </UTooltip>
-          </div>
+              </div>
+            </template>
+          </UPopover>
         </div>
 
         <!-- Модальное окно: Формирование списка покупок -->

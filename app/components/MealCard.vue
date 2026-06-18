@@ -36,11 +36,11 @@
         />
       </button>
       <div v-if="nutritionOpen" class="px-4 pb-4 flex flex-col gap-1 text-sm">
-        <p><span class="font-semibold">Суммарная стоимость:</span> {{ nutrition.cost.toLocaleString('ru-RU') }}₽</p>
-        <p><span class="font-semibold">Всего калорий:</span> {{ nutrition.calories }} ккал</p>
-        <p><span class="font-semibold">Всего белков:</span> {{ nutrition.proteins }} г</p>
-        <p><span class="font-semibold">Всего жиров:</span> {{ nutrition.fats }} г</p>
-        <p><span class="font-semibold">Всего углеводов:</span> {{ nutrition.carbs }} г</p>
+        <p><span class="font-semibold">Суммарная стоимость:</span> {{ fmt2(nutrition.cost) }} ₽</p>
+        <p><span class="font-semibold">Всего калорий:</span> {{ fmt1(nutrition.calories) }} ккал</p>
+        <p><span class="font-semibold">Всего белков:</span> {{ fmt1(nutrition.proteins) }} г</p>
+        <p><span class="font-semibold">Всего жиров:</span> {{ fmt1(nutrition.fats) }} г</p>
+        <p><span class="font-semibold">Всего углеводов:</span> {{ fmt1(nutrition.carbs) }} г</p>
       </div>
     </div>
   </div>
@@ -74,4 +74,7 @@ defineEmits<{
 }>()
 
 const nutritionOpen = ref(false)
+
+const fmt1 = (v: number) => (Math.round(v * 10) / 10).toLocaleString('ru-RU')
+const fmt2 = (v: number) => (Math.round(v * 100) / 100).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 </script>

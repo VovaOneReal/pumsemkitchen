@@ -11,7 +11,7 @@
       v-model="selectedProduct"
     />
 
-    <UInput class="w-32" type="text" placeholder="Примечание" v-model="note" />
+    <UInput class="w-32" type="text" placeholder="Примечание" v-model="note" :maxlength="128" />
 
     <UInputNumber
       :disabled="isOptional"

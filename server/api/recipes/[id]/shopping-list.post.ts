@@ -1,62 +1,11 @@
 import { z } from 'zod'
 import { db } from '~~/server/utils/db'
 import { shoppingLists, listElements, measurementUnitsRef, converts } from '~~/db/schema'
+import { toGrams, type UnitRow } from '~~/server/utils/nutrition'
 
 const bodySchema = z.object({
   portions: z.number().int().min(1),
 })
-
-type ProductRow = {
-  gMeasure: string | null
-  mlMeasure: string | null
-  pcsMeasure: string | null
-}
-
-type UnitRow = { measurementUnitId: number; measureType: string; isStandart: boolean }
-type ConvertRow = { fromUnitId: number; toUnitId: number; convertationCoefficient: string }
-
-// Конвертация количества в граммы — аналог unitToGrams из recipe.vue
-function toGrams(
-  qty: number,
-  unitId: number,
-  product: ProductRow,
-  allUnits: UnitRow[],
-  allConverts: ConvertRow[],
-  stdGramUnitId: number,
-  stdMlUnitId: number,
-): number | null {
-  const unit = allUnits.find(u => u.measurementUnitId === unitId)
-  if (!unit) return null
-
-  if (unit.measureType === 'weight') {
-    if (unit.isStandart) return qty
-    // Прямое направление: unitId → gram
-    const direct = allConverts.find(c => c.fromUnitId === unitId && c.toUnitId === stdGramUnitId)
-    if (direct) return qty * Number(direct.convertationCoefficient)
-    // Обратное направление: gram → unitId (1 / коэффициент)
-    const reverse = allConverts.find(c => c.fromUnitId === stdGramUnitId && c.toUnitId === unitId)
-    if (reverse) return qty / Number(reverse.convertationCoefficient)
-    return null
-  }
-
-  if (unit.measureType === 'volume' || unit.measureType === 'volume_extra') {
-    if (!product.mlMeasure || !product.gMeasure) return null
-    let mlQty = qty
-    if (unitId !== stdMlUnitId) {
-      const conv = allConverts.find(c => c.fromUnitId === unitId && c.toUnitId === stdMlUnitId)
-      if (!conv) return null
-      mlQty = qty * Number(conv.convertationCoefficient)
-    }
-    return (mlQty / Number(product.mlMeasure)) * Number(product.gMeasure)
-  }
-
-  if (unit.measureType === 'piece') {
-    if (!product.pcsMeasure || !product.gMeasure) return null
-    return (qty / Number(product.pcsMeasure)) * Number(product.gMeasure)
-  }
-
-  return null
-}
 
 export default defineEventHandler(async (event) => {
   const { user } = await getUserSession(event)
@@ -97,7 +46,7 @@ export default defineEventHandler(async (event) => {
   const basePortions = recipe.portions || 1
 
   // Группировка ингредиентов по продукту
-  const groups = new Map<number, Array<{ qty: number; unitId: number; unit: UnitRow; product: ProductRow; name: string }>>()
+  const groups = new Map<number, Array<{ qty: number; unitId: number; unit: UnitRow; product: typeof recipe.ingredients[0]['product']; name: string }>>()
 
   for (const ing of recipe.ingredients) {
     // Ингредиенты "по вкусу" не добавляются в список покупок

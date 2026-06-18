@@ -726,6 +726,29 @@ paths:
           description: Нет доступа к меню
         "404":
           description: Меню или дата не найдены
+  /menus/{id}/nutrition:
+    get:
+      summary: Итоговые КБЖУ и стоимость меню
+      description: Возвращает суммарные КБЖУ и стоимость по всем дням и приёмам пищи в меню.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Итоговые КБЖУ и стоимость
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NutritionValues"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа к меню
+        "404":
+          description: Меню не найдено
   /meals/{mealId}/recipes:
     post:
       summary: Добавить рецепт в приём пищи
@@ -1101,6 +1124,27 @@ components:
                     pictureUrl:
                       type: string
                       nullable: true
+                    nutritionPerPortion:
+                      $ref: "#/components/schemas/NutritionValues"
+    NutritionValues:
+      type: object
+      description: КБЖУ и стоимость (на одну порцию или суммарно — зависит от контекста)
+      properties:
+        proteins:
+          type: number
+          description: Белки, г
+        fats:
+          type: number
+          description: Жиры, г
+        carbs:
+          type: number
+          description: Углеводы, г
+        calories:
+          type: number
+          description: Калории, ккал (proteins*4 + fats*9 + carbs*4)
+        cost:
+          type: number
+          description: Стоимость, руб
     PlanDateForm:
       type: object
       required:
