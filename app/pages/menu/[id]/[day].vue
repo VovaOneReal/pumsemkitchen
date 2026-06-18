@@ -6,6 +6,13 @@
       <h2 class="ui-header-2 truncate">{{ dayDetail?.menuTitle ?? '...' }} / {{ formattedDay }}</h2>
     </div>
 
+    <!-- Итого за день -->
+    <DayNutritionSummary
+      v-if="!loading && dayDetail && dayDetail.meals.length > 0"
+      :nutrition="dayNutrition"
+      title="Итого за день"
+    />
+
     <!-- Подзаголовок -->
     <h3 class="text-2xl font-bold">Приёмы пищи</h3>
 
@@ -14,7 +21,7 @@
       <USkeleton v-for="i in 5" :key="i" class="h-32 w-full rounded-xl" />
     </div>
 
-    <!-- Карточки приёмов пищи и итог дня -->
+    <!-- Карточки приёмов пищи -->
     <div v-else class="flex flex-col gap-4">
       <MealCard
         v-for="(meal, idx) in dayDetail?.meals ?? []"
@@ -24,12 +31,6 @@
         :nutrition="mealsNutrition[idx]"
         @delete-recipe="(recipeId) => onDeleteRecipe(meal.mealId, recipeId)"
         @update-portions="(recipeId, portions) => onUpdatePortions(meal.mealId, recipeId, portions)"
-      />
-
-      <DayNutritionSummary
-        v-if="dayDetail && (dayDetail.meals.length > 0)"
-        :nutrition="dayNutrition"
-        title="Итого за день"
       />
     </div>
   </div>

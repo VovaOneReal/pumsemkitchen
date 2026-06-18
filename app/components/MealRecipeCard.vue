@@ -1,8 +1,11 @@
 <template>
   <div class="flex flex-col w-64 shrink-0 rounded-xl border border-default bg-default shadow-sm overflow-hidden">
-    <!-- Шапка: название + удалить -->
+    <!-- Шапка: название (ссылка на рецепт) + удалить -->
     <div class="flex items-center justify-between px-3 py-2 gap-2 border-b border-default">
-      <span class="font-semibold text-sm truncate">{{ title }}</span>
+      <NuxtLink
+        :to="`/recipes/recipe?id=${recipeId}`"
+        class="font-semibold text-sm truncate hover:text-primary transition-colors"
+      >{{ title }}</NuxtLink>
       <UTooltip text="Удалить рецепт из приёма пищи">
         <UButton
           icon="i-lucide-trash-2"
@@ -13,9 +16,6 @@
         />
       </UTooltip>
     </div>
-
-    <!-- Изображение рецепта -->
-    <AppImage :src="imageUrl ?? undefined" :placeholder="!imageUrl" class="w-full h-40" />
 
     <!-- Подвал: количество порций + редактирование -->
     <div class="flex items-center justify-between px-3 py-2 border-t border-default text-sm">
@@ -66,6 +66,7 @@
 
 <script lang="ts" setup>
 const props = defineProps<{
+  recipeId: number
   title: string
   imageUrl: string | null
   portions: number

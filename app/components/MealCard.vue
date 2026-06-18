@@ -14,6 +14,7 @@
         <MealRecipeCard
           v-for="recipe in recipes"
           :key="recipe.id"
+          :recipe-id="recipe.id"
           :title="recipe.title"
           :image-url="recipe.imageUrl"
           :portions="recipe.portions"
