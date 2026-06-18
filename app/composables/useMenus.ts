@@ -31,5 +31,8 @@ export const useMenus = () => {
     menus.value = menus.value.filter((m) => m.id !== id)
   }
 
-  return { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu }
+  const createMenuShoppingList = async (id: number): Promise<{ id: number; title: string }> =>
+    $fetch(`/api/menus/${id}/shopping-list`, { method: 'POST' })
+
+  return { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu, createMenuShoppingList }
 }

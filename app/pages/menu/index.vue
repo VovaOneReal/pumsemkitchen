@@ -3,7 +3,10 @@
     <!-- Заголовок -->
     <div class="flex items-center justify-between w-full">
       <h2 class="ui-header-2">Меню</h2>
-      <UButton leading-icon="i-lucide-plus" label="Создать" @click="openCreate" />
+      <div class="flex items-center gap-2">
+        <UButton leading-icon="i-lucide-bar-chart-2" label="Отчёт по питанию" variant="outline" color="neutral" to="/menu/report" />
+        <UButton leading-icon="i-lucide-plus" label="Создать" @click="openCreate" />
+      </div>
     </div>
 
     <!-- Поиск, сортировка, фильтр -->
@@ -42,6 +45,7 @@
           :editor-name="menu.editorName"
           :date-from="menu.dateFrom"
           :date-to="menu.dateTo"
+          :shopping-list-loading="shoppingListLoadingIds.has(menu.id)"
           @delete="onDeleteMenu(menu.id)"
           @edit="openEdit(menu)"
           @create-shopping-list="onCreateShoppingList(menu.id)"
@@ -98,13 +102,15 @@ import { menuFormSchema } from '~~/schemas/menu'
 useHead({ title: 'Меню' })
 
 const toast = useToast()
-const { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu } = useMenus()
+const { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu, createMenuShoppingList } = useMenus()
 
 onMounted(fetchMenus)
 
 const searchQuery = ref('')
 const sortKey = ref<'dateFrom-desc' | 'dateFrom-asc' | 'createdAt-desc' | 'title-asc' | 'title-desc'>('dateFrom-desc')
 const filterMonth = ref<string | null>(null)
+
+const shoppingListLoadingIds = reactive(new Set<number>())
 
 const showFormModal = ref(false)
 const saving = ref(false)
@@ -255,7 +261,15 @@ async function onDeleteMenu(id: number) {
   }
 }
 
-function onCreateShoppingList(_menuId: number) {
-  toast.add({ title: 'Функция в разработке', color: 'info' })
+async function onCreateShoppingList(menuId: number) {
+  shoppingListLoadingIds.add(menuId)
+  try {
+    const result = await createMenuShoppingList(menuId)
+    toast.add({ title: 'Список покупок сформирован', description: result.title, color: 'success' })
+  } catch {
+    toast.add({ title: 'Ошибка формирования списка покупок', color: 'error' })
+  } finally {
+    shoppingListLoadingIds.delete(menuId)
+  }
 }
 </script>

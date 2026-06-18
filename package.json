@@ -19,6 +19,7 @@
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.10.0",
+    "chart.js": "^4.5.1",
     "drizzle-orm": "^0.45.2",
     "lucide-vue-next": "^0.554.0",
     "nuxt": "^4.2.1",
@@ -26,6 +27,8 @@
     "pg": "^8.21.0",
     "pinia": "^3.0.4",
     "viewerjs": "^1.11.7",
+    "vue-chartjs": "^5.3.3",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {

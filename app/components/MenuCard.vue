@@ -33,6 +33,7 @@
             variant="subtle"
             color="neutral"
             size="sm"
+            :loading="shoppingListLoading"
             @click="$emit('create-shopping-list')"
           />
         </UTooltip>
@@ -122,6 +123,7 @@ const props = defineProps<{
   editorName: string | null
   dateFrom: string | null
   dateTo: string | null
+  shoppingListLoading?: boolean
 }>()
 
 const emit = defineEmits<{
