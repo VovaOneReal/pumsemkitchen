@@ -2,6 +2,7 @@
   <div class="flex items-center justify-center min-h-screen px-6">
     <UAuthForm
       title="Сервис планирования питания"
+      description="Войти в профиль"
       :fields="fields"
       :submit="{ label: 'Войти', block: true, loading }"
       class="w-full max-w-sm"

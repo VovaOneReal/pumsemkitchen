@@ -41,7 +41,6 @@ export default defineEventHandler(async (event) => {
 
   await db.update(products).set({
     measurementUnitId: body.measurement_unit_id,
-    familyId: body.family_id ?? null,
     title: body.title,
     proteins: String(body.proteins),
     fats: String(body.fats),
@@ -73,7 +72,7 @@ export default defineEventHandler(async (event) => {
     carbs: Number(row!.carbs ?? 0),
     calories: 0,
     isPublic: row!.isPublic,
-    isOwn: row!.userId === user.userId,
+    isOwn: true,
     measurementUnitId: row!.measurementUnitId,
     authorName: row!.user_userId.name,
     createdAt: row!.createdAt,

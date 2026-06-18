@@ -2,6 +2,7 @@
   <div class="flex items-center justify-center min-h-screen px-6">
     <UAuthForm
       title="Сервис планирования питания"
+      description="Зарегистрировать профиль"
       :fields="fields"
       :schema="signupSchema"
       :submit="{ label: 'Зарегистрироваться', block: true, loading }"
@@ -44,6 +45,7 @@ const fields = [
     type: 'password',
     label: 'Пригласительный код',
     placeholder: 'Введите код приглашения...',
+    help: 'Его можно узнать у администратора системы',
   },
 ]
 

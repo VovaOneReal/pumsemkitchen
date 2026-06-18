@@ -8,7 +8,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   async function selectWorkspace(id: string) {
     activeWorkspaceId.value = id
-    clearNuxtState()
+    // Очищаем только кеш сущностей, зависящих от пространства
+    clearNuxtState(['recipes', 'currentRecipe', 'menus', 'shoppingLists', 'products'])
     await navigateTo('/')
   }
 

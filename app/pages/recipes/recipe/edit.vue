@@ -22,7 +22,7 @@
           <h3 class="font-semibold">Обложка</h3>
           <AppImageUpload v-model="coverImage" class="w-full aspect-square" />
         </div> -->
-        <UFormField label="Время готовки (мин.)" class="w-full">
+        <UFormField label="Время приготовления (мин.)" class="w-full">
           <UInputNumber v-model="cookingTime" :min="0" class="w-full" orientation="horizontal" />
         </UFormField>
       </div>
