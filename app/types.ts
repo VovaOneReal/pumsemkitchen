@@ -100,6 +100,31 @@ export type ShoppingList = {
   editedAt: string
 }
 
+export type Family = {
+  id: number
+  title: string
+  ownerName: string
+  createdAt: string
+  isOwner: boolean
+}
+
+export type FamilyMember = {
+  userId: number
+  name: string
+  login: string
+  isOwner: boolean
+}
+
+export type FamilyDetail = Family & {
+  members: FamilyMember[]
+}
+
+export type Invitation = {
+  id: number
+  familyName: string
+  ownerName: string
+}
+
 export type Product = {
   id: number
   name: string

@@ -1037,6 +1037,282 @@ paths:
           description: Нет доступа к списку
         "404":
           description: Список не найден
+  /families:
+    get:
+      summary: Список семей пользователя
+      description: >
+        Возвращает все семьи, где пользователь является владельцем или участником.
+        Для семей, где пользователь — владелец, поле isOwner = true.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Массив семей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FamilyResponse"
+        "401":
+          description: Пользователь не авторизован
+    post:
+      summary: Создать семью
+      description: >
+        Создаёт новую семейную группу. Создатель становится её владельцем.
+        Требует активной сессии (cookie).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFamilyData"
+      responses:
+        "200":
+          description: Созданная семья
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FamilyResponse"
+        "401":
+          description: Пользователь не авторизован
+        "422":
+          description: Ошибка валидации входных данных
+  /families/{id}:
+    get:
+      summary: Получить семью с участниками
+      description: >
+        Возвращает информацию о семье и полный список участников.
+        Доступно только владельцу или участнику.
+        Требует активной сессии (cookie).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Семья с участниками
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FamilyDetailResponse"
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Нет доступа к этой семье
+        "404":
+          description: Семья не найдена
+    patch:
+      summary: Обновить семью
+      description: >
+        Переименовывает семью. Доступно только владельцу.
+        Требует активной сессии (cookie).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFamilyData"
+      responses:
+        "200":
+          description: Обновлённая семья
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FamilyResponse"
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Только владелец может редактировать семью
+        "404":
+          description: Семья не найдена
+        "422":
+          description: Ошибка валидации входных данных
+    delete:
+      summary: Удалить семью
+      description: >
+        Удаляет семью со всеми связанными данными. Доступно только владельцу.
+        Требует активной сессии (cookie).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Семья удалена
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Только владелец может удалить семью
+        "404":
+          description: Семья не найдена
+  /families/{id}/leave:
+    post:
+      summary: Покинуть семью
+      description: >
+        Покидает семейную группу. Если пользователь — обычный участник: удаляется из таблицы участников.
+        Если владелец с другими участниками: права случайно передаются одному из них.
+        Если владелец без участников: семья удаляется.
+        Требует активной сессии (cookie).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Пользователь покинул группу
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  familyDeleted:
+                    type: boolean
+                    description: true если семья была удалена
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Пользователь не является участником этой семьи
+        "404":
+          description: Семья не найдена
+  /families/{id}/kick:
+    post:
+      summary: Исключить участника
+      description: >
+        Исключает участника из семьи. Доступно только владельцу.
+        Нельзя исключить самого себя.
+        Требует активной сессии (cookie).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: integer
+                  description: ID пользователя для исключения
+      responses:
+        "200":
+          description: Участник исключён
+        "400":
+          description: Нельзя исключить самого себя
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Только владелец может исключать участников
+        "404":
+          description: Семья или участник не найдены
+  /families/{id}/invite:
+    post:
+      summary: Пригласить пользователя в семью
+      description: >
+        Создаёт приглашение по логину пользователя. Доступно только владельцу.
+        Проверяет: не сам себя, логин существует, не уже участник, нет активного приглашения.
+        Требует активной сессии (cookie).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login
+              properties:
+                login:
+                  type: string
+                  description: Логин приглашаемого пользователя
+      responses:
+        "200":
+          description: Приглашение отправлено
+        "400":
+          description: Пользователь уже участник, уже приглашён или попытка пригласить себя
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Только владелец может отправлять приглашения
+        "404":
+          description: Семья или пользователь не найдены
+  /invitations:
+    get:
+      summary: Список входящих приглашений
+      description: >
+        Возвращает все активные приглашения (статус sent) для текущего пользователя.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Список приглашений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InvitationResponse"
+        "401":
+          description: Пользователь не авторизован
+  /invitations/{id}/respond:
+    post:
+      summary: Ответить на приглашение
+      description: >
+        Принимает или отклоняет приглашение.
+        При принятии пользователь добавляется в состав семьи.
+        Требует активной сессии (cookie).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accept
+              properties:
+                accept:
+                  type: boolean
+                  description: true — принять, false — отклонить
+      responses:
+        "200":
+          description: Ответ на приглашение обработан
+        "400":
+          description: Приглашение уже было обработано
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Приглашение предназначено другому пользователю
+        "404":
+          description: Приглашение не найдено
 components:
   schemas:
     ShoppingListResponse:
@@ -1706,3 +1982,66 @@ components:
           minLength: 8
           maxLength: 1024
           description: Новый пароль пользователя
+    FamilyResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        ownerName:
+          type: string
+        createdAt:
+          type: string
+          format: date
+        isOwner:
+          type: boolean
+    FamilyMemberResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        name:
+          type: string
+        login:
+          type: string
+        isOwner:
+          type: boolean
+    FamilyDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/FamilyResponse"
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: "#/components/schemas/FamilyMemberResponse"
+    CreateFamilyData:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Название семейной группы
+    UpdateFamilyData:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Новое название семейной группы
+    InvitationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        familyName:
+          type: string
+        ownerName:
+          type: string

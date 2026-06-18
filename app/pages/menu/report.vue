@@ -50,12 +50,7 @@
 
     <!-- Таблица -->
     <USkeleton v-if="loading" class="h-48 w-full rounded-xl" />
-    <UTable
-      v-else
-      :data="rows"
-      :columns="columns"
-      :empty="{ label: 'Нет данных за выбранный период' }"
-    />
+    <UTable v-else :data="rows" :columns="columns" empty="Нет данных за выбранный период" />
   </div>
 </template>
 
@@ -76,15 +71,19 @@ type DayReport = {
 const today = new Date().toISOString().slice(0, 10)
 const firstOfMonth = today.slice(0, 8) + '01'
 
-const dateFrom   = ref(firstOfMonth)
-const dateTo     = ref(today)
-const rows       = ref<DayReport[]>([])
-const loading    = ref(false)
+const dateFrom = ref(firstOfMonth)
+const dateTo = ref(today)
+const rows = ref<DayReport[]>([])
+const loading = ref(false)
 const downloading = ref(false)
-const chartOpen  = ref(false)
+const chartOpen = ref(false)
 
 const fmt1 = (v: number) => (Math.round(v * 10) / 10).toLocaleString('ru-RU')
-const fmt2 = (v: number) => (Math.round(v * 100) / 100).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const fmt2 = (v: number) =>
+  (Math.round(v * 100) / 100).toLocaleString('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 
 function formatDate(iso: string): string {
   const [y, m, d] = iso.split('-')
@@ -92,12 +91,36 @@ function formatDate(iso: string): string {
 }
 
 const columns = [
-  { accessorKey: 'date',     header: 'День',            cell: ({ row }: { row: { original: DayReport } }) => formatDate(row.original.date) },
-  { accessorKey: 'proteins', header: 'Белки, г',        cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.proteins) },
-  { accessorKey: 'fats',     header: 'Жиры, г',         cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.fats) },
-  { accessorKey: 'carbs',    header: 'Углеводы, г',     cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.carbs) },
-  { accessorKey: 'calories', header: 'Калории, ккал',   cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.calories) },
-  { accessorKey: 'cost',     header: 'Стоимость, ₽',    cell: ({ row }: { row: { original: DayReport } }) => fmt2(row.original.cost) },
+  {
+    accessorKey: 'date',
+    header: 'День',
+    cell: ({ row }: { row: { original: DayReport } }) => formatDate(row.original.date),
+  },
+  {
+    accessorKey: 'proteins',
+    header: 'Белки, г',
+    cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.proteins),
+  },
+  {
+    accessorKey: 'fats',
+    header: 'Жиры, г',
+    cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.fats),
+  },
+  {
+    accessorKey: 'carbs',
+    header: 'Углеводы, г',
+    cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.carbs),
+  },
+  {
+    accessorKey: 'calories',
+    header: 'Калории, ккал',
+    cell: ({ row }: { row: { original: DayReport } }) => fmt1(row.original.calories),
+  },
+  {
+    accessorKey: 'cost',
+    header: 'Стоимость, ₽',
+    cell: ({ row }: { row: { original: DayReport } }) => fmt2(row.original.cost),
+  },
 ]
 
 async function fetchReport() {
@@ -123,7 +146,7 @@ async function downloadReport() {
       [`Дата формирования: ${formatDate(today)}`],
       [],
       ['День', 'Белки (г)', 'Жиры (г)', 'Углеводы (г)', 'Калории (ккал)', 'Стоимость (₽)'],
-      ...rows.value.map(r => [
+      ...rows.value.map((r) => [
         formatDate(r.date),
         r.proteins,
         r.fats,

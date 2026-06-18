@@ -6,7 +6,7 @@
       </div>
 
       <!-- Выбор пространства: личное или семейное -->
-      <UDropdownMenu :items="workspaceItems" class="pb-2">
+      <UDropdownMenu :items="[]" class="pb-2">
         <UButton
           :label="activeWorkspace.label"
           trailing-icon="i-lucide-chevron-down"
@@ -15,6 +15,33 @@
           block
           class="justify-between font-semibold"
         />
+        <template #content>
+          <div class="p-2 flex flex-col gap-1 min-w-48">
+            <UInput
+              v-model="searchWorkspace"
+              placeholder="Поиск..."
+              size="sm"
+              :leading-icon="'i-lucide-search'"
+              class="mb-1"
+            />
+            <div class="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
+              <button
+                v-for="ws in filteredWorkspaceItems"
+                :key="ws.id"
+                class="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-elevated text-left w-full"
+                :class="{ 'font-semibold': activeWorkspaceId === ws.id }"
+                @click="activeWorkspaceId = ws.id"
+              >
+                <UIcon
+                  :name="activeWorkspaceId === ws.id ? 'i-lucide-check' : 'i-lucide-circle'"
+                  class="w-4 h-4 flex-shrink-0"
+                  :class="activeWorkspaceId === ws.id ? 'text-primary' : 'text-transparent'"
+                />
+                {{ ws.label }}
+              </button>
+            </div>
+          </div>
+        </template>
       </UDropdownMenu>
 
       <UButton
@@ -57,28 +84,25 @@
 const route = useRoute()
 const { user, fetch: refreshSession } = useUserSession()
 const toast = useToast()
+const { families, fetchFamilies } = useFamilies()
 
-// Моканые пространства: личное + семьи
-const workspaces = [
+onMounted(() => fetchFamilies())
+
+const searchWorkspace = ref('')
+
+// Личное пространство + семьи пользователя
+const workspaceItems = computed(() => [
   { id: 'personal', label: 'Ваше пространство' },
-  { id: 'family-1', label: 'Семья Ивановых' },
-  { id: 'family-2', label: 'Семья Петровых' },
-]
+  ...families.value.map((f) => ({ id: `family-${f.id}`, label: f.title })),
+])
+
+const filteredWorkspaceItems = computed(() =>
+  workspaceItems.value.filter((w) => w.label.toLowerCase().includes(searchWorkspace.value.toLowerCase())),
+)
 
 const activeWorkspaceId = ref('personal')
 const activeWorkspace = computed(
-  () => workspaces.find((w) => w.id === activeWorkspaceId.value) ?? workspaces[0],
-)
-
-const workspaceItems = computed(() =>
-  workspaces.map((w) => ({
-    label: w.label,
-    type: 'checkbox' as const,
-    checked: activeWorkspaceId.value === w.id,
-    onSelect() {
-      activeWorkspaceId.value = w.id
-    },
-  })),
+  () => workspaceItems.value.find((w) => w.id === activeWorkspaceId.value) ?? workspaceItems.value[0],
 )
 
 async function logout() {

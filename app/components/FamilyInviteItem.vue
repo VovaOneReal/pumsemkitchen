@@ -8,6 +8,7 @@
         label="Отклонить"
         variant="ghost"
         color="error"
+        :loading="declining"
         @click="$emit('decline')"
       />
       <UButton
@@ -15,6 +16,7 @@
         label="Принять"
         variant="ghost"
         color="success"
+        :loading="accepting"
         @click="$emit('accept')"
       />
     </div>
@@ -25,6 +27,8 @@
 defineProps<{
   familyName: string
   ownerName: string
+  accepting?: boolean
+  declining?: boolean
 }>()
 
 defineEmits<{
