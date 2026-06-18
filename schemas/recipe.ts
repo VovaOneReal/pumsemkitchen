@@ -17,7 +17,7 @@ const stepSchema = z.object({
 export const createRecipeSchema = z.object({
   title: z.string({ error: 'Пожалуйста, заполните поле' })
     .min(1, 'Название не может быть пустым')
-    .max(32, 'Название не должно превышать 32 символа'),
+    .max(128, 'Название не должно превышать 128 символов'),
   description: z.string().nullable().optional(),
   cooking_time_min: z.number().int().positive('Время приготовления должно быть больше нуля').nullable().optional(),
   portions: z.number().int().min(0, 'Количество порций не может быть отрицательным').optional(),

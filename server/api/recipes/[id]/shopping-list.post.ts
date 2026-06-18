@@ -30,8 +30,13 @@ function toGrams(
 
   if (unit.measureType === 'weight') {
     if (unit.isStandart) return qty
-    const conv = allConverts.find(c => c.fromUnitId === unitId && c.toUnitId === stdGramUnitId)
-    return conv ? qty * Number(conv.convertationCoefficient) : null
+    // Прямое направление: unitId → gram
+    const direct = allConverts.find(c => c.fromUnitId === unitId && c.toUnitId === stdGramUnitId)
+    if (direct) return qty * Number(direct.convertationCoefficient)
+    // Обратное направление: gram → unitId (1 / коэффициент)
+    const reverse = allConverts.find(c => c.fromUnitId === stdGramUnitId && c.toUnitId === unitId)
+    if (reverse) return qty / Number(reverse.convertationCoefficient)
+    return null
   }
 
   if (unit.measureType === 'volume' || unit.measureType === 'volume_extra') {
@@ -75,12 +80,29 @@ export default defineEventHandler(async (event) => {
 
   const stdGramUnit = allUnits.find(u => u.measureType === 'weight' && u.isStandart)
   const stdMlUnit = allUnits.find(u => u.measureType === 'volume' && u.isStandart)
+
+  // Единица «килограмм» — нестандартная весовая единица, связанная с граммами в любом направлении
+  const kgUnit = stdGramUnit
+    ? allUnits.find(u =>
+        u.measureType === 'weight' &&
+        !u.isStandart &&
+        allConverts.some(
+          c =>
+            (c.fromUnitId === u.measurementUnitId && c.toUnitId === stdGramUnit.measurementUnitId) ||
+            (c.fromUnitId === stdGramUnit.measurementUnitId && c.toUnitId === u.measurementUnitId),
+        ),
+      )
+    : undefined
+
   const basePortions = recipe.portions || 1
 
   // Группировка ингредиентов по продукту
   const groups = new Map<number, Array<{ qty: number; unitId: number; unit: UnitRow; product: ProductRow; name: string }>>()
 
   for (const ing of recipe.ingredients) {
+    // Ингредиенты "по вкусу" не добавляются в список покупок
+    if (ing.isOptional) continue
+
     const scaledQty = Math.round(Number(ing.quantity) * (body.portions / basePortions) * 10) / 10
     const unit = allUnits.find(u => u.measurementUnitId === ing.measurementUnitId)
     if (!unit) continue
@@ -101,32 +123,40 @@ export default defineEventHandler(async (event) => {
   const items: Array<{ title: string; quantity: number; measurementUnitId: number }> = []
 
   for (const entries of groups.values()) {
-    if (entries.length === 1) {
-      const e = entries[0]
-      // volume_extra → конвертировать в мл
-      if (e.unit.measureType === 'volume_extra' && stdMlUnit) {
-        const conv = allConverts.find(c => c.fromUnitId === e.unitId && c.toUnitId === stdMlUnit.measurementUnitId)
-        if (conv) {
-          items.push({
-            title: e.name,
-            quantity: Math.round(e.qty * Number(conv.convertationCoefficient) * 10) / 10,
-            measurementUnitId: stdMlUnit.measurementUnitId,
-          })
-          continue
-        }
+    if (!stdGramUnit) continue
+
+    // Суммируем все записи продукта в граммах
+    let totalGrams = 0
+    let conversionFailed = false
+
+    for (const e of entries) {
+      const grams = toGrams(e.qty, e.unitId, e.product, allUnits, allConverts, stdGramUnit.measurementUnitId, stdMlUnit?.measurementUnitId ?? -1)
+      if (grams === null) { conversionFailed = true; break }
+      totalGrams += grams
+    }
+
+    if (conversionFailed) {
+      // Конвертация невозможна — оставляем оригинальную единицу (только для одиночных записей)
+      if (entries.length === 1) {
+        const e = entries[0]
+        items.push({ title: e.name, quantity: e.qty, measurementUnitId: e.unitId })
       }
-      items.push({ title: e.name, quantity: e.qty, measurementUnitId: e.unitId })
-    } else {
-      // Несколько ингредиентов одного продукта → суммировать в граммах
-      if (!stdGramUnit) continue
-      let totalGrams = 0
-      for (const e of entries) {
-        const grams = toGrams(e.qty, e.unitId, e.product, allUnits, allConverts, stdGramUnit.measurementUnitId, stdMlUnit?.measurementUnitId ?? -1)
-        if (grams !== null) totalGrams += grams
-      }
+      continue
+    }
+
+    totalGrams = Math.round(totalGrams * 10) / 10
+
+    // >= 500 г → килограммы
+    if (totalGrams >= 500 && kgUnit) {
       items.push({
         title: entries[0].name,
-        quantity: Math.round(totalGrams * 10) / 10,
+        quantity: Math.round(totalGrams) / 1000,
+        measurementUnitId: kgUnit.measurementUnitId,
+      })
+    } else {
+      items.push({
+        title: entries[0].name,
+        quantity: totalGrams,
         measurementUnitId: stdGramUnit.measurementUnitId,
       })
     }

@@ -254,9 +254,10 @@
       <!-- Правая колонка (растянутая) -->
       <div class="flex flex-col gap-6 flex-1 min-w-0">
         <!-- Описание -->
-        <div v-if="currentRecipe.description" class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2">
           <h3>Описание</h3>
-          <p>{{ currentRecipe.description }}</p>
+          <p v-if="currentRecipe.description">{{ currentRecipe.description }}</p>
+          <p v-else class="text-muted">Нет описания</p>
         </div>
 
         <!-- Источник -->
@@ -271,7 +272,7 @@
         </div>
 
         <!-- Ингредиенты -->
-        <div v-if="currentRecipe.ingredients.length" class="flex flex-col gap-3">
+        <div class="flex flex-col gap-3">
           <div class="flex items-center justify-between flex-wrap gap-2">
             <h3>Ингредиенты</h3>
             <div class="flex items-center gap-3 flex-wrap">
@@ -304,13 +305,14 @@
               :cost="ingredientCosts.get(ing.id)"
               @name-click="openProductView(ing)"
             />
+            <p v-if="!currentRecipe.ingredients.length" class="text-muted">Ингредиенты не указаны</p>
           </div>
         </div>
 
-        <!-- Готовка -->
-        <div v-if="currentRecipe.steps.length" class="flex flex-col gap-6">
+        <!-- Приготовление -->
+        <div class="flex flex-col gap-6">
           <div class="flex items-center justify-between">
-            <h3>Готовка</h3>
+            <h3>Приготовление</h3>
             <div v-if="currentRecipe.cookingTimeMin" class="flex items-center gap-1 text-sm text-muted">
               <Clock :size="16" />
               <span>Время готовки (мин.): {{ currentRecipe.cookingTimeMin }}</span>
@@ -323,6 +325,7 @@
             :description="step.description"
             :image-src="step.pictureUrl ?? undefined"
           />
+          <p v-if="!currentRecipe.steps.length" class="text-muted">Шагов алгоритма нет</p>
         </div>
       </div>
     </div>

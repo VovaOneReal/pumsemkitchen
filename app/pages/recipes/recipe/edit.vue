@@ -2,9 +2,16 @@
   <div class="flex flex-col gap-6 w-full h-full">
     <!-- Заголовок -->
     <div class="flex items-center gap-3 flex-shrink-0">
-      <UButton icon="i-lucide-arrow-left" variant="ghost" square :to="editingId ? `/recipes/recipe?id=${editingId}` : '/recipes/recipe'" />
+      <UButton
+        icon="i-lucide-arrow-left"
+        variant="ghost"
+        square
+        :to="editingId ? `/recipes/recipe?id=${editingId}` : '/recipes/recipe'"
+      />
       <UButton color="primary" :loading="saving" @click="onSave">Сохранить</UButton>
-      <h1 class="text-2xl font-bold">{{ isCreating && !editingId ? 'Создать рецепт' : 'Изменить рецепт' }}</h1>
+      <h1 class="text-2xl font-bold">
+        {{ isCreating && !editingId ? 'Создать рецепт' : 'Изменить рецепт' }}
+      </h1>
     </div>
 
     <!-- Основной контент -->
@@ -30,7 +37,7 @@
             type="text"
             class="w-full"
             placeholder="Введите название рецепта..."
-            :maxlength="32"
+            :maxlength="128"
           />
         </div>
 
@@ -51,12 +58,7 @@
         <div class="flex flex-col gap-2">
           <h3 class="font-semibold">Источник</h3>
           <UFormField :error="sourceUrlError">
-            <UInput
-              v-model="sourceUrl"
-              type="url"
-              class="w-full"
-              placeholder="https://..."
-            />
+            <UInput v-model="sourceUrl" type="url" class="w-full" placeholder="https://..." />
           </UFormField>
         </div>
 
@@ -98,7 +100,7 @@
 
         <!-- Готовка -->
         <div class="flex flex-col gap-2">
-          <h3 class="font-semibold">Готовка</h3>
+          <h3 class="font-semibold">Приготовление</h3>
           <div class="flex flex-col w-full gap-1">
             <div
               v-for="(step, index) in recipeSteps"
@@ -122,7 +124,9 @@
             block
             variant="soft"
             icon="i-lucide-plus"
-            @click="recipeSteps.push({ step: recipeSteps.length, description: '', pictureUrl: null })"
+            @click="
+              recipeSteps.push({ step: recipeSteps.length, description: '', pictureUrl: null })
+            "
           >
             Добавить шаг
           </UButton>
@@ -153,7 +157,7 @@ const { isCreating } = useRecipeState()
 const toast = useToast()
 const route = useRoute()
 
-const editingId = computed(() => route.query.id ? Number(route.query.id) : null)
+const editingId = computed(() => (route.query.id ? Number(route.query.id) : null))
 
 const title = ref('')
 const description = ref('')
@@ -161,8 +165,12 @@ const coverImage = ref<string | null>(null)
 const sourceUrl = ref<string | null>(null)
 const sourceUrlError = computed(() => {
   if (!sourceUrl.value) return undefined
-  try { new URL(sourceUrl.value); return undefined }
-  catch { return 'Введите корректный URL' }
+  try {
+    new URL(sourceUrl.value)
+    return undefined
+  } catch {
+    return 'Введите корректный URL'
+  }
 })
 const portions = ref(4)
 const cookingTime = ref(0)
@@ -197,7 +205,7 @@ onMounted(async () => {
       isOptional: ing.isOptional,
       amount: ing.amount,
       measurementUnitId: ing.measurementUnitId,
-    }))
+    })),
   )
   nextIngredientId = r.ingredients.length
 
@@ -206,7 +214,7 @@ onMounted(async () => {
       step: s.step - 1,
       description: s.description,
       pictureUrl: s.pictureUrl,
-    }))
+    })),
   )
 })
 
@@ -274,7 +282,11 @@ async function onSave() {
     }
   } catch {
     const action = editingId.value ? 'обновить' : 'создать'
-    toast.add({ title: 'Ошибка сохранения', description: `Не удалось ${action} рецепт`, color: 'error' })
+    toast.add({
+      title: 'Ошибка сохранения',
+      description: `Не удалось ${action} рецепт`,
+      color: 'error',
+    })
   } finally {
     saving.value = false
   }
@@ -314,7 +326,9 @@ function onStepDragOver(e: DragEvent, index: number) {
 
 function onStepDragEnd() {
   // Пересчитываем порядковые номера шагов после перетаскивания
-  recipeSteps.forEach((s, i) => { s.step = i })
+  recipeSteps.forEach((s, i) => {
+    s.step = i
+  })
   dragStepIndex.value = -1
 }
 </script>
