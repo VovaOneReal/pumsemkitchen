@@ -9,7 +9,12 @@
       :items="productItems"
       :loading="productsLoading"
       v-model="selectedProduct"
-    />
+    >
+      <template #item="{ item }">
+        <span class="flex-1 truncate">{{ item.label }}</span>
+        <UIcon v-if="item.isPublic" name="i-lucide-globe" class="w-4 h-4 text-muted shrink-0" />
+      </template>
+    </UInputMenu>
 
     <UInput class="w-32" type="text" placeholder="Примечание" v-model="note" :maxlength="128" />
 
@@ -63,7 +68,7 @@ const { measurements, loading: measurementsLoading, fetchMeasurements } = useMea
 onMounted(() => Promise.all([fetchProducts(), fetchMeasurements()]))
 
 const productItems = computed(() =>
-  products.value.map((p) => ({ label: p.name, value: p.id }))
+  products.value.map((p) => ({ label: p.name, value: p.id, isPublic: p.isPublic }))
 )
 
 // UInputMenu работает с объектом { label, value }, поэтому проксируем через computed
