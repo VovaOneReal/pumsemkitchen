@@ -8,3 +8,13 @@ export const updateMealRecipeSchema = z.object({
 })
 
 export type UpdateMealRecipeForm = z.infer<typeof updateMealRecipeSchema>
+
+export const addMealRecipeSchema = z.object({
+  recipeId: z.number({ error: 'Укажите рецепт' }).int().min(1),
+  portions: z
+    .number({ error: 'Пожалуйста, заполните поле' })
+    .int('Укажите целое число')
+    .min(1, 'Минимум 1 порция'),
+})
+
+export type AddMealRecipeForm = z.infer<typeof addMealRecipeSchema>

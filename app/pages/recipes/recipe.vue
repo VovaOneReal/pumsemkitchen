@@ -90,35 +90,44 @@
               </div>
               <div class="flex flex-col gap-4">
                 <UFormField label="Выберите меню" required>
-                  <USelect
-                    v-model="selectedMenu"
-                    :items="mockMenus"
+                  <UInputMenu
+                    v-model="selectedMenuId"
+                    :items="menuItems"
+                    value-key="value"
                     placeholder="Выберите меню..."
+                    search-placeholder="Поиск по названию..."
+                    :loading="loadingMenus"
                     class="w-full"
                   />
                 </UFormField>
-                <UFormField v-if="selectedMenu" label="Выберите день меню" required>
-                  <USelect
-                    v-model="selectedDay"
-                    :items="mockDays"
+                <UFormField v-if="selectedMenuId" label="Выберите день меню" required>
+                  <UInputMenu
+                    v-model="selectedPlanDate"
+                    :items="planDateItems"
+                    value-key="value"
                     placeholder="Выберите день..."
+                    search-placeholder="Поиск по дате..."
+                    :loading="loadingDates"
                     class="w-full"
                   />
                 </UFormField>
-                <UFormField v-if="selectedDay" label="Выберите приём пищи" required>
-                  <USelect
-                    v-model="selectedMeal"
-                    :items="mockMeals"
+                <UFormField v-if="selectedPlanDate" label="Выберите приём пищи" required>
+                  <UInputMenu
+                    v-model="selectedMealId"
+                    :items="mealItems"
+                    value-key="value"
                     placeholder="Выберите приём пищи..."
+                    search-placeholder="Поиск по названию..."
+                    :loading="loadingMeals"
                     class="w-full"
                   />
                 </UFormField>
-                <UFormField v-if="selectedMeal" label="Укажите число порций" required>
+                <UFormField v-if="selectedMealId" label="Укажите число порций" required>
                   <UInputNumber v-model="addPortions" :min="1" orientation="horizontal" class="w-full" />
                 </UFormField>
               </div>
               <div class="flex justify-end">
-                <UButton color="primary" :disabled="!selectedMeal">Добавить</UButton>
+                <UButton color="primary" :disabled="!selectedMealId" :loading="addingToMenu" @click="onAddToMenu">Добавить</UButton>
               </div>
             </div>
           </template>
@@ -386,17 +395,70 @@ const viewConversionText = computed(() => {
 
 // Модалка: Добавление в меню
 const addToMenuOpen = ref(false)
-const selectedMenu = ref<string | null>(null)
-const selectedDay = ref<string | null>(null)
-const selectedMeal = ref<string | null>(null)
+const selectedMenuId = ref<number | null>(null)
+const selectedPlanDate = ref<string | null>(null)
+const selectedMealId = ref<number | null>(null)
 const addPortions = ref(1)
+const addingToMenu = ref(false)
 
-const mockMenus = ['Меню на неделю', 'Праздничное меню', 'Диетическое меню']
-const mockDays = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
-const mockMeals = ['Завтрак', 'Обед', 'Ужин', 'Перекус']
+const {
+  menuItems,
+  planDateItems,
+  mealItems,
+  loadingMenus,
+  loadingDates,
+  loadingMeals,
+  fetchMenus,
+  fetchPlanDates,
+  fetchMeals,
+  addRecipeToMeal,
+  reset: resetAddToMenu,
+} = useAddRecipeToMenu()
 
-watch(selectedMenu, () => { selectedDay.value = null; selectedMeal.value = null })
-watch(selectedDay, () => { selectedMeal.value = null })
+watch(addToMenuOpen, (open) => {
+  if (open) {
+    fetchMenus()
+  } else {
+    selectedMenuId.value = null
+    selectedPlanDate.value = null
+    selectedMealId.value = null
+    addPortions.value = 1
+    resetAddToMenu()
+  }
+})
+
+watch(selectedMenuId, (id) => {
+  selectedPlanDate.value = null
+  selectedMealId.value = null
+  if (id) fetchPlanDates(id)
+})
+
+watch(selectedPlanDate, (date) => {
+  selectedMealId.value = null
+  if (date && selectedMenuId.value) fetchMeals(selectedMenuId.value, date)
+})
+
+async function onAddToMenu() {
+  if (!selectedMealId.value || !currentRecipe.value) return
+  addingToMenu.value = true
+  try {
+    const result = await addRecipeToMeal(selectedMealId.value, currentRecipe.value.id, addPortions.value)
+    if (result === 'duplicate') {
+      toast.add({
+        title: 'Это блюдо уже добавлено в приём пищи',
+        description: 'Изменить число порций можно на экране выбранного приёма пищи.',
+        color: 'warning',
+      })
+    } else {
+      addToMenuOpen.value = false
+      toast.add({ title: 'Рецепт добавлен в меню', color: 'success' })
+    }
+  } catch {
+    toast.add({ title: 'Ошибка', description: 'Не удалось добавить рецепт', color: 'error' })
+  } finally {
+    addingToMenu.value = false
+  }
+}
 
 async function onDelete() {
   if (!currentRecipe.value) return

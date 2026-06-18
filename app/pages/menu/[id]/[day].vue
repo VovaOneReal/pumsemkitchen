@@ -30,6 +30,8 @@
 </template>
 
 <script lang="ts" setup>
+import { useMeals } from '~/composables/useMeals'
+
 useHead({ title: 'День меню' })
 
 const route = useRoute()

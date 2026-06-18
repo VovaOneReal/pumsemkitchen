@@ -726,6 +726,48 @@ paths:
           description: Нет доступа к меню
         "404":
           description: Меню или дата не найдены
+  /meals/{mealId}/recipes:
+    post:
+      summary: Добавить рецепт в приём пищи
+      parameters:
+        - in: path
+          name: mealId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recipeId
+                - portions
+              properties:
+                recipeId:
+                  type: integer
+                  minimum: 1
+                portions:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: Рецепт добавлен в приём пищи
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealRecipeResponse"
+        "401":
+          description: Не авторизован
+        "403":
+          description: Нет доступа
+        "404":
+          description: Приём пищи не найден
+        "409":
+          description: Рецепт уже добавлен в этот приём пищи
+        "422":
+          description: Ошибка валидации
   /meals/{mealId}/recipes/{recipeId}:
     patch:
       summary: Изменить количество порций рецепта в приёме пищи
