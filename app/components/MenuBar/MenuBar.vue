@@ -25,7 +25,12 @@
               class="mb-1"
             />
             <div class="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
-              <USkeleton v-if="loadingFamilies" v-for="i in 3" :key="i" class="h-8 w-full rounded-md" />
+              <USkeleton
+                v-if="loadingFamilies"
+                v-for="i in 3"
+                :key="i"
+                class="h-8 w-full rounded-md"
+              />
               <button
                 v-else
                 v-for="ws in filteredWorkspaceItems"
@@ -35,9 +40,13 @@
                 @click="selectWorkspace(ws.id)"
               >
                 <UIcon
-                  :name="workspaceStore.activeWorkspaceId === ws.id ? 'i-lucide-check' : 'i-lucide-dot'"
+                  :name="
+                    workspaceStore.activeWorkspaceId === ws.id ? 'i-lucide-check' : 'i-lucide-dot'
+                  "
                   class="w-4 h-4 flex-shrink-0"
-                  :class="workspaceStore.activeWorkspaceId === ws.id ? 'text-primary' : 'text-muted'"
+                  :class="
+                    workspaceStore.activeWorkspaceId === ws.id ? 'text-primary' : 'text-muted'
+                  "
                 />
                 {{ ws.label }}
               </button>
@@ -62,7 +71,7 @@
     <div class="flex flex-col gap-1">
       <UButton
         icon="i-lucide-circle-help"
-        label="Справка"
+        label="Руководство"
         :variant="getVariant('/help')"
         color="primary"
         block
@@ -114,7 +123,9 @@ const workspaceItems = computed(() => [
 ])
 
 const filteredWorkspaceItems = computed(() =>
-  workspaceItems.value.filter((w) => w.label.toLowerCase().includes(searchWorkspace.value.toLowerCase())),
+  workspaceItems.value.filter((w) =>
+    w.label.toLowerCase().includes(searchWorkspace.value.toLowerCase()),
+  ),
 )
 
 const activeWorkspace = computed(

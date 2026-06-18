@@ -15,8 +15,8 @@ export default defineEventHandler(async (event) => {
 
   // Определение роли по пригласительному коду
   const role =
-    inviteCode === process.env.INVITE_CODE_ADMIN ? 'admin'
-    : inviteCode === process.env.INVITE_CODE ? 'user'
+    inviteCode === 'ЛГТУ2026ВКРАДМИН' ? 'admin'
+    : inviteCode === 'ЛГТУ2026ВКР' ? 'user'
     : null
   if (!role) {
     throw createError({ statusCode: 400, statusMessage: 'Неверный пригласительный код' })
