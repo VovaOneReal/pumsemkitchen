@@ -24,6 +24,7 @@ export const createRecipeSchema = z.object({
   is_public: z.boolean().optional(),
   picture_url: z.string().nullable().optional(),
   source_url: z.string().url('Введите корректный URL').nullable().optional(),
+  family_id: z.number().int().positive().optional().nullable(),
   ingredients: z.array(ingredientSchema).optional(),
   steps: z.array(stepSchema).optional(),
 })

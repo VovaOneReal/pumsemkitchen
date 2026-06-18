@@ -1,4 +1,5 @@
 import { db } from '~~/server/utils/db'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -11,7 +12,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!menu) throw createError({ statusCode: 404, statusMessage: 'Меню не найдено' })
-  if (menu.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к меню' })
+  if (menu.familyId) {
+    await checkFamilyAccess(menu.familyId, user.userId)
+  } else if (menu.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к меню' })
+  }
 
   return {
     menuTitle: menu.menuTitle,

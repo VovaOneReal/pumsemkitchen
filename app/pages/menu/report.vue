@@ -126,10 +126,11 @@ const columns = [
 async function fetchReport() {
   if (!dateFrom.value || !dateTo.value || dateFrom.value > dateTo.value) return
   loading.value = true
+  const workspaceStore = useWorkspaceStore()
   try {
-    rows.value = await $fetch<DayReport[]>('/api/report/nutrition', {
-      query: { from: dateFrom.value, to: dateTo.value },
-    })
+    const query: Record<string, unknown> = { from: dateFrom.value, to: dateTo.value }
+    if (workspaceStore.activeFamilyId) query.familyId = workspaceStore.activeFamilyId
+    rows.value = await $fetch<DayReport[]>('/api/report/nutrition', { query })
   } catch {
     rows.value = []
   } finally {

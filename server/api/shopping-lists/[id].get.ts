@@ -1,4 +1,5 @@
 import { db } from '~~/server/utils/db'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 // DD.MM.YYYY
 const fmt = (d: string) => d.split('-').reverse().join('.')
@@ -17,7 +18,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!row) throw createError({ statusCode: 404, statusMessage: 'Список не найден' })
-  if (row.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к списку' })
+  if (row.familyId) {
+    await checkFamilyAccess(row.familyId, user.userId)
+  } else if (row.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к списку' })
+  }
 
   return {
     id: row.shoppingListId,

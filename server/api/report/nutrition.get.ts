@@ -1,22 +1,30 @@
 import { z } from 'zod'
-import { eq, and, gte, lte, inArray } from 'drizzle-orm'
+import { eq, and, gte, lte, inArray, isNull } from 'drizzle-orm'
 import { db } from '~~/server/utils/db'
 import { menus, measurementUnitsRef, converts, planDates } from '~~/db/schema'
 import { computeRecipeNutrition, type NutritionRefs } from '~~/server/utils/nutrition'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 const querySchema = z.object({
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Формат даты: YYYY-MM-DD'),
-  to:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Формат даты: YYYY-MM-DD'),
+  from:     z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Формат даты: YYYY-MM-DD'),
+  to:       z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Формат даты: YYYY-MM-DD'),
+  familyId: z.coerce.number().int().positive().optional(),
 })
 
 export default defineEventHandler(async (event) => {
   const { user } = await getUserSession(event)
-  const { from, to } = await getValidatedQuery(event, querySchema.parseAsync)
+  const { from, to, familyId } = await getValidatedQuery(event, querySchema.parseAsync)
 
-  // Получаем все меню пользователя
+  if (familyId) await checkFamilyAccess(familyId, user.userId)
+
+  // Получаем меню пространства
   const userMenus = await db.select({ menuId: menus.menuId })
     .from(menus)
-    .where(eq(menus.userId, user.userId))
+    .where(
+      familyId
+        ? eq(menus.familyId, familyId)
+        : and(eq(menus.userId, user.userId), isNull(menus.familyId)),
+    )
 
   if (userMenus.length === 0) return []
 

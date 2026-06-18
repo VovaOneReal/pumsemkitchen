@@ -1,12 +1,15 @@
 import { db } from '~~/server/utils/db'
 import { products } from '~~/db/schema'
 import { createProductSchema } from '~~/schemas/product'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
   const { user } = await getUserSession(event)
 
   const body = await readValidatedBody(event, createProductSchema.parseAsync)
+
+  if (body.family_id) await checkFamilyAccess(body.family_id, user.userId)
 
   const today = new Date().toISOString().slice(0, 10)
 

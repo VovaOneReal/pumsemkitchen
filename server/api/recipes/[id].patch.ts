@@ -2,6 +2,7 @@ import { db } from '~~/server/utils/db'
 import { recipes, ingredients as ingredientsTable, recipeSteps } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
 import { updateRecipeSchema } from '~~/schemas/recipe'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -15,7 +16,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Рецепт не найден' })
-  if (existing.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  if (existing.familyId) {
+    await checkFamilyAccess(existing.familyId, user.userId)
+  } else if (existing.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  }
 
   await db.transaction(async (tx) => {
     // Обновляем только переданные поля рецепта

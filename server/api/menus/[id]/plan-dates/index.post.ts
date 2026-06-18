@@ -1,6 +1,7 @@
 import { db } from '~~/server/utils/db'
 import { planDates, meals } from '~~/db/schema'
 import { planDateSchema } from '~~/schemas/planDate'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 const DEFAULT_MEALS = ['Завтрак', 'Второй завтрак', 'Обед', 'Полдник', 'Ужин']
 
@@ -16,7 +17,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!menu) throw createError({ statusCode: 404, statusMessage: 'Меню не найдено' })
-  if (menu.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к меню' })
+  if (menu.familyId) {
+    await checkFamilyAccess(menu.familyId, user.userId)
+  } else if (menu.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к меню' })
+  }
 
   // Проверка дублирования даты внутри меню
   const duplicate = menu.planDates.some((pd) => pd.planDate === body.planDate)

@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '~~/server/utils/db'
 import { recipes } from '~~/db/schema'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -12,7 +13,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Рецепт не найден' })
-  if (existing.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  if (existing.familyId) {
+    await checkFamilyAccess(existing.familyId, user.userId)
+  } else if (existing.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  }
 
   await db.delete(recipes).where(eq(recipes.recipeId, id))
 

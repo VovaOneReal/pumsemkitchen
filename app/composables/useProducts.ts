@@ -5,15 +5,18 @@ export const useProducts = () => {
   const products = useState<Product[]>('products', () => [])
   const loading = ref(false)
 
+  const workspaceStore = useWorkspaceStore()
+
   const fetchProducts = async () => {
     if (products.value.length > 0) return // кеш-гард: не делать повторный запрос
     loading.value = true
     try {
+      const query = workspaceStore.activeFamilyId ? { familyId: workspaceStore.activeFamilyId } : {}
       const [own, pub] = await Promise.all([
-        $fetch<Product[]>('/api/products'),
+        $fetch<Product[]>('/api/products', { query }),
         $fetch<Product[]>('/api/products/public'),
       ])
-      // Собственные продукты приоритетны — перекрывают публичные с тем же id
+      // Собственные/семейные продукты приоритетны — перекрывают публичные с тем же id
       const ownIds = new Set(own.map(p => p.id))
       products.value = [...own, ...pub.filter(p => !ownIds.has(p.id))]
     } finally {
@@ -22,7 +25,8 @@ export const useProducts = () => {
   }
 
   const createProduct = async (body: CreateProductForm) => {
-    const created = await $fetch<Product>('/api/products', { method: 'POST', body })
+    const fullBody = { ...body, family_id: workspaceStore.activeFamilyId ?? undefined }
+    const created = await $fetch<Product>('/api/products', { method: 'POST', body: fullBody })
     products.value = [...products.value, created]
     return created
   }

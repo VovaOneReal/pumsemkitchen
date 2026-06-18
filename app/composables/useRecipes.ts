@@ -8,10 +8,13 @@ export const useRecipes = () => {
   const currentRecipe = useState<RecipeDetail | null>('currentRecipe', () => null)
   const detailLoading = ref(false)
 
+  const workspaceStore = useWorkspaceStore()
+
   const fetchRecipes = async () => {
     loading.value = true
     try {
-      recipes.value = await $fetch<Recipe[]>('/api/recipes')
+      const query = workspaceStore.activeFamilyId ? { familyId: workspaceStore.activeFamilyId } : {}
+      recipes.value = await $fetch<Recipe[]>('/api/recipes', { query })
     } finally {
       loading.value = false
     }
@@ -28,7 +31,10 @@ export const useRecipes = () => {
   }
 
   const createRecipe = async (body: CreateRecipeForm) => {
-    return await $fetch('/api/recipes', { method: 'POST', body })
+    return await $fetch('/api/recipes', {
+      method: 'POST',
+      body: { ...body, family_id: workspaceStore.activeFamilyId ?? undefined },
+    })
   }
 
   const updateRecipe = async (id: number, body: UpdateRecipeForm) => {

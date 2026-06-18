@@ -1,4 +1,5 @@
 import { db } from '~~/server/utils/db'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -17,7 +18,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!recipe) throw createError({ statusCode: 404, statusMessage: 'Рецепт не найден' })
-  if (recipe.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  if (recipe.familyId) {
+    await checkFamilyAccess(recipe.familyId, user.userId)
+  } else if (recipe.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  }
 
   return {
     id: recipe.recipeId,

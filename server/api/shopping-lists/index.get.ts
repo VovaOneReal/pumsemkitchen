@@ -1,6 +1,5 @@
 import { db } from '~~/server/utils/db'
-import { eq } from 'drizzle-orm'
-import { shoppingLists } from '~~/db/schema'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 // DD.MM.YYYY
 const fmt = (d: string) => d.split('-').reverse().join('.')
@@ -8,9 +7,16 @@ const fmt = (d: string) => d.split('-').reverse().join('.')
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
   const { user } = await getUserSession(event)
+  const { familyId: familyIdStr } = getQuery(event)
+  const familyId = familyIdStr ? Number(familyIdStr) : null
+
+  if (familyId) await checkFamilyAccess(familyId, user.userId)
 
   const rows = await db.query.shoppingLists.findMany({
-    where: (sl, { eq }) => eq(sl.userId, user.userId),
+    where: (sl, { eq, and, isNull }) =>
+      familyId
+        ? eq(sl.familyId, familyId)
+        : and(eq(sl.userId, user.userId), isNull(sl.familyId)),
     with: {
       user_userId: true,
       user_editUserId: true,

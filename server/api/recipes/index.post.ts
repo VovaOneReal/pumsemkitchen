@@ -1,6 +1,7 @@
 import { db } from '~~/server/utils/db'
 import { recipes, ingredients as ingredientsTable, recipeSteps } from '~~/db/schema'
 import { createRecipeSchema } from '~~/schemas/recipe'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -8,9 +9,12 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, createRecipeSchema.parseAsync)
   const today = new Date().toISOString().slice(0, 10)
 
+  if (body.family_id) await checkFamilyAccess(body.family_id, user.userId)
+
   const recipe = await db.transaction(async (tx) => {
     const [created] = await tx.insert(recipes).values({
       userId: user.userId,
+      familyId: body.family_id ?? null,
       title: body.title,
       description: body.description ?? null,
       cookingTimeMin: body.cooking_time_min ?? null,

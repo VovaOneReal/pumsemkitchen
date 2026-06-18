@@ -30,10 +30,13 @@ export const useAddRecipeToMenu = () => {
     meals.value.map((m) => ({ label: m.mealTitle, value: m.mealId })),
   )
 
+  const workspaceStore = useWorkspaceStore()
+
   const fetchMenus = async () => {
     loadingMenus.value = true
     try {
-      menus.value = await $fetch<Menu[]>('/api/menus')
+      const query = workspaceStore.activeFamilyId ? { familyId: workspaceStore.activeFamilyId } : {}
+      menus.value = await $fetch<Menu[]>('/api/menus', { query })
     } finally {
       loadingMenus.value = false
     }

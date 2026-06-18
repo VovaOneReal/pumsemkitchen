@@ -2,6 +2,7 @@ import { db } from '~~/server/utils/db'
 import { shoppingLists } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
 import { updateShoppingListSchema } from '~~/schemas/shopping-list'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 // DD.MM.YYYY
 const fmt = (d: string) => d.split('-').reverse().join('.')
@@ -18,7 +19,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Список не найден' })
-  if (existing.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к списку' })
+  if (existing.familyId) {
+    await checkFamilyAccess(existing.familyId, user.userId)
+  } else if (existing.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к списку' })
+  }
 
   await db.update(shoppingLists)
     .set({ title: body.title, editedAt: today, editUserId: user.userId })

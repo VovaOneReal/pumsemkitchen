@@ -1,4 +1,5 @@
 import { db } from '~~/server/utils/db'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -10,7 +11,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!list) throw createError({ statusCode: 404, statusMessage: 'Список не найден' })
-  if (list.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к списку' })
+  if (list.familyId) {
+    await checkFamilyAccess(list.familyId, user.userId)
+  } else if (list.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к списку' })
+  }
 
   const rows = await db.query.listElements.findMany({
     where: (el, { eq }) => eq(el.shoppingListId, listId),

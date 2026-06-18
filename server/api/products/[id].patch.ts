@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '~~/server/utils/db'
 import { products, ingredients } from '~~/db/schema'
 import { updateProductSchema } from '~~/schemas/product'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -15,6 +16,12 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!existing) throw createError({ statusCode: 404, statusMessage: 'Not found' })
+
+  if (existing.familyId) {
+    await checkFamilyAccess(existing.familyId, user.userId)
+  } else if (existing.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  }
 
   // Запрещаем убирать ранее заданные меры, если продукт используется хотя бы в одном рецепте
   const isMeasureBeingNulled =

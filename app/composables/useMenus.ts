@@ -5,17 +5,23 @@ export const useMenus = () => {
   const menus = useState<Menu[]>('menus', () => [])
   const loading = ref(false)
 
+  const workspaceStore = useWorkspaceStore()
+
   const fetchMenus = async () => {
     loading.value = true
     try {
-      menus.value = await $fetch<Menu[]>('/api/menus')
+      const query = workspaceStore.activeFamilyId ? { familyId: workspaceStore.activeFamilyId } : {}
+      menus.value = await $fetch<Menu[]>('/api/menus', { query })
     } finally {
       loading.value = false
     }
   }
 
   const createMenu = async (body: MenuForm) => {
-    const created = await $fetch<Menu>('/api/menus', { method: 'POST', body })
+    const created = await $fetch<Menu>('/api/menus', {
+      method: 'POST',
+      body: { ...body, family_id: workspaceStore.activeFamilyId ?? undefined },
+    })
     menus.value = [created, ...menus.value]
     return created
   }

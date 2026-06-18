@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { db } from '~~/server/utils/db'
 import { shoppingLists, listElements, measurementUnitsRef, converts } from '~~/db/schema'
 import { toGrams, type UnitRow } from '~~/server/utils/nutrition'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 const bodySchema = z.object({
   portions: z.number().int().min(1),
@@ -22,7 +23,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!recipe) throw createError({ statusCode: 404, statusMessage: 'Рецепт не найден' })
-  if (recipe.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  if (recipe.familyId) {
+    await checkFamilyAccess(recipe.familyId, user.userId)
+  } else if (recipe.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к рецепту' })
+  }
 
   const allUnits = await db.select().from(measurementUnitsRef)
   const allConverts = await db.select().from(converts)
@@ -116,6 +121,7 @@ export default defineEventHandler(async (event) => {
 
   const [created] = await db.insert(shoppingLists).values({
     userId: user.userId,
+    familyId: recipe.familyId ?? null,
     title,
     createdAt: today,
     editedAt: today,

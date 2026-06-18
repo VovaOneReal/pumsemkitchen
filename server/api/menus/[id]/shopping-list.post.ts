@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '~~/server/utils/db'
 import { shoppingLists, listElements, shoppingListMenus, measurementUnitsRef, converts } from '~~/db/schema'
 import { toGrams, type UnitRow } from '~~/server/utils/nutrition'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   const { user } = await getUserSession(event)
@@ -31,7 +32,11 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!menu) throw createError({ statusCode: 404, statusMessage: 'Меню не найдено' })
-  if (menu.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа к меню' })
+  if (menu.familyId) {
+    await checkFamilyAccess(menu.familyId, user.userId)
+  } else if (menu.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа к меню' })
+  }
 
   const allUnits = await db.select().from(measurementUnitsRef)
   const allConverts = await db.select().from(converts)
@@ -147,6 +152,7 @@ export default defineEventHandler(async (event) => {
   } else {
     const [created] = await db.insert(shoppingLists).values({
       userId: user.userId,
+      familyId: menu.familyId ?? null,
       title: listTitle,
       createdAt: today,
       editedAt: today,

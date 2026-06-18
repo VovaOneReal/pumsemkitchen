@@ -2,6 +2,7 @@ import { db } from '~~/server/utils/db'
 import { mealRecipes } from '~~/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { updateMealRecipeSchema } from '~~/schemas/mealRecipe'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -17,7 +18,12 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!meal) throw createError({ statusCode: 404, statusMessage: 'Приём пищи не найден' })
-  if (meal.planDate.menu.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Нет доступа' })
+  const menu = meal.planDate.menu
+  if (menu.familyId) {
+    await checkFamilyAccess(menu.familyId, user.userId)
+  } else if (menu.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Нет доступа' })
+  }
 
   const [updated] = await db
     .update(mealRecipes)

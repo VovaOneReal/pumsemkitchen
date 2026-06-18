@@ -1,4 +1,5 @@
 import { db } from '~~/server/utils/db'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
@@ -13,8 +14,11 @@ export default defineEventHandler(async (event) => {
 
   if (!product) throw createError({ statusCode: 404, statusMessage: 'Not found' })
 
-  // Продукт принадлежит другому пользователю
-  if (product.userId !== user.userId) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  if (product.familyId) {
+    await checkFamilyAccess(product.familyId, user.userId)
+  } else if (product.userId !== user.userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  }
 
   return {
     id: product.productId,

@@ -31,13 +31,13 @@
                 v-for="ws in filteredWorkspaceItems"
                 :key="ws.id"
                 class="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-elevated text-left w-full"
-                :class="{ 'font-semibold': activeWorkspaceId === ws.id }"
+                :class="{ 'font-semibold': workspaceStore.activeWorkspaceId === ws.id }"
                 @click="selectWorkspace(ws.id)"
               >
                 <UIcon
-                  :name="activeWorkspaceId === ws.id ? 'i-lucide-check' : 'i-lucide-dot'"
+                  :name="workspaceStore.activeWorkspaceId === ws.id ? 'i-lucide-check' : 'i-lucide-dot'"
                   class="w-4 h-4 flex-shrink-0"
-                  :class="activeWorkspaceId === ws.id ? 'text-primary' : 'text-muted'"
+                  :class="workspaceStore.activeWorkspaceId === ws.id ? 'text-primary' : 'text-muted'"
                 />
                 {{ ws.label }}
               </button>
@@ -76,6 +76,7 @@
         color="primary"
         block
         class="justify-start"
+        :loading="loggingOut"
         @click="logout"
       />
     </div>
@@ -88,9 +89,12 @@ const { user, fetch: refreshSession } = useUserSession()
 const toast = useToast()
 const { families, fetchFamilies } = useFamilies()
 
+const workspaceStore = useWorkspaceStore()
+
 const workspaceOpen = ref(false)
 const searchWorkspace = ref('')
 const loadingFamilies = ref(false)
+const loggingOut = ref(false)
 
 async function onWorkspaceToggle(open: boolean) {
   if (!open) return
@@ -113,22 +117,29 @@ const filteredWorkspaceItems = computed(() =>
   workspaceItems.value.filter((w) => w.label.toLowerCase().includes(searchWorkspace.value.toLowerCase())),
 )
 
-const activeWorkspaceId = ref('personal')
 const activeWorkspace = computed(
-  () => workspaceItems.value.find((w) => w.id === activeWorkspaceId.value) ?? workspaceItems.value[0],
+  () =>
+    workspaceItems.value.find((w) => w.id === workspaceStore.activeWorkspaceId) ??
+    workspaceItems.value[0],
 )
 
-function selectWorkspace(id: string) {
-  activeWorkspaceId.value = id
+async function selectWorkspace(id: string) {
   workspaceOpen.value = false
+  await workspaceStore.selectWorkspace(id)
 }
 
 async function logout() {
-  await $fetch('/api/auth/logout', { method: 'POST' })
-  await refreshSession()
-  clearNuxtState()
-  toast.add({ title: 'Вы вышли из системы', color: 'success' })
-  await navigateTo('/login')
+  loggingOut.value = true
+  try {
+    await $fetch('/api/auth/logout', { method: 'POST' })
+    await refreshSession()
+    workspaceStore.activeWorkspaceId = 'personal'
+    clearNuxtState()
+    toast.add({ title: 'Вы вышли из системы', color: 'success' })
+    await navigateTo('/login')
+  } finally {
+    loggingOut.value = false
+  }
 }
 
 const topItems = computed(() => [

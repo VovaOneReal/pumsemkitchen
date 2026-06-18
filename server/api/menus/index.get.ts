@@ -1,11 +1,19 @@
 import { db } from '~~/server/utils/db'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
   const { user } = await getUserSession(event)
+  const { familyId: familyIdStr } = getQuery(event)
+  const familyId = familyIdStr ? Number(familyIdStr) : null
+
+  if (familyId) await checkFamilyAccess(familyId, user.userId)
 
   const rows = await db.query.menus.findMany({
-    where: (m, { eq }) => eq(m.userId, user.userId),
+    where: (m, { eq, and, isNull }) =>
+      familyId
+        ? eq(m.familyId, familyId)
+        : and(eq(m.userId, user.userId), isNull(m.familyId)),
     with: {
       user_userId: true,
       user_editUserId: true,

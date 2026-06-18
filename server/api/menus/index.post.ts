@@ -1,15 +1,24 @@
 import { db } from '~~/server/utils/db'
 import { menus } from '~~/db/schema'
 import { menuFormSchema } from '~~/schemas/menu'
+import { checkFamilyAccess } from '~~/server/utils/checkFamilyAccess'
+import { z } from 'zod'
+
+const createMenuSchema = menuFormSchema.extend({
+  family_id: z.number().int().positive().optional().nullable(),
+})
 
 export default defineEventHandler(async (event) => {
   // Сессия гарантирована server/middleware/auth.ts
   const { user } = await getUserSession(event)
-  const body = await readValidatedBody(event, menuFormSchema.parseAsync)
+  const body = await readValidatedBody(event, createMenuSchema.parseAsync)
   const today = new Date().toISOString().slice(0, 10)
+
+  if (body.family_id) await checkFamilyAccess(body.family_id, user.userId)
 
   const [created] = await db.insert(menus).values({
     userId: user.userId,
+    familyId: body.family_id ?? null,
     menuTitle: body.title,
     createdAt: today,
     editedAt: today,

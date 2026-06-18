@@ -7,10 +7,13 @@ export const useShoppingLists = () => {
   const deletingId = ref<number | null>(null)
   const editingId = ref<number | null>(null)
 
+  const workspaceStore = useWorkspaceStore()
+
   const fetchLists = async () => {
     loading.value = true
     try {
-      lists.value = await $fetch<ShoppingList[]>('/api/shopping-lists')
+      const query = workspaceStore.activeFamilyId ? { familyId: workspaceStore.activeFamilyId } : {}
+      lists.value = await $fetch<ShoppingList[]>('/api/shopping-lists', { query })
     } finally {
       loading.value = false
     }
@@ -19,7 +22,9 @@ export const useShoppingLists = () => {
   const createList = async (title: string) => {
     creating.value = true
     try {
-      const created = await $fetch<ShoppingList>('/api/shopping-lists', { method: 'POST', body: { title } })
+      const body: Record<string, unknown> = { title }
+      if (workspaceStore.activeFamilyId) body.family_id = workspaceStore.activeFamilyId
+      const created = await $fetch<ShoppingList>('/api/shopping-lists', { method: 'POST', body })
       lists.value.unshift(created)
       return created
     } finally {
