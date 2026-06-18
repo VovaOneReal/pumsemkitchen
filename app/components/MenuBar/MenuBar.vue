@@ -6,7 +6,7 @@
       </div>
 
       <!-- Выбор пространства: личное или семейное -->
-      <UDropdownMenu :items="[]" class="pb-2">
+      <UPopover v-model:open="workspaceOpen" class="pb-2" @update:open="onWorkspaceToggle">
         <UButton
           :label="activeWorkspace.label"
           trailing-icon="i-lucide-chevron-down"
@@ -16,7 +16,7 @@
           class="justify-between font-semibold"
         />
         <template #content>
-          <div class="p-2 flex flex-col gap-1 min-w-48">
+          <div class="p-2 flex flex-col gap-1" style="min-width: 14rem">
             <UInput
               v-model="searchWorkspace"
               placeholder="Поиск..."
@@ -25,24 +25,26 @@
               class="mb-1"
             />
             <div class="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
+              <USkeleton v-if="loadingFamilies" v-for="i in 3" :key="i" class="h-8 w-full rounded-md" />
               <button
+                v-else
                 v-for="ws in filteredWorkspaceItems"
                 :key="ws.id"
                 class="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-elevated text-left w-full"
                 :class="{ 'font-semibold': activeWorkspaceId === ws.id }"
-                @click="activeWorkspaceId = ws.id"
+                @click="selectWorkspace(ws.id)"
               >
                 <UIcon
-                  :name="activeWorkspaceId === ws.id ? 'i-lucide-check' : 'i-lucide-circle'"
+                  :name="activeWorkspaceId === ws.id ? 'i-lucide-check' : 'i-lucide-dot'"
                   class="w-4 h-4 flex-shrink-0"
-                  :class="activeWorkspaceId === ws.id ? 'text-primary' : 'text-transparent'"
+                  :class="activeWorkspaceId === ws.id ? 'text-primary' : 'text-muted'"
                 />
                 {{ ws.label }}
               </button>
             </div>
           </div>
         </template>
-      </UDropdownMenu>
+      </UPopover>
 
       <UButton
         v-for="item in topItems"
@@ -86,11 +88,22 @@ const { user, fetch: refreshSession } = useUserSession()
 const toast = useToast()
 const { families, fetchFamilies } = useFamilies()
 
-onMounted(() => fetchFamilies())
-
+const workspaceOpen = ref(false)
 const searchWorkspace = ref('')
+const loadingFamilies = ref(false)
 
-// Личное пространство + семьи пользователя
+async function onWorkspaceToggle(open: boolean) {
+  if (!open) return
+  searchWorkspace.value = ''
+  loadingFamilies.value = true
+  try {
+    await fetchFamilies()
+  } finally {
+    loadingFamilies.value = false
+  }
+}
+
+// Личное пространство всегда первым, затем семьи пользователя
 const workspaceItems = computed(() => [
   { id: 'personal', label: 'Ваше пространство' },
   ...families.value.map((f) => ({ id: `family-${f.id}`, label: f.title })),
@@ -104,6 +117,11 @@ const activeWorkspaceId = ref('personal')
 const activeWorkspace = computed(
   () => workspaceItems.value.find((w) => w.id === activeWorkspaceId.value) ?? workspaceItems.value[0],
 )
+
+function selectWorkspace(id: string) {
+  activeWorkspaceId.value = id
+  workspaceOpen.value = false
+}
 
 async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
