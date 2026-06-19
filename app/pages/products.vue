@@ -296,13 +296,14 @@
                         :delay-duration="300"
                         :disabled="!editForm.emiss_goods_id"
                       >
-                        <USelect
+                        <UInputMenu
                           v-model="editForm.emiss_goods_id"
                           v-model:open="emissSelectOpen"
                           :items="emissSelectItems"
                           :loading="emissGoodsLoading"
-                          searchable
+                          value-key="value"
                           placeholder="Не выбрано"
+                          search-placeholder="Поиск по названию..."
                           class="w-full"
                         />
                       </UTooltip>
@@ -532,7 +533,8 @@ watch(emissSelectOpen, async (open) => {
 
 const emissSelectItems = computed(() => [
   { label: 'Не выбрано', value: null },
-  ...emissGoods.value.map((g) => ({ label: g.name, value: g.id })),
+  // Показываем только товары с is_showing_goods = true
+  ...emissGoods.value.filter((g) => g.isShowingGoods).map((g) => ({ label: g.name, value: g.id })),
 ])
 
 function calcCalories(protein: number, fat: number, carbs: number): number {
