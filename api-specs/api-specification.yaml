@@ -1277,6 +1277,97 @@ paths:
                   $ref: "#/components/schemas/InvitationResponse"
         "401":
           description: Пользователь не авторизован
+  /emiss/upload:
+    post:
+      summary: Загрузить SDMX-файл с данными ЕМИСС
+      description: >
+        Принимает SDMX XML-файл (multipart/form-data, поле "file").
+        Парсит данные, фильтрует по строке «Российская Федерация без учета новых субъектов»,
+        добавляет новые товары в emiss_goods и новые записи цен в emiss_records.
+        Дубликаты (существующие товар+дата) пропускаются.
+        Доступно только администратору.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: SDMX XML-файл, экспортированный с сайта ЕМИСС
+      responses:
+        "200":
+          description: Данные успешно импортированы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addedGoods:
+                    type: integer
+                    description: Число добавленных новых товаров
+                  addedRecords:
+                    type: integer
+                    description: Число добавленных записей цен
+        "400":
+          description: Файл не передан
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Доступ разрешён только администратору
+        "422":
+          description: Неверный формат файла или нет данных для импорта
+  /emiss/goods:
+    get:
+      summary: Список товаров ЕМИСС с актуальной ценой
+      description: >
+        Возвращает все записи из emiss_goods с последней ценой из emiss_records.
+        Доступно только администратору.
+        Требует активной сессии (cookie).
+      responses:
+        "200":
+          description: Массив товаров ЕМИСС
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmissGoodsResponse"
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Доступ разрешён только администратору
+    patch:
+      summary: Обновить флаги показа товаров ЕМИСС
+      description: >
+        Обновляет поле is_showing_goods для переданных товаров.
+        Доступно только администратору.
+        Требует активной сессии (cookie).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmissGoodsPatchRequest"
+      responses:
+        "200":
+          description: Изменения сохранены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "401":
+          description: Пользователь не авторизован
+        "403":
+          description: Доступ разрешён только администратору
+        "422":
+          description: Ошибка валидации входных данных
   /invitations/{id}/respond:
     post:
       summary: Ответить на приглашение
@@ -1658,6 +1749,10 @@ components:
           type: boolean
           default: false
           description: Доступен ли продукт другим пользователям
+        emiss_goods_id:
+          type: integer
+          nullable: true
+          description: ID товара ЕМИСС для привязки статистики цен. Только администратор передаёт это поле; остальные игнорируют.
     Recipe:
       type: object
       properties:
@@ -1947,6 +2042,10 @@ components:
           type: number
           nullable: true
           description: Количество штук, соответствующее gMeasure граммам (null — не задано)
+        emissGoodsId:
+          type: integer
+          nullable: true
+          description: ID связанного товара ЕМИСС (null — не привязан). Только администратор может устанавливать это поле.
     UserMe:
       type: object
       properties:
@@ -2036,6 +2135,46 @@ components:
           minLength: 1
           maxLength: 128
           description: Новое название семейной группы
+    EmissGoodsResponse:
+      type: object
+      required: [id, name, isShowingGoods]
+      properties:
+        id:
+          type: integer
+          description: ID товара (emiss_goods_id)
+        name:
+          type: string
+          description: Название товара (emiss_goods_name)
+        isShowingGoods:
+          type: boolean
+          description: Показывать ли товар в списке
+        latestPrice:
+          type: number
+          nullable: true
+          description: Актуальная цена из emiss_records (null — записей нет)
+        latestDate:
+          type: string
+          format: date
+          nullable: true
+          description: Дата актуальной цены (null — записей нет)
+    EmissGoodsPatchRequest:
+      type: object
+      required: [goods]
+      properties:
+        goods:
+          type: array
+          minItems: 1
+          description: Список изменений флагов показа
+          items:
+            type: object
+            required: [id, is_showing_goods]
+            properties:
+              id:
+                type: integer
+                description: ID товара
+              is_showing_goods:
+                type: boolean
+                description: Новое значение флага
     InvitationResponse:
       type: object
       properties:

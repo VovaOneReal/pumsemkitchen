@@ -125,6 +125,14 @@ export type Invitation = {
   ownerName: string
 }
 
+export type EmissGoodsItem = {
+  id: number
+  name: string
+  isShowingGoods: boolean
+  latestPrice: number | null
+  latestDate: string | null
+}
+
 export type Product = {
   id: number
   name: string
@@ -148,4 +156,5 @@ export type Product = {
   gMeasure: number | null
   mlMeasure: number | null
   pcsMeasure: number | null
+  emissGoodsId?: number | null
 }

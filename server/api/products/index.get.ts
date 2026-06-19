@@ -38,5 +38,6 @@ export default defineEventHandler(async (event) => {
     gMeasure: p.gMeasure !== null ? Number(p.gMeasure) : null,
     mlMeasure: p.mlMeasure !== null ? Number(p.mlMeasure) : null,
     pcsMeasure: p.pcsMeasure !== null ? Number(p.pcsMeasure) : null,
+    emissGoodsId: p.emissGoodsId ?? null,
   }))
 })

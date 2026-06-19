@@ -287,10 +287,35 @@
                   <!-- Стоимость -->
                   <div class="flex flex-col gap-2">
                     <p class="font-semibold text-sm">Стоимость</p>
+
+                    <!-- Привязка к ЕМИСС (только для администратора) -->
+                    <div v-if="isAdmin" class="flex flex-col gap-1">
+                      <span class="text-xs text-gray-500">Стоимость из ЕМИСС</span>
+                      <UTooltip
+                        :text="emissGoods.find(g => g.id === editForm.emiss_goods_id)?.name ?? ''"
+                        :delay-duration="300"
+                        :disabled="!editForm.emiss_goods_id"
+                      >
+                        <USelect
+                          v-model="editForm.emiss_goods_id"
+                          v-model:open="emissSelectOpen"
+                          :items="emissSelectItems"
+                          :loading="emissGoodsLoading"
+                          searchable
+                          placeholder="Не выбрано"
+                          class="w-full"
+                        />
+                      </UTooltip>
+                      <p v-if="editForm.emiss_goods_id" class="text-xs text-warning-500">
+                        Не забудьте указать корректное количество и меру измерения для товара
+                      </p>
+                    </div>
+
                     <div class="flex items-center gap-2 flex-wrap">
                       <UFormField name="price">
                         <UInputNumber
                           v-model="editForm.price"
+                          :disabled="!!editForm.emiss_goods_id"
                           :step="0.01"
                           :min="0"
                           :format-options="{ useGrouping: false, maximumFractionDigits: 2 }"
@@ -452,6 +477,7 @@ interface EditForm {
   g_measure: number
   ml_measure: number | null
   pcs_measure: number | null
+  emiss_goods_id: number | null
 }
 
 const { user } = useUserSession()
@@ -485,10 +511,29 @@ const editForm = ref<EditForm>({
   g_measure: 100,
   ml_measure: 100,
   pcs_measure: 1,
+  emiss_goods_id: null,
 })
 
 const { products, fetchProducts, createProduct, updateProduct, deleteProduct } = useProducts()
 const { measurements, loading: measurementsLoading, fetchMeasurements } = useMeasurements()
+const { goods: emissGoods, fetchGoods: fetchEmissGoods } = useEmissGoods()
+
+const emissSelectOpen = ref(false)
+const emissGoodsLoading = ref(false)
+
+// Ленивая загрузка товаров ЕМИСС при первом открытии выпадающего списка
+watch(emissSelectOpen, async (open) => {
+  if (open && emissGoods.value.length === 0) {
+    emissGoodsLoading.value = true
+    try { await fetchEmissGoods() }
+    finally { emissGoodsLoading.value = false }
+  }
+})
+
+const emissSelectItems = computed(() => [
+  { label: 'Не выбрано', value: null },
+  ...emissGoods.value.map((g) => ({ label: g.name, value: g.id })),
+])
 
 function calcCalories(protein: number, fat: number, carbs: number): number {
   return Math.round((4 * protein + 9 * fat + 4 * carbs) * 10) / 10
@@ -602,6 +647,7 @@ function openCreate() {
     g_measure: 100,
     ml_measure: 100,
     pcs_measure: 1,
+    emiss_goods_id: null,
   }
   specifyVolume.value = false
   specifyPieces.value = false
@@ -627,6 +673,7 @@ async function openEdit(product: Product) {
     g_measure: product.gMeasure ?? 100,
     ml_measure: product.mlMeasure ?? 100,
     pcs_measure: product.pcsMeasure ?? 1,
+    emiss_goods_id: product.emissGoodsId ?? null,
   }
   await fetchMeasurements()
   // Устанавливаем единицу после загрузки справочника, чтобы вотч её не сбросил
@@ -686,6 +733,7 @@ async function onFormSubmit() {
       g_measure: (specifyVolume.value || specifyPieces.value) ? editForm.value.g_measure : null,
       ml_measure: specifyVolume.value ? editForm.value.ml_measure : null,
       pcs_measure: specifyPieces.value ? editForm.value.pcs_measure : null,
+      emiss_goods_id: isAdmin.value ? editForm.value.emiss_goods_id : undefined,
     }
     if (editingProduct.value) {
       await updateProduct(editingProduct.value.id, body)

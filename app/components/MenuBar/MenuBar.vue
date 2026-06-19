@@ -167,6 +167,9 @@ const topItems = computed(() => [
   { label: 'Меню', icon: 'i-lucide-calendar-days', to: '/menu' },
   { label: 'Покупки', icon: 'i-lucide-list-checks', to: '/shopping' },
   { label: 'Продукты', icon: 'i-lucide-package', to: '/products' },
+  ...(user.value?.role === 'admin'
+    ? [{ label: 'ЕМИСС', icon: 'i-lucide-chart-no-axes-combined', to: '/emiss' }]
+    : []),
 ])
 
 function getVariant(to: string): 'ghost' | 'solid' | 'soft' {

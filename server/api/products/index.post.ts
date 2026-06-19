@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     gMeasure: body.g_measure != null ? String(body.g_measure) : null,
     mlMeasure: body.ml_measure != null ? String(body.ml_measure) : null,
     pcsMeasure: body.pcs_measure != null ? String(body.pcs_measure) : null,
+    emissGoodsId: body.emiss_goods_id ?? null,
     isPublic: body.is_public,
     createdAt: today,
     editedAt: today,
@@ -57,5 +58,6 @@ export default defineEventHandler(async (event) => {
     gMeasure: row!.gMeasure !== null ? Number(row!.gMeasure) : null,
     mlMeasure: row!.mlMeasure !== null ? Number(row!.mlMeasure) : null,
     pcsMeasure: row!.pcsMeasure !== null ? Number(row!.pcsMeasure) : null,
+    emissGoodsId: row!.emissGoodsId ?? null,
   }
 })

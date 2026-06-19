@@ -50,6 +50,7 @@ export default defineEventHandler(async (event) => {
     gMeasure: body.g_measure !== undefined ? (body.g_measure !== null ? String(body.g_measure) : null) : existing.gMeasure,
     mlMeasure: body.ml_measure !== undefined ? (body.ml_measure !== null ? String(body.ml_measure) : null) : existing.mlMeasure,
     pcsMeasure: body.pcs_measure !== undefined ? (body.pcs_measure !== null ? String(body.pcs_measure) : null) : existing.pcsMeasure,
+    emissGoodsId: body.emiss_goods_id !== undefined ? (body.emiss_goods_id ?? null) : existing.emissGoodsId,
     isPublic: body.is_public ?? false,
     editUserId: user.userId,
     editedAt: today,
@@ -81,5 +82,6 @@ export default defineEventHandler(async (event) => {
     gMeasure: row!.gMeasure !== null ? Number(row!.gMeasure) : null,
     mlMeasure: row!.mlMeasure !== null ? Number(row!.mlMeasure) : null,
     pcsMeasure: row!.pcsMeasure !== null ? Number(row!.pcsMeasure) : null,
+    emissGoodsId: row!.emissGoodsId ?? null,
   }
 })

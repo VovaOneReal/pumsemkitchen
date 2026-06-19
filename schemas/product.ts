@@ -15,6 +15,7 @@ const baseProductSchema = z.object({
   ml_measure: z.number({ error: 'Введите число' }).positive('Значение должно быть больше нуля').nullable().optional(),
   pcs_measure: z.number({ error: 'Введите число' }).positive('Значение должно быть больше нуля').nullable().optional(),
   is_public: z.boolean({ error: 'Укажите булевое значение' }).optional().default(false),
+  emiss_goods_id: z.number({ error: 'Укажите товар' }).int().positive().nullable().optional(),
 })
 
 // Если указан ml или pcs — g обязателен
