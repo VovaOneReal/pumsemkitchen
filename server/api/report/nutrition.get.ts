@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   const menuIds = userMenus.map(m => m.menuId)
 
-  // Загружаем все дни питания за указанный период
+  // Шаг 1: структура дней без рецептов — избегаем коллизии псевдонимов Drizzle при глубине 8+ уровней
   const rows = await db.query.planDates.findMany({
     where: and(
       gte(planDates.planDate, from),
@@ -39,33 +39,42 @@ export default defineEventHandler(async (event) => {
     ),
     with: {
       meals: {
-        with: {
-          mealRecipes: {
-            with: {
-              recipe: {
-                with: {
-                  ingredients: {
-                    with: {
-                      product: {
-                        with: {
-                          emissGood: {
-                            with: { emissRecords: { orderBy: (r, { desc }) => desc(r.recordDate), limit: 1 } },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        with: { mealRecipes: true },
       },
     },
     orderBy: (pd, { asc }) => asc(pd.planDate),
   })
 
   if (rows.length === 0) return []
+
+  // Шаг 2: уникальные ID рецептов из всех дней
+  const recipeIds = [...new Set(
+    rows.flatMap(pd =>
+      pd.meals.flatMap(m => m.mealRecipes.map(mr => mr.recipeId)),
+    ),
+  )]
+
+  // Шаг 3: рецепты с ингредиентами и ЕМИСС — отдельный запрос, глубина 5 уровней
+  const recipes = recipeIds.length > 0
+    ? await db.query.recipes.findMany({
+        where: (r, { inArray: inArr }) => inArr(r.recipeId, recipeIds),
+        with: {
+          ingredients: {
+            with: {
+              product: {
+                with: {
+                  emissGood: {
+                    with: { emissRecords: { orderBy: (r, { desc }) => desc(r.recordDate), limit: 1 } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+    : []
+
+  const recipeMap = new Map(recipes.map(r => [r.recipeId, r]))
 
   // Справочники загружаем один раз для всех дней
   const allUnits    = await db.select().from(measurementUnitsRef)
@@ -91,7 +100,9 @@ export default defineEventHandler(async (event) => {
 
     for (const meal of pd.meals) {
       for (const mr of meal.mealRecipes) {
-        const perPortion = computeRecipeNutrition(mr.recipe.ingredients, mr.recipe.portions, refs)
+        const recipe = recipeMap.get(mr.recipeId)
+        if (!recipe) continue
+        const perPortion = computeRecipeNutrition(recipe.ingredients, recipe.portions, refs)
         const factor = mr.mealPortions
         proteins += perPortion.proteins * factor
         fats     += perPortion.fats     * factor

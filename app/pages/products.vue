@@ -167,7 +167,7 @@
                       {{ selectedProduct.priceFromProductName }}
                     </p>
                     <p class="text-sm">
-                      {{ selectedProduct?.priceRub }} ₽
+                      {{ (selectedProduct?.emissGoodsId != null && selectedProduct?.emissLatestPrice != null) ? selectedProduct.emissLatestPrice : selectedProduct?.priceRub }} ₽
                       <span class="text-gray-500"
                         >&nbsp;за {{ selectedProduct?.priceQty }}
                         {{ selectedProduct?.priceUnit }}.</span
@@ -531,6 +531,14 @@ watch(emissSelectOpen, async (open) => {
   }
 })
 
+// При выборе товара ЕМИСС подставляем его актуальную цену в поле price
+watch(() => editForm.value.emiss_goods_id, (id) => {
+  if (id != null) {
+    const good = emissGoods.value.find(g => g.id === id)
+    if (good?.latestPrice != null) editForm.value.price = good.latestPrice
+  }
+})
+
 const emissSelectItems = computed(() => [
   { label: 'Не выбрано', value: null },
   // Показываем только товары с is_showing_goods = true
@@ -607,7 +615,11 @@ const columns: TableColumn<Product>[] = [
   {
     accessorKey: 'priceRub',
     header: 'Стоимость',
-    cell: ({ row }) => `${row.original.priceRub} ₽`,
+    cell: ({ row }) => {
+      const p = row.original
+      const price = (p.emissGoodsId != null && p.emissLatestPrice != null) ? p.emissLatestPrice : p.priceRub
+      return `${price} ₽`
+    },
   },
   {
     id: 'priceFor',
@@ -668,7 +680,7 @@ async function openEdit(product: Product) {
     proteins: product.protein,
     fats: product.fat,
     carbs: product.carbs,
-    price: product.priceRub,
+    price: (product.emissGoodsId && product.emissLatestPrice != null) ? product.emissLatestPrice : product.priceRub,
     quantity_per_price: product.priceQty,
     measurement_unit_id: null,
     is_public: product.isPublic ?? false,

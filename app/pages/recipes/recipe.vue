@@ -205,7 +205,7 @@
                           Указана стоимость из публичного продукта {{ selectedViewProduct.priceFromProductName }}
                         </p>
                         <p class="text-sm">
-                          {{ selectedViewProduct?.priceRub }} ₽
+                          {{ (selectedViewProduct?.emissGoodsId != null && selectedViewProduct?.emissLatestPrice != null) ? selectedViewProduct.emissLatestPrice : selectedViewProduct?.priceRub }} ₽
                           <span class="text-gray-500">&nbsp;за {{ selectedViewProduct?.priceQty }} {{ selectedViewProduct?.priceUnit }}.</span>
                         </p>
                       </div>

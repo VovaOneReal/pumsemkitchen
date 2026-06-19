@@ -39,6 +39,7 @@ const items = [
   { label: 'Меню', to: '/help/menu' },
   { label: 'Покупки', to: '/help/shopping' },
   { label: 'Продукты', to: '/help/products' },
+  { label: 'ЕМИСС', to: '/help/emiss' },
 ]
 
 function getVariant(to: string): 'ghost' | 'solid' | 'soft' {

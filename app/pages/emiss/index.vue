@@ -9,7 +9,10 @@
         :loading="uploading"
         @click="fileInput?.click()"
       />
-      <span class="text-sm text-muted">Следуйте инструкции по загрузке данных</span>
+      <NuxtLink
+        to="/help/emiss#загрузка-данных"
+        class="text-sm text-muted hover:text-primary transition-colors"
+      >Следуйте инструкции по загрузке данных</NuxtLink>
       <!-- Скрытый input для выбора XML-файла -->
       <input
         ref="fileInput"
@@ -20,6 +23,14 @@
       />
     </div>
 
+    <!-- Поиск -->
+    <UInput
+      v-model="searchQuery"
+      placeholder="Название товара..."
+      class="w-64 flex-shrink-0"
+      :trailing-icon="'i-lucide-search'"
+    />
+
     <!-- Таблица (прокручивается в своём блоке) -->
     <div class="flex-1 overflow-auto min-h-0">
       <div v-if="loading" class="flex flex-col gap-2">
@@ -27,7 +38,7 @@
       </div>
       <UTable
         v-else
-        :data="localGoods"
+        :data="filteredGoods"
         :columns="columns"
         :empty="'Информации о товарах нет'"
       >
@@ -69,6 +80,13 @@ const { goods, fetchGoods, saveShowingFlags } = useEmissGoods()
 
 const loading = ref(false)
 const saving = ref(false)
+const searchQuery = ref('')
+
+const filteredGoods = computed(() =>
+  localGoods.value.filter((g) =>
+    g.name.toLowerCase().includes(searchQuery.value.toLowerCase()),
+  ),
+)
 const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
