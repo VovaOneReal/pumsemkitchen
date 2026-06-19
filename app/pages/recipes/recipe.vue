@@ -535,6 +535,13 @@ const ingredientCosts = computed<Map<number, number | undefined>>(() => {
       map.set(ing.id, undefined); continue
     }
 
+    // Если привязан товар ЕМИСС — берём его последнюю цену, иначе ручную
+    const priceRub = (product.emissGoodsId != null && product.emissLatestPrice != null)
+      ? product.emissLatestPrice
+      : product.priceRub
+
+    if (!priceRub) { map.set(ing.id, undefined); continue }
+
     // Количество ингредиента (с учётом масштаба порций) → граммы
     const ingGrams = unitToGrams(scaledAmount(ing.amount), ing.measurementUnitId, product)
     // Количество продукта за указанную цену → граммы
@@ -542,7 +549,7 @@ const ingredientCosts = computed<Map<number, number | undefined>>(() => {
 
     if (ingGrams === null || !priceGrams) { map.set(ing.id, undefined); continue }
 
-    map.set(ing.id, Math.round(ingGrams * (product.priceRub / priceGrams) * 100) / 100)
+    map.set(ing.id, Math.round(ingGrams * (priceRub / priceGrams) * 100) / 100)
   }
   return map
 })

@@ -85,6 +85,7 @@ type IngredientForNutrition = {
     price: string | null
     quantityPerPrice: string | null
     measurementUnitId: number
+    emissGood: { emissRecords: Array<{ recordPrice: string }> } | null
   }
 }
 
@@ -124,7 +125,9 @@ export function computeRecipeNutrition(
     totalFat     += (grams / 100) * Number(ing.product.fats    ?? 0)
     totalCarbs   += (grams / 100) * Number(ing.product.carbs   ?? 0)
 
-    const price      = Number(ing.product.price           ?? 0)
+    // Если привязан товар ЕМИСС — берём его последнюю цену, иначе ручную
+    const emissPrice = ing.product.emissGood?.emissRecords[0]?.recordPrice
+    const price      = Number(emissPrice ?? ing.product.price ?? 0)
     const qtyPerPrice = Number(ing.product.quantityPerPrice ?? 0)
     if (price > 0 && qtyPerPrice > 0) {
       // Округляем масштабированное количество до 1 знака (как scaledAmount в recipe.vue)

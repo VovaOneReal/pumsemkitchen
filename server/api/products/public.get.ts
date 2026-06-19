@@ -3,7 +3,12 @@ import { db } from '~~/server/utils/db'
 export default defineEventHandler(async () => {
   const rows = await db.query.products.findMany({
     where: (p, { eq }) => eq(p.isPublic, true),
-    with: { measurementUnitsRef: true, user_userId: true, user_editUserId: true },
+    with: {
+      measurementUnitsRef: true,
+      user_userId: true,
+      user_editUserId: true,
+      emissGood: { with: { emissRecords: { orderBy: (r, { desc }) => desc(r.recordDate), limit: 1 } } },
+    },
   })
 
   return rows.map((p) => ({
@@ -28,5 +33,6 @@ export default defineEventHandler(async () => {
     mlMeasure: p.mlMeasure !== null ? Number(p.mlMeasure) : null,
     pcsMeasure: p.pcsMeasure !== null ? Number(p.pcsMeasure) : null,
     emissGoodsId: p.emissGoodsId ?? null,
+    emissLatestPrice: p.emissGood?.emissRecords[0] ? Number(p.emissGood.emissRecords[0].recordPrice) : null,
   }))
 })

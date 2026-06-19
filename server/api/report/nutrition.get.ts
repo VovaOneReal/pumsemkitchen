@@ -44,7 +44,17 @@ export default defineEventHandler(async (event) => {
             with: {
               recipe: {
                 with: {
-                  ingredients: { with: { product: true } },
+                  ingredients: {
+                    with: {
+                      product: {
+                        with: {
+                          emissGood: {
+                            with: { emissRecords: { orderBy: (r, { desc }) => desc(r.recordDate), limit: 1 } },
+                          },
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },

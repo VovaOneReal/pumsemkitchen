@@ -2046,6 +2046,10 @@ components:
           type: integer
           nullable: true
           description: ID связанного товара ЕМИСС (null — не привязан). Только администратор может устанавливать это поле.
+        emissLatestPrice:
+          type: number
+          nullable: true
+          description: Актуальная цена из ЕМИСС (последняя по дате запись emiss_records). Null — если товар ЕМИСС не привязан или записей нет.
     UserMe:
       type: object
       properties:

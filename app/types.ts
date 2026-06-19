@@ -157,4 +157,5 @@ export type Product = {
   mlMeasure: number | null
   pcsMeasure: number | null
   emissGoodsId?: number | null
+  emissLatestPrice?: number | null
 }
