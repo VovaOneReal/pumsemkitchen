@@ -1,8 +1,16 @@
 <template>
   <div class="flex flex-col rounded-xl border border-default bg-default shadow-sm overflow-hidden">
     <!-- Заголовок приёма пищи -->
-    <div class="px-4 py-3 border-b border-default">
+    <div class="px-4 py-3 border-b border-default flex items-center justify-between">
       <h4 class="text-xl font-bold">{{ name }}</h4>
+      <UButton
+        icon="i-lucide-plus"
+        label="Добавить рецепт"
+        size="sm"
+        variant="ghost"
+        color="neutral"
+        @click="$emit('add-recipe')"
+      />
     </div>
 
     <!-- Горизонтально прокручиваемые карточки рецептов -->
@@ -72,6 +80,7 @@ defineProps<{
 defineEmits<{
   'delete-recipe': [id: number]
   'update-portions': [id: number, portions: number]
+  'add-recipe': []
 }>()
 
 const nutritionOpen = ref(false)

@@ -41,5 +41,14 @@ export const useMeals = (menuId: Ref<number>, date: Ref<string>) => {
     calcDayNutrition(dayDetail.value?.meals ?? []),
   )
 
-  return { dayDetail, loading, fetchDay, updatePortions, deleteRecipe, mealsNutrition, dayNutrition }
+  const addRecipe = async (mealId: number, recipeId: number, portions: number) => {
+    await $fetch(`/api/meals/${mealId}/recipes`, {
+      method: 'POST',
+      body: { recipeId, portions },
+    })
+    // Перезагружаем день, чтобы получить свежий nutritionPerPortion с сервера
+    await fetchDay()
+  }
+
+  return { dayDetail, loading, fetchDay, updatePortions, deleteRecipe, addRecipe, mealsNutrition, dayNutrition }
 }

@@ -31,8 +31,19 @@
         :nutrition="mealsNutrition[idx]"
         @delete-recipe="(recipeId) => onDeleteRecipe(meal.mealId, recipeId)"
         @update-portions="(recipeId, portions) => onUpdatePortions(meal.mealId, recipeId, portions)"
+        @add-recipe="openAddModal(meal.mealId, meal.mealTitle)"
       />
     </div>
+
+    <!-- Модальное окно добавления рецепта в приём пищи -->
+    <AddRecipeToMealModal
+      v-if="activeMealId !== null"
+      :open="addModalOpen"
+      :meal-id="activeMealId"
+      :meal-title="activeMealTitle"
+      @update:open="onAddModalUpdateOpen"
+      @added="onRecipeAdded"
+    />
   </div>
 </template>
 
@@ -48,6 +59,27 @@ const menuId = computed(() => Number(route.params.id))
 const date = computed(() => String(route.params.day))
 
 const { dayDetail, loading, fetchDay, updatePortions, deleteRecipe, mealsNutrition, dayNutrition } = useMeals(menuId, date)
+
+const activeMealId = ref<number | null>(null)
+const activeMealTitle = ref('')
+const addModalOpen = ref(false)
+
+function openAddModal(mealId: number, mealTitle: string) {
+  activeMealId.value = mealId
+  activeMealTitle.value = mealTitle
+  addModalOpen.value = true
+}
+
+function onAddModalUpdateOpen(val: boolean) {
+  addModalOpen.value = val
+  // При закрытии сбрасываем activeMealId, чтобы компонент размонтировался и очистил состояние
+  if (!val) activeMealId.value = null
+}
+
+async function onRecipeAdded() {
+  await fetchDay()
+  toast.add({ title: 'Рецепт добавлен', color: 'success' })
+}
 
 onMounted(fetchDay)
 
