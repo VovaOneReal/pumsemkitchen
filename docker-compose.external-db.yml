@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD}
+      INVITE_CODE: ${INVITE_CODE}
+      INVITE_CODE_ADMIN: ${INVITE_CODE_ADMIN}
+    # Позволяет обращаться к хост-машине через host.docker.internal на Linux
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
