@@ -531,6 +531,84 @@ paths:
           description: Не авторизован
         "422":
           description: Ошибка валидации
+  /menus/generate:
+    post:
+      summary: Автогенерация меню
+      description: >
+        Создаёт меню, дни и блюда автоматически по алгоритму случайного выбора внутри
+        калорийных диапазонов с бюджетной корректировкой. Для каждой даты создаёт все
+        5 стандартных приёмов пищи; рецепты добавляются только в выбранные слоты.
+        Возвращает id созданного меню и список предупреждений.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - dateFrom
+                - dateTo
+                - numberOfPeople
+                - targetCaloriesPerDay
+                - totalBudget
+                - selectedMeals
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                dateFrom:
+                  type: string
+                  format: date
+                dateTo:
+                  type: string
+                  format: date
+                numberOfPeople:
+                  type: integer
+                  minimum: 1
+                targetCaloriesPerDay:
+                  type: integer
+                  minimum: 100
+                totalBudget:
+                  type: number
+                  nullable: true
+                  description: Лимит бюджета в рублях. null — не учитывать.
+                selectedMeals:
+                  type: array
+                  items:
+                    type: string
+                    enum: [Завтрак, Второй завтрак, Обед, Полдник, Ужин]
+                  minItems: 1
+                familyId:
+                  type: integer
+                  nullable: true
+      responses:
+        "200":
+          description: Меню сгенерировано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  menuId:
+                    type: integer
+                  warnings:
+                    type: object
+                    properties:
+                      budgetExceeded:
+                        type: boolean
+                      actualCost:
+                        type: number
+                        nullable: true
+                      calorieDeviation:
+                        type: boolean
+                      dayRepeat:
+                        type: boolean
+        "401":
+          description: Не авторизован
+        "422":
+          description: Нет рецептов с данными о питательности, или ошибка валидации
   /menus/{id}:
     patch:
       summary: Обновление меню

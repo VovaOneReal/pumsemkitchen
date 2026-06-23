@@ -5,6 +5,7 @@
       <h2 class="ui-header-2">Меню</h2>
       <div class="flex items-center gap-2">
         <UButton leading-icon="i-lucide-bar-chart-2" label="Отчёт по питанию" variant="outline" color="neutral" to="/menu/report" />
+        <UButton leading-icon="i-lucide-sparkles" label="Сгенерировать" variant="outline" color="neutral" @click="openGenerate" />
         <UButton leading-icon="i-lucide-plus" label="Создать" @click="openCreate" />
       </div>
     </div>
@@ -57,6 +58,75 @@
       Меню пока нет. Нажмите «Создать», чтобы добавить первое.
     </p>
 
+    <!-- Диалог генерации меню -->
+    <UModal v-model:open="showGenerateModal" :dismissible="false">
+      <template #content>
+        <UForm
+          :schema="menuGenerateSchema"
+          :state="generateState"
+          class="p-6 flex flex-col gap-5"
+          @submit="onGenerateSubmit"
+        >
+          <h3 class="text-xl font-semibold">Генерация меню</h3>
+
+          <UFormField name="title" label="Название меню" required>
+            <UInput
+              v-model="generateState.title"
+              placeholder="Название меню"
+              :maxlength="128"
+              class="w-full"
+              @input="onTitleInput"
+            />
+          </UFormField>
+
+          <div class="grid grid-cols-2 gap-3">
+            <UFormField name="dateFrom" label="Начало периода" required>
+              <UInput v-model="generateState.dateFrom" type="date" class="w-full" />
+            </UFormField>
+            <UFormField name="dateTo" label="Окончание периода" required>
+              <UInput v-model="generateState.dateTo" type="date" class="w-full" />
+            </UFormField>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <UFormField name="numberOfPeople" label="Количество человек" required>
+              <UInput v-model="generateState.numberOfPeople" type="number" min="1" class="w-full" />
+            </UFormField>
+            <UFormField name="targetCaloriesPerDay" label="Ккал в день" required>
+              <UInput v-model="generateState.targetCaloriesPerDay" type="number" min="100" class="w-full" />
+            </UFormField>
+          </div>
+
+          <UFormField name="totalBudget" label="Лимит бюджета, ₽">
+            <UInput
+              v-model="generateState.totalBudget"
+              type="number"
+              min="1"
+              placeholder="Необязательно"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField name="selectedMeals" label="Приёмы пищи" required>
+            <div class="grid grid-cols-2 gap-2 mt-1">
+              <UCheckbox
+                v-for="meal in ALL_MEALS"
+                :key="meal"
+                :label="meal"
+                :model-value="isMealSelected(meal)"
+                @update:model-value="toggleMeal(meal)"
+              />
+            </div>
+          </UFormField>
+
+          <div class="flex justify-end gap-2">
+            <UButton type="button" variant="ghost" color="error" label="Отменить" @click="closeGenerate" />
+            <UButton type="submit" :loading="generating" label="Сгенерировать" />
+          </div>
+        </UForm>
+      </template>
+    </UModal>
+
     <!-- Диалог создания / редактирования -->
     <UModal v-model:open="showFormModal" :dismissible="false">
       <template #content>
@@ -98,11 +168,12 @@
 <script lang="ts" setup>
 import type { Menu } from '@/types'
 import { menuFormSchema } from '~~/schemas/menu'
+import { menuGenerateSchema } from '~~/schemas/menuGenerate'
 
 useHead({ title: 'Меню' })
 
 const toast = useToast()
-const { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu, createMenuShoppingList } = useMenus()
+const { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu, createMenuShoppingList, generateMenu } = useMenus()
 
 onMounted(fetchMenus)
 
@@ -270,6 +341,127 @@ async function onCreateShoppingList(menuId: number) {
     toast.add({ title: 'Ошибка формирования списка покупок', color: 'error' })
   } finally {
     shoppingListLoadingIds.delete(menuId)
+  }
+}
+
+// ── Генерация меню ──────────────────────────────────────────────────────────
+
+const ALL_MEALS = ['Завтрак', 'Второй завтрак', 'Обед', 'Полдник', 'Ужин'] as const
+
+const showGenerateModal = ref(false)
+const generating = ref(false)
+// Признак ручного редактирования заголовка (подавляет авто-заполнение по датам)
+const titleEditedManually = ref(false)
+
+function isoToday() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function isoPlusDays(n: number) {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+function formatShortDate(iso: string) {
+  if (!iso || iso.length < 10) return ''
+  const [, m, d] = iso.split('-')
+  return `${d}.${m}`
+}
+
+const generateState = ref({
+  title: '',
+  dateFrom: isoToday(),
+  dateTo: isoPlusDays(6),
+  numberOfPeople: '1',
+  targetCaloriesPerDay: '2000',
+  totalBudget: '',
+  selectedMeals: ['Завтрак', 'Обед', 'Ужин'] as string[],
+})
+
+function autoGenerateTitle() {
+  return `Меню ${formatShortDate(generateState.value.dateFrom)}–${formatShortDate(generateState.value.dateTo)}`
+}
+
+// Авто-заполнение заголовка при изменении дат (если пользователь не редактировал вручную)
+watch(
+  [() => generateState.value.dateFrom, () => generateState.value.dateTo],
+  ([, ], [oldFrom, oldTo]) => {
+    const prevAuto = `Меню ${formatShortDate(oldFrom)}–${formatShortDate(oldTo)}`
+    if (!titleEditedManually.value || generateState.value.title === prevAuto) {
+      generateState.value.title = autoGenerateTitle()
+    }
+  },
+)
+
+function onTitleInput(e: Event) {
+  titleEditedManually.value = !!(e.target as HTMLInputElement).value
+}
+
+function isMealSelected(meal: string) {
+  return generateState.value.selectedMeals.includes(meal)
+}
+
+function toggleMeal(meal: string) {
+  const idx = generateState.value.selectedMeals.indexOf(meal)
+  if (idx >= 0) generateState.value.selectedMeals.splice(idx, 1)
+  else generateState.value.selectedMeals.push(meal)
+}
+
+function openGenerate() {
+  titleEditedManually.value = false
+  generateState.value = {
+    title: '',
+    dateFrom: isoToday(),
+    dateTo: isoPlusDays(6),
+    numberOfPeople: '1',
+    targetCaloriesPerDay: '2000',
+    totalBudget: '',
+    selectedMeals: ['Завтрак', 'Обед', 'Ужин'],
+  }
+  generateState.value.title = autoGenerateTitle()
+  showGenerateModal.value = true
+}
+
+function closeGenerate() {
+  showGenerateModal.value = false
+}
+
+async function onGenerateSubmit() {
+  generating.value = true
+  try {
+    const state = generateState.value
+    const result = await generateMenu({
+      title: state.title,
+      dateFrom: state.dateFrom,
+      dateTo: state.dateTo,
+      numberOfPeople: Number(state.numberOfPeople),
+      targetCaloriesPerDay: Number(state.targetCaloriesPerDay),
+      totalBudget: state.totalBudget ? Number(state.totalBudget) : null,
+      selectedMeals: state.selectedMeals,
+    })
+
+    if (result.warnings.dayRepeat) {
+      toast.add({ title: 'Повторы блюд', description: 'Пул рецептов мал — некоторые блюда повторяются в один день', color: 'warning' })
+    }
+    if (result.warnings.calorieDeviation) {
+      toast.add({ title: 'Отклонение по калориям', description: 'Некоторые дни отклоняются от цели более чем на 25%', color: 'warning' })
+    }
+    if (result.warnings.budgetExceeded) {
+      toast.add({
+        title: 'Бюджет превышен',
+        description: `Фактическая стоимость: ${result.warnings.actualCost} ₽`,
+        color: 'warning',
+      })
+    }
+
+    closeGenerate()
+    await fetchMenus()
+    await navigateTo(`/menu/${result.menuId}`)
+  } catch (e: any) {
+    toast.add({ title: 'Ошибка генерации', description: e.data?.statusMessage ?? 'Попробуйте ещё раз', color: 'error' })
+  } finally {
+    generating.value = false
   }
 }
 </script>

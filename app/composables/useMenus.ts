@@ -40,5 +40,28 @@ export const useMenus = () => {
   const createMenuShoppingList = async (id: number): Promise<{ id: number; title: string }> =>
     $fetch(`/api/menus/${id}/shopping-list`, { method: 'POST' })
 
-  return { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu, createMenuShoppingList }
+  type GenerateWarnings = {
+    budgetExceeded: boolean
+    actualCost: number | null
+    calorieDeviation: boolean
+    dayRepeat: boolean
+  }
+
+  type GenerateMenuBody = {
+    title: string
+    dateFrom: string
+    dateTo: string
+    numberOfPeople: number
+    targetCaloriesPerDay: number
+    totalBudget: number | null
+    selectedMeals: string[]
+  }
+
+  const generateMenu = async (body: GenerateMenuBody): Promise<{ menuId: number; warnings: GenerateWarnings }> =>
+    $fetch('/api/menus/generate', {
+      method: 'POST',
+      body: { ...body, familyId: workspaceStore.activeFamilyId ?? undefined },
+    })
+
+  return { menus, loading, fetchMenus, createMenu, updateMenu, deleteMenu, createMenuShoppingList, generateMenu }
 }
