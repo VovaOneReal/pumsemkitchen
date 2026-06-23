@@ -17,18 +17,15 @@
     <!-- Основной контент -->
     <div class="flex gap-6 w-full overflow-y-auto">
       <!-- Левая колонка: обложка и доп. поля -->
-      <div class="flex flex-col gap-4 w-48 flex-shrink-0">
-        <!-- <div class="flex flex-col gap-2">
+      <!-- <div class="flex flex-col gap-4 w-48 flex-shrink-0"> -->
+      <!-- <div class="flex flex-col gap-2">
           <h3 class="font-semibold">Обложка</h3>
           <AppImageUpload v-model="coverImage" class="w-full aspect-square" />
         </div> -->
-        <UFormField label="Время приготовления (мин.)" class="w-full">
-          <UInputNumber v-model="cookingTime" :min="0" class="w-full" orientation="horizontal" />
-        </UFormField>
-      </div>
+      <!-- </div> -->
 
       <!-- Правая колонка: основные поля -->
-      <div class="flex-1 flex flex-col gap-6 pb-4">
+      <div class="flex-1 flex flex-col gap-6 pb-8">
         <!-- Название -->
         <div class="flex flex-col gap-2">
           <h3 class="font-semibold">Название</h3>
@@ -101,6 +98,9 @@
         <!-- Готовка -->
         <div class="flex flex-col gap-2">
           <h3 class="font-semibold">Приготовление</h3>
+          <UFormField label="Время приготовления (мин.)" class="w-full">
+            <UInputNumber v-model="cookingTime" :min="0" class="w-full" orientation="horizontal" />
+          </UFormField>
           <div class="flex flex-col w-full gap-1">
             <div
               v-for="(step, index) in recipeSteps"
@@ -277,8 +277,8 @@ async function onSave() {
       await updateRecipe(editingId.value, result.data)
       await navigateTo(`/recipes/recipe?id=${editingId.value}`)
     } else {
-      await createRecipe(result.data)
-      await navigateTo('/recipes')
+      const created = await createRecipe(result.data)
+      await navigateTo(`/recipes/recipe?id=${created.id}`)
     }
   } catch {
     const action = editingId.value ? 'обновить' : 'создать'

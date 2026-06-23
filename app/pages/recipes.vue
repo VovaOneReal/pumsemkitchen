@@ -30,6 +30,7 @@
           </template>
         </UPopover>
       </div>
+      <p v-if="!loading" class="text-sm text-muted">{{ filteredRecipes.length }} {{ filteredRecipes.length === 1 ? 'рецепт' : filteredRecipes.length < 5 ? 'рецепта' : 'рецептов' }}</p>
       <UPageList class="gap-2">
         <div v-if="loading" class="text-muted text-sm py-4">Ищем рецепты...</div>
         <div v-else-if="filteredRecipes.length === 0" class="text-muted text-sm py-4">
