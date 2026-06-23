@@ -1,5 +1,14 @@
+const COOKIE_KEY = 'activeWorkspaceId'
+
 export const useWorkspaceStore = defineStore('workspace', () => {
-  const activeWorkspaceId = ref<string>('personal')
+  // useCookie читает cookie на сервере и клиенте — SSR-payload и гидратация совпадают
+  const workspaceCookie = useCookie<string>(COOKIE_KEY, { default: () => 'personal', sameSite: 'lax' })
+
+  const activeWorkspaceId = ref<string>(workspaceCookie.value)
+
+  watch(activeWorkspaceId, (val) => {
+    workspaceCookie.value = val
+  })
 
   const activeFamilyId = computed((): number | null => {
     if (activeWorkspaceId.value === 'personal') return null

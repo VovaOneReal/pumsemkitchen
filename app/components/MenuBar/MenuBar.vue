@@ -116,6 +116,13 @@ async function onWorkspaceToggle(open: boolean) {
   }
 }
 
+// Загружаем семьи при монтировании, чтобы метка активного пространства отображалась корректно
+onMounted(async () => {
+  if (workspaceStore.activeWorkspaceId !== 'personal') {
+    await fetchFamilies()
+  }
+})
+
 // Личное пространство всегда первым, затем семьи пользователя
 const workspaceItems = computed(() => [
   { id: 'personal', label: 'Ваше пространство' },

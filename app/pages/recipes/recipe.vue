@@ -623,6 +623,8 @@ const displayedNutrition = computed(() =>
 watch(
   () => route.query.id,
   (id) => {
+    // $fetch в composable не форвардит куки сессии при SSR — запускаем только на клиенте
+    if (!import.meta.client) return
     if (id) {
       fetchRecipeById(Number(id)).then(() => {
         portions.value = currentRecipe.value?.portions ?? 4
