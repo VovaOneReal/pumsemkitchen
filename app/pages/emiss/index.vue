@@ -23,13 +23,20 @@
       />
     </div>
 
-    <!-- Поиск -->
-    <UInput
-      v-model="searchQuery"
-      placeholder="Название товара..."
-      class="w-64 flex-shrink-0"
-      :trailing-icon="'i-lucide-search'"
-    />
+    <!-- Поиск и сортировка -->
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <UInput
+        v-model="searchQuery"
+        placeholder="Название товара..."
+        class="w-64"
+        :trailing-icon="'i-lucide-search'"
+      />
+      <USelect
+        v-model="sortMode"
+        :items="sortOptions"
+        class="w-52"
+      />
+    </div>
 
     <!-- Таблица (прокручивается в своём блоке) -->
     <div class="flex-1 overflow-auto min-h-0">
@@ -81,12 +88,30 @@ const { goods, fetchGoods, saveShowingFlags } = useEmissGoods()
 const loading = ref(false)
 const saving = ref(false)
 const searchQuery = ref('')
+const sortMode = ref('name-asc')
 
-const filteredGoods = computed(() =>
-  localGoods.value.filter((g) =>
+const sortOptions = [
+  { label: 'Сортировка: А → Я', value: 'name-asc' },
+  { label: 'Сортировка: Я → А', value: 'name-desc' },
+  { label: 'Сначала показываемые', value: 'showing-first' },
+]
+
+const filteredGoods = computed(() => {
+  const filtered = localGoods.value.filter((g) =>
     g.name.toLowerCase().includes(searchQuery.value.toLowerCase()),
-  ),
-)
+  )
+  if (sortMode.value === 'name-asc') {
+    return [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  }
+  if (sortMode.value === 'name-desc') {
+    return [...filtered].sort((a, b) => b.name.localeCompare(a.name, 'ru'))
+  }
+  // showing-first: включённые сверху, внутри групп — по алфавиту
+  return [...filtered].sort((a, b) => {
+    if (a.isShowingGoods !== b.isShowingGoods) return a.isShowingGoods ? -1 : 1
+    return a.name.localeCompare(b.name, 'ru')
+  })
+})
 const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 

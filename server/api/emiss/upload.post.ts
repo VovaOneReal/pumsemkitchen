@@ -4,8 +4,18 @@ import { emissGoods, emissRecords } from '~~/db/schema'
 import { eq } from 'drizzle-orm'
 
 const MONTH_MAP: Record<string, number> = {
-  январь: 1, февраль: 2, март: 3, апрель: 4, май: 5, июнь: 6,
-  июль: 7, август: 8, сентябрь: 9, октябрь: 10, ноябрь: 11, декабрь: 12,
+  январь: 1,
+  февраль: 2,
+  март: 3,
+  апрель: 4,
+  май: 5,
+  июнь: 6,
+  июль: 7,
+  август: 8,
+  сентябрь: 9,
+  октябрь: 10,
+  ноябрь: 11,
+  декабрь: 12,
 }
 
 export default defineEventHandler(async (event) => {
@@ -47,7 +57,10 @@ export default defineEventHandler(async (event) => {
   }
   const grtovMap = new Map<string, string>()
   for (const code of grtovList.Code ?? []) {
-    grtovMap.set(String(code['@_value']), String(code.Description?.['#text'] ?? code.Description ?? ''))
+    grtovMap.set(
+      String(code['@_value']),
+      String(code.Description?.['#text'] ?? code.Description ?? ''),
+    )
   }
 
   // Находим OKATO-код для РФ без новых субъектов
@@ -119,7 +132,7 @@ export default defineEventHandler(async (event) => {
         // Новый товар
         const [inserted] = await tx
           .insert(emissGoods)
-          .values({ emissGoodsName: productName })
+          .values({ emissGoodsName: productName, isShowingGoods: false })
           .returning({ emissGoodsId: emissGoods.emissGoodsId })
         goodsId = inserted.emissGoodsId
         existingDates = new Set()
